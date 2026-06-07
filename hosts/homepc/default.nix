@@ -13,7 +13,6 @@
       den.aspects.users
 
       den.aspects.kde
-      den.aspects.niri
       den.aspects.dms
       den.aspects.matugen
       den.aspects.stylix

@@ -1,42 +1,89 @@
 { inputs, den, ... }:
+let
+  dmsHome = { pkgs, ... }: {
+    imports = [
+      inputs.niri-nix.homeModules.default
+      inputs.dms.homeModules.dank-material-shell
+      inputs.dms.homeModules.niri
+    ];
+
+    wayland.windowManager.niri.enable = true;
+
+    programs.dank-material-shell = {
+      enable = true;
+      package = inputs.dms.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
+      systemd.enable = false;
+
+      niri = {
+        enableSpawn = true;
+        includes = {
+          enable = true;
+          override = true;
+          originalFileName = "hm";
+          filesToInclude = [
+            "alttab"
+            "binds"
+            "colors"
+            "layout"
+            "outputs"
+            "wpblur"
+          ];
+        };
+      };
+    };
+  };
+in
 {
   den.aspects.dms = {
-    includes = [ den.aspects.niri ];
+    nixos = { pkgs, user, ... }: {
+      imports = [
+        inputs.niri-nix.nixosModules.default
+        inputs.dms.nixosModules.greeter
+      ];
 
-    nixos = { pkgs, ... }: {
-      # DMS is the shell/widgets layer for the Niri session.
-      imports = [ inputs.dms.nixosModules.dank-material-shell ];
+      programs.niri.enable = true;
 
-      programs.dank-material-shell = {
+      services.greetd.settings.default_session.user = "greeter";
+
+      programs.dank-material-shell.greeter = {
         enable = true;
         package = inputs.dms.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        configHome = "/home/${user.userName}";
 
-        enableDynamicTheming = true;
-        enableSystemMonitoring = true;
-        enableClipboardPaste = true;
-        enableAudioWavelength = true;
+        compositor = {
+          name = "niri";
+          customConfig = ''
+            hotkey-overlay {
+                skip-at-startup
+            }
 
-        systemd = {
-          enable = true;
-          restartIfChanged = true;
+            environment {
+                DMS_RUN_GREETER "1"
+            }
+
+            gestures {
+                hot-corners {
+                    off
+                }
+            }
+
+            layout {
+                background-color "#000000"
+            }
+          '';
         };
       };
 
-      environment.systemPackages = with pkgs; [
-        matugen
-        libnotify
-        wl-clipboard
-        playerctl
-        brightnessctl
+      users.users.${user.userName}.extraGroups = [
+        "video"
+        "input"
+        "render"
       ];
+
+      home-manager.users.${user.userName} = dmsHome;
     };
 
-    homeManager = { pkgs, ... }: {
-      home.packages = with pkgs; [
-        matugen
-        libnotify
-        wl-clipboard
-      ];
-    };
+    homeManager = dmsHome;
   };
 }

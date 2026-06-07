@@ -39,7 +39,7 @@ let
       inherit pkgs modules;
       extraSpecialArgs = {
         inherit inputs;
-        lib = extendedLib;
+        dotLib = extendedLib;
       };
     };
 
