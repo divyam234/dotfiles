@@ -27,9 +27,20 @@
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     impermanence.url = "github:nix-community/impermanence";
     nur.url = "github:nix-community/NUR";
   };
+
+  flake-file.outputs = ''
+    inputs:
+      builtins.removeAttrs
+        (inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules))
+        [ "modules" "denful" ]
+  '';
 
   imports = [
     inputs.flake-file.flakeModules.dendritic

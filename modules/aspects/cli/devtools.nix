@@ -22,7 +22,7 @@
         nil
         nix-output-monitor
         nixd
-        nixfmt-rfc-style
+        nixfmt
         nodejs_24
         pnpm
         python3

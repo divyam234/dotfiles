@@ -6,7 +6,7 @@ let
 in
 {
   perSystem = { pkgs, system, ... }: {
-    formatter = pkgs.nixfmt-rfc-style;
+    formatter = pkgs.nixfmt;
 
     devShells.default = pkgs.mkShell {
       packages = with pkgs; [
@@ -20,7 +20,7 @@ in
         nh
         nil
         nix-output-monitor
-        nixfmt-rfc-style
+        nixfmt
         sops
         statix
       ];
