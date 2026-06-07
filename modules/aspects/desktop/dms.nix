@@ -19,7 +19,7 @@ let
         enableSpawn = true;
         includes = {
           enable = true;
-          override = true;
+          override = false;
           originalFileName = "hm";
           filesToInclude = [
             "alttab"
@@ -35,6 +35,18 @@ let
     # Stylix owns theming — feeds base16 colors into DMS shell UI and Niri
     stylix.targets.dank-material-shell.enable = true;
     stylix.targets.niri.enable = true;
+
+    # DMS niri include files (alttab, binds, layout, outputs, wpblur)
+    # are installed by the DMS package. With override = false, we add
+    # the includes here via extraConfig instead of letting DMS replace
+    # the entire config.kdl (which would lose Stylix colors).
+    programs.niri.extraConfig = ''
+      include "dms/alttab.kdl"
+      include "dms/binds.kdl"
+      include "dms/layout.kdl"
+      include "dms/outputs.kdl"
+      include "dms/wpblur.kdl"
+    '';
   };
 in
 {
