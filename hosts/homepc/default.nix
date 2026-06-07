@@ -14,7 +14,6 @@
 
       den.aspects.kde
       den.aspects.dms
-      den.aspects.matugen
       den.aspects.stylix
       den.aspects.fonts
       den.aspects.portals

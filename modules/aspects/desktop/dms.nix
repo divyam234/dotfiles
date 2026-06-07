@@ -24,7 +24,6 @@ let
           filesToInclude = [
             "alttab"
             "binds"
-            "colors"
             "layout"
             "outputs"
             "wpblur"
@@ -32,6 +31,10 @@ let
         };
       };
     };
+
+    # Stylix owns theming — feeds base16 colors into DMS shell UI and Niri
+    stylix.targets.dank-material-shell.enable = true;
+    stylix.targets.niri.enable = true;
   };
 in
 {

@@ -27,6 +27,7 @@
       den.aspects.gotify
 
       den.aspects.restic
+      den.aspects.stylix
     ];
 
     nixos = { ... }: {

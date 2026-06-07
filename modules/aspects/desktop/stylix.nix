@@ -15,8 +15,10 @@
           serif = { package = pkgs.merriweather; name = "Merriweather"; };
         };
         targets = {
-          # KDE/Qt is the active desktop. Stylix owns broad theme propagation;
-          # Matugen only generates the palette consumed by Stylix.
+          # Stylix is the single theming source across all hosts.
+          # DMS shell theming and Niri colors are enabled via stylix targets
+          # set in modules/aspects/desktop/dms.nix (HM context).
+          # GTK, Qt, and terminals auto-enable via stylix.autoEnable.
         };
       };
     };
