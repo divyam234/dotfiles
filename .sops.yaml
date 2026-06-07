@@ -1,0 +1,16 @@
+
+# Fill this after generating age keys.
+# Example:
+# keys:
+#   - &killer age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# creation_rules:
+#   - path_regex: hosts/.*\.yaml$
+#     key_groups:
+#       - age:
+#           - *killer
+#   - path_regex: modules/secrets\.yaml$
+#     key_groups:
+#       - age:
+#           - *killer
+keys: []
+creation_rules: []

@@ -1,0 +1,23 @@
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-}"
+name="${2:-}"
+
+if [[ -z "$cmd" || -z "$name" ]]; then
+  echo "usage: svc status|logs|restart|start|stop|shell <container>" >&2
+  exit 2
+fi
+
+unit="podman-${name}.service"
+
+case "$cmd" in
+  status) systemctl status "$unit" ;;
+  logs) journalctl -u "$unit" -f ;;
+  restart) sudo systemctl restart "$unit" ;;
+  start) sudo systemctl start "$unit" ;;
+  stop) sudo systemctl stop "$unit" ;;
+  shell) sudo podman exec -it "$name" sh ;;
+  *) echo "unknown command: $cmd" >&2; exit 2 ;;
+esac

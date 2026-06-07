@@ -1,0 +1,9 @@
+
+/result
+/result-*
+.direnv/
+.env
+*.age
+*.bak
+*.swp
+.DS_Store
