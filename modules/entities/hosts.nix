@@ -18,22 +18,23 @@
       "containers"
       "tailscale"
     ];
-    services = [
-      "caddy"
-      "postgres"
-      "redis"
-      "pgdog"
-      "databasus"
-      "forgejo"
-      "vaultwarden"
-      "gluetun"
-      "adguard"
-      "camofox"
-      "hermes"
-      "siyuan"
-      "restic"
-    ];
+    services = {
+      adguard.enable = true;
+      caddy.enable = true;
+      camofox.enable = true;
+      databasus.enable = true;
+      forgejo.enable = true;
+      gluetun.enable = true;
+      hermes.enable = true;
+      pgdog.enable = true;
+      postgres.enable = true;
+      redis.enable = true;
+      restic.enable = true;
+      siyuan.enable = true;
+      vaultwarden.enable = true;
+    };
     domain = "example.com";
     caddyEmail = dotUsers.bhunter.email;
+    secretsFile = ../../hosts/netcup/secrets.yaml;
   };
 }

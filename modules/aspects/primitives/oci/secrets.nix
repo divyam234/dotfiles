@@ -8,18 +8,28 @@
         host,
         ...
       }:
+      let
+        secretsFile = host.secretsFile;
+      in
       {
-        sops.secrets = {
-          "postgres/user".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "postgres/password".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "caddy/cloudflare_api_token".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "gluetun/vpn_private_key".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "gluetun/vpn_addresses".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "redis/password".sopsFile = ../../../../hosts/netcup/secrets.yaml;
-          "vaultwarden/admin_token".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+        assertions = [
+          {
+            assertion = secretsFile != null;
+            message = "Host ${host.name} enables container secrets but does not set host.secretsFile.";
+          }
+        ];
+
+        sops.secrets = lib.mkIf (secretsFile != null) {
+          "postgres/user".sopsFile = secretsFile;
+          "postgres/password".sopsFile = secretsFile;
+          "caddy/cloudflare_api_token".sopsFile = secretsFile;
+          "gluetun/vpn_private_key".sopsFile = secretsFile;
+          "gluetun/vpn_addresses".sopsFile = secretsFile;
+          "redis/password".sopsFile = secretsFile;
+          "vaultwarden/admin_token".sopsFile = secretsFile;
         };
 
-        sops.templates = {
+        sops.templates = lib.mkIf (secretsFile != null) {
           "postgres.env" = {
             path = lib.dot.containerEnvFile "postgres";
             mode = "0440";
@@ -36,7 +46,7 @@
             content = ''
               VPN_SERVICE_PROVIDER=nordvpn
               VPN_TYPE=wireguard
-              WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."gluetun/wireguard_private_key"}
+              WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."gluetun/vpn_private_key"}
               SERVER_HOSTNAMES=nl885.nordvpn.com,nl886.nordvpn.com
               httpProxy = "on";
               HTTPPROXY_LISTENING_ADDRESS=:3128

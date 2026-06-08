@@ -2,11 +2,28 @@
 {
   den.aspects.restic = {
     nixos =
-      { config, lib, ... }:
       {
-        sops.secrets."restic/password".sopsFile = ../../../hosts/netcup/secrets.yaml;
-        sops.secrets."restic/repository".sopsFile = ../../../hosts/netcup/secrets.yaml;
-        sops.secrets."restic/rclone_conf".sopsFile = ../../../hosts/netcup/secrets.yaml;
+        config,
+        host,
+        lib,
+        ...
+      }:
+      let
+        secretsFile = host.secretsFile;
+      in
+      {
+        assertions = [
+          {
+            assertion = secretsFile != null;
+            message = "Host ${host.name} enables restic but does not set host.secretsFile.";
+          }
+        ];
+
+        sops.secrets = lib.mkIf (secretsFile != null) {
+          "restic/password".sopsFile = secretsFile;
+          "restic/repository".sopsFile = secretsFile;
+          "restic/rclone_conf".sopsFile = secretsFile;
+        };
 
         services.restic.backups.netcup = {
           initialize = true;

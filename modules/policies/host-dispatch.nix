@@ -47,6 +47,9 @@ let
   resolveNames =
     kind: registry: names:
     map (name: registry.${name} or (throw "Unknown host ${kind}: ${name}")) names;
+
+  enabledServices =
+    services: lib.attrNames (lib.filterAttrs (_name: service: service.enable) services);
 in
 {
   den.schema.host.includes = [
@@ -56,7 +59,7 @@ in
         includes =
           roleAspects.${host.role}
           ++ resolveNames "feature" featureAspects host.features
-          ++ resolveNames "service" serviceAspects host.services;
+          ++ resolveNames "service" serviceAspects (enabledServices host.services);
       }
     )
   ];
