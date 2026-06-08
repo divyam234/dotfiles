@@ -32,10 +32,6 @@ let
       };
     };
 
-    # Stylix owns theming — feeds base16 colors into DMS shell UI and Niri
-    stylix.targets.dank-material-shell.enable = true;
-    stylix.targets.niri.enable = true;
-
     # DMS niri include files (alttab, binds, layout, outputs, wpblur)
     # are installed by the DMS package. With override = false, we add
     # the includes here via extraConfig instead of letting DMS replace

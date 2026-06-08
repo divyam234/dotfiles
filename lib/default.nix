@@ -3,7 +3,7 @@ let
   concatMapStringsSep = sep: f: xs: lib.concatStringsSep sep (map f xs);
 
   containerNetwork = "svc";
-  containerDataRoot = "/var/lib/killer-containers";
+  containerDataRoot = "/var/lib/containers";
   containerSecretDir = "/run/secrets/container-env";
 
   indent = prefix: text:
@@ -43,10 +43,13 @@ rec {
     ++ map (name: "d ${containerDataRoot}/${name} 0750 root root -") names;
 
   mkOci = name: args:
+    let
+      networkMode = args.networkMode or containerNetwork;
+    in
     {
       image = args.image;
       autoStart = args.autoStart or true;
-      extraOptions = (args.extraOptions or [ ]) ++ [ "--network=${containerNetwork}" ];
+      extraOptions = (args.extraOptions or [ ]) ++ [ "--network=${networkMode}" ];
     }
     // lib.optionalAttrs (args ? environment) { inherit (args) environment; }
     // lib.optionalAttrs (args ? environmentFiles) { inherit (args) environmentFiles; }

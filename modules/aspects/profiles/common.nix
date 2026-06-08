@@ -1,4 +1,3 @@
-
 { den, ... }:
 {
   den.aspects.common = {
@@ -7,6 +6,7 @@
       den.aspects.fish
       den.aspects.git
       den.aspects.ssh
+      den.aspects.starship
     ];
   };
 }

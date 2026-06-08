@@ -7,7 +7,7 @@
         enable = true;
         enableFishIntegration = true;
         settings = {
-          theme = "dark:stylix-dark,light:stylix-light";
+          theme = "dark";
           font-size = 12;
           window-padding-x = 8;
           window-padding-y = 8;

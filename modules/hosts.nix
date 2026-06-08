@@ -11,6 +11,7 @@ let
 
   overlays = [
     inputs.nur.overlays.default
+    inputs.rust-overlay.overlays.default
     (_final: prev: {
       zjstatus = inputs.zjstatus.packages.${prev.stdenv.hostPlatform.system}.default;
     })
@@ -19,7 +20,9 @@ let
     })
   ];
 
-  mkNixos = system: { modules }:
+  mkNixos =
+    system:
+    { modules }:
     inputs.nixpkgs.lib.nixosSystem {
       inherit system modules;
       specialArgs = {
@@ -28,7 +31,9 @@ let
       };
     };
 
-  mkHome = system: { modules, ... }:
+  mkHome =
+    system:
+    { modules, ... }:
     let
       pkgs = import inputs.nixpkgs {
         inherit system overlays;
@@ -43,36 +48,32 @@ let
       };
     };
 
-  killerUser = {
-    userName = "killer";
-    fullName = "Killer Crock";
-    email = "killercrock234@gmail.com";
-    signingKey = "~/.ssh/id_ed25519.pub";
+  bhunterUser = {
+    userName = "bhunter";
+    email = "47589864+divyam234@users.noreply.github.com";
     authorizedKeys = [
-      "ssh-ed25519 CHANGE_ME_killer_public_key"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICWt7MJWVbCBzlYidynsuu9kP5kB5/gcUBFO+K6ciyCC"
     ];
   };
 in
 {
   den.hosts.x86_64-linux.homepc = {
     instantiate = mkNixos "x86_64-linux";
-    users.killer = killerUser;
+    users.bhunter = bhunterUser;
     isServer = false;
     autologin = false;
-    domain = "home.example.com";
-    caddyEmail = killerUser.email;
   };
 
   den.hosts.aarch64-linux.netcup = {
     instantiate = mkNixos "aarch64-linux";
-    users.killer = killerUser;
+    users.bhunter = bhunterUser;
     isServer = true;
     autologin = false;
     domain = "example.com";
-    caddyEmail = killerUser.email;
+    caddyEmail = bhunterUser.email;
   };
 
-  den.homes.x86_64-linux."killer@homepc" = {
+  den.homes.x86_64-linux."bhunter@homepc" = {
     instantiate = mkHome "x86_64-linux";
   };
 }

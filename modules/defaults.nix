@@ -1,4 +1,9 @@
-{ inputs, lib, den, ... }:
+{
+  inputs,
+  lib,
+  den,
+  ...
+}:
 let
   extendedLib = lib.extend (
     self: _super: {
@@ -9,55 +14,62 @@ let
     }
   );
 
-  caddyRouteType = lib.types.submodule ({ name, ... }: {
-    options = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to render this Caddy route.";
-      };
+  caddyRouteType = lib.types.submodule (
+    { name, ... }: {
+      options = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to render this Caddy route.";
+        };
 
-      host = lib.mkOption {
-        type = lib.types.str;
-        description = "Public hostname for the route.";
-      };
+        host = lib.mkOption {
+          type = lib.types.str;
+          description = "Public hostname for the route.";
+        };
 
-      upstreams = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "One or more Caddy reverse_proxy upstreams.";
-      };
+        upstreams = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "One or more Caddy reverse_proxy upstreams.";
+        };
 
-      encode = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to enable zstd/gzip encoding.";
-      };
+        encode = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to enable zstd/gzip encoding.";
+        };
 
-      cacheStatic = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Whether to add long-lived caching headers for static assets.";
-      };
+        cacheStatic = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether to add long-lived caching headers for static assets.";
+        };
 
-      securityHeaders = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to add a small secure-header baseline.";
-      };
+        securityHeaders = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether to add a small secure-header baseline.";
+        };
 
-      tls = lib.mkOption {
-        type = lib.types.enum [ "cloudflare" "internal" "auto" "off" ];
-        default = "cloudflare";
-        description = "TLS mode. cloudflare uses the Caddy Cloudflare DNS plugin and CLOUDFLARE_API_TOKEN.";
-      };
+        tls = lib.mkOption {
+          type = lib.types.enum [
+            "cloudflare"
+            "internal"
+            "auto"
+            "off"
+          ];
+          default = "cloudflare";
+          description = "TLS mode. cloudflare uses the Caddy Cloudflare DNS plugin and CLOUDFLARE_API_TOKEN.";
+        };
 
-      extraConfig = lib.mkOption {
-        type = lib.types.lines;
-        default = "";
-        description = "Extra raw Caddyfile directives inserted before reverse_proxy.";
+        extraConfig = lib.mkOption {
+          type = lib.types.lines;
+          default = "";
+          description = "Extra raw Caddyfile directives inserted before reverse_proxy.";
+        };
       };
-    };
-  });
+    }
+  );
 in
 {
   den = {
@@ -82,9 +94,18 @@ in
 
     schema.host = { lib, ... }: {
       options = {
-        isLaptop = lib.mkOption { type = lib.types.bool; default = false; };
-        isServer = lib.mkOption { type = lib.types.bool; default = false; };
-        autologin = lib.mkOption { type = lib.types.bool; default = false; };
+        isLaptop = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        isServer = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        autologin = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
         domain = lib.mkOption {
           type = lib.types.str;
           default = "example.com";
@@ -95,7 +116,10 @@ in
           default = null;
           description = "ACME contact email. Defaults to the primary user's email when unset.";
         };
-        primaryDisplay = lib.mkOption { type = lib.types.attrsOf lib.types.anything; default = { }; };
+        primaryDisplay = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
+        };
       };
     };
 
@@ -159,6 +183,7 @@ in
         config.allowUnfree = true;
         overlays = [
           inputs.nur.overlays.default
+          inputs.rust-overlay.overlays.default
           (final: prev: {
             dot = extendedLib.dot;
             local = extendedLib.dot.importPackages final ../packages;

@@ -1,4 +1,3 @@
-
 { den, ... }:
 {
   den.aspects.fish = {
@@ -67,11 +66,26 @@
             '';
           };
         };
-        zoxide = { enable = true; enableFishIntegration = true; };
-        fzf = { enable = true; enableFishIntegration = true; };
-        atuin = { enable = true; enableFishIntegration = true; };
-        starship = { enable = true; enableFishIntegration = true; };
-        direnv = { enable = true; nix-direnv.enable = true; };
+        zoxide = {
+          enable = true;
+          enableFishIntegration = true;
+        };
+        fzf = {
+          enable = true;
+          enableFishIntegration = true;
+        };
+        atuin = {
+          enable = true;
+          enableFishIntegration = true;
+        };
+        starship = {
+          enable = true;
+          enableFishIntegration = true;
+        };
+        direnv = {
+          enable = true;
+          nix-direnv.enable = true;
+        };
       };
     };
   };

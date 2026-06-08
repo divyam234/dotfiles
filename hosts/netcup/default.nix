@@ -16,18 +16,22 @@
       den.aspects.oci-base
       den.aspects.container-network
       den.aspects.container-secrets
-      den.aspects.caddy-container
+      den.aspects.caddy
       den.aspects.postgres
-      den.aspects.valkey
+      den.aspects.redis
+      den.aspects.pgdog
+      den.aspects.databasus
       den.aspects.forgejo
-      den.aspects.atuin
-      den.aspects.atticd
       den.aspects.vaultwarden
-      den.aspects.uptime-kuma
-      den.aspects.gotify
+
+      den.aspects.gluetun
+      den.aspects.adguard
+
+      den.aspects.camofox
+      den.aspects.hermes
+      den.aspects.siyuan
 
       den.aspects.restic
-      den.aspects.stylix
     ];
 
     nixos = { ... }: {

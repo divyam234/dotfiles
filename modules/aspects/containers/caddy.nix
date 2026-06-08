@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.caddy-container = {
+  den.aspects.caddy = {
     includes = [
       den.aspects.oci-base
       den.aspects.container-network

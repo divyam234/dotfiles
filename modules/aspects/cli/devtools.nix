@@ -1,4 +1,3 @@
-
 { den, ... }:
 {
   den.aspects.devtools = {
@@ -17,7 +16,6 @@
         gotestsum
         gnumake
         just
-        lua-language-server
         marksman
         nil
         nix-output-monitor
@@ -26,7 +24,7 @@
         nodejs_24
         pnpm
         python3
-        rustup
+        rust-bin.stable.latest.default
         shellcheck
         shfmt
         sqlc
@@ -34,10 +32,7 @@
         stylua
         taplo
         templ
-        typescript-language-server
         uv
-        vscode-langservers-extracted
-        yaml-language-server
       ];
     };
   };

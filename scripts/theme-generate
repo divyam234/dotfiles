@@ -1,4 +1,0 @@
-
-#!/usr/bin/env bash
-set -euo pipefail
-matugen image ./theme/wallpaper.png --config ./theme/matugen/config.toml

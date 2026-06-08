@@ -187,7 +187,7 @@ keybinds {
               floating true
               move_to_focused_tab true
               cwd "/"
-              root_dirs "/home/killer/projects;/home/killermajid/projects;/home/killermajid/projects/personal;/home/killermajid;/home/killer"
+              root_dirs "/home/bhunter/projects;/home/bhunter/projects/personal;/home/bhunter"
           }; SwitchToMode "Locked";
         }
     }

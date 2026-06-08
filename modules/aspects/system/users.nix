@@ -11,12 +11,12 @@
       };
     };
 
-    homeManager = { user, ... }: {
-      home = {
-        username = user.userName;
-        homeDirectory = "/home/${user.userName}";
-        stateVersion = "25.11";
-      };
-    };
+    # homeManager = { user, ... }: {
+    #   home = {
+    #     username = user.userName;
+    #     homeDirectory = "/home/${user.userName}";
+    #     stateVersion = "25.11";
+    #   };
+    # };
   };
 }

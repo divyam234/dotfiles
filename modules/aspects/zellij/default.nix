@@ -18,10 +18,8 @@
       };
 
     homeManager =
-      { pkgs, config, ... }:
+      { pkgs, ... }:
       let
-        inherit (config.lib.stylix) colors;
-
         sesh = pkgs.writeScriptBin "sesh" ''
           #! /usr/bin/env bash
 
@@ -100,9 +98,9 @@
           default_tab_template {
               pane size=2 borderless=true {
                   plugin location="file://${pkgs.zjstatus}/bin/zjstatus.wasm" {
-                      format_left   "{mode}#[bg=#${colors.base00}] {tabs}"
+                      format_left   "{mode}#[bg=#111318] {tabs}"
                       format_center ""
-                      format_right  "#[bg=#${colors.base00},fg=#${colors.base0D}]#[bg=#${colors.base0D},fg=#${colors.base01},bold] #[bg=#${colors.base02},fg=#${colors.base05},bold] {session} #[bg=#${colors.base03},fg=#${colors.base05},bold]"
+                      format_right  "#[bg=#111318,fg=#517bac]#[bg=#517bac,fg=#e54d45,bold] #[bg=#6fd66e,fg=#8e9dbf,bold] {session} #[bg=#dbd27b,fg=#8e9dbf,bold]"
                       format_space  ""
                       format_hide_on_overlength "true"
                       format_precedence "crl"
@@ -112,30 +110,30 @@
                       border_format   "#[fg=#6C7086]{char}"
                       border_position "top"
 
-                      mode_normal        "#[bg=#${colors.base0B},fg=#${colors.base02},bold] NORMAL#[bg=#${colors.base03},fg=#${colors.base0B}]█"
-                      mode_locked        "#[bg=#${colors.base04},fg=#${colors.base02},bold] LOCKED #[bg=#${colors.base03},fg=#${colors.base04}]█"
-                      mode_resize        "#[bg=#${colors.base08},fg=#${colors.base02},bold] RESIZE#[bg=#${colors.base03},fg=#${colors.base08}]█"
-                      mode_pane          "#[bg=#${colors.base0D},fg=#${colors.base02},bold] PANE#[bg=#${colors.base03},fg=#${colors.base0D}]█"
-                      mode_tab           "#[bg=#${colors.base07},fg=#${colors.base02},bold] TAB#[bg=#${colors.base03},fg=#${colors.base07}]█"
-                      mode_scroll        "#[bg=#${colors.base0A},fg=#${colors.base02},bold] SCROLL#[bg=#${colors.base03},fg=#${colors.base0A}]█"
-                      mode_enter_search  "#[bg=#${colors.base0D},fg=#${colors.base02},bold] ENT-SEARCH#[bg=#${colors.base03},fg=#${colors.base0D}]█"
-                      mode_search        "#[bg=#${colors.base0D},fg=#${colors.base02},bold] SEARCHARCH#[bg=#${colors.base03},fg=#${colors.base0D}]█"
-                      mode_rename_tab    "#[bg=#${colors.base07},fg=#${colors.base02},bold] RENAME-TAB#[bg=#${colors.base03},fg=#${colors.base07}]█"
-                      mode_rename_pane   "#[bg=#${colors.base0D},fg=#${colors.base02},bold] RENAME-PANE#[bg=#${colors.base03},fg=#${colors.base0D}]█"
-                      mode_session       "#[bg=#${colors.base0E},fg=#${colors.base02},bold] SESSION#[bg=#${colors.base03},fg=#${colors.base0E}]█"
-                      mode_move          "#[bg=#${colors.base0F},fg=#${colors.base02},bold] MOVE#[bg=#${colors.base03},fg=#${colors.base0F}]█"
-                      mode_prompt        "#[bg=#${colors.base0D},fg=#${colors.base02},bold] PROMPT#[bg=#${colors.base03},fg=#${colors.base0D}]█"
-                      mode_tmux          "#[bg=#${colors.base09},fg=#${colors.base02},bold] TMUX#[bg=#${colors.base03},fg=#${colors.base09}]█"
+                      mode_normal        "#[bg=#e8e197,fg=#6fd66e,bold] NORMAL#[bg=#dbd27b,fg=#e8e197]█"
+                      mode_locked        "#[bg=#6180d1,fg=#6fd66e,bold] LOCKED #[bg=#dbd27b,fg=#6180d1]█"
+                      mode_resize        "#[bg=#5c6370,fg=#6fd66e,bold] RESIZE#[bg=#dbd27b,fg=#5c6370]█"
+                      mode_pane          "#[bg=#517bac,fg=#6fd66e,bold] PANE#[bg=#dbd27b,fg=#517bac]█"
+                      mode_tab           "#[bg=#abb2bf,fg=#6fd66e,bold] TAB#[bg=#dbd27b,fg=#abb2bf]█"
+                      mode_scroll        "#[bg=#86e086,fg=#6fd66e,bold] SCROLL#[bg=#dbd27b,fg=#86e086]█"
+                      mode_enter_search  "#[bg=#517bac,fg=#6fd66e,bold] ENT-SEARCH#[bg=#dbd27b,fg=#517bac]█"
+                      mode_search        "#[bg=#517bac,fg=#6fd66e,bold] SEARCHARCH#[bg=#dbd27b,fg=#517bac]█"
+                      mode_rename_tab    "#[bg=#abb2bf,fg=#6fd66e,bold] RENAME-TAB#[bg=#dbd27b,fg=#abb2bf]█"
+                      mode_rename_pane   "#[bg=#517bac,fg=#6fd66e,bold] RENAME-PANE#[bg=#dbd27b,fg=#517bac]█"
+                      mode_session       "#[bg=#6b75b3,fg=#6fd66e,bold] SESSION#[bg=#dbd27b,fg=#6b75b3]█"
+                      mode_move          "#[bg=#ffffff,fg=#6fd66e,bold] MOVE#[bg=#dbd27b,fg=#ffffff]█"
+                      mode_prompt        "#[bg=#517bac,fg=#6fd66e,bold] PROMPT#[bg=#dbd27b,fg=#517bac]█"
+                      mode_tmux          "#[bg=#e0605f,fg=#6fd66e,bold] TMUX#[bg=#dbd27b,fg=#e0605f]█"
 
-                      tab_normal              "#[bg=#${colors.base03},fg=#${colors.base0D}]█#[bg=#${colors.base0D},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{floating_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
-                      tab_normal_fullscreen   "#[bg=#${colors.base03},fg=#${colors.base0D}]█#[bg=#${colors.base0D},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{fullscreen_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
-                      tab_normal_sync         "#[bg=#${colors.base03},fg=#${colors.base0D}]█#[bg=#${colors.base0D},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{sync_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
+                      tab_normal              "#[bg=#dbd27b,fg=#517bac]█#[bg=#517bac,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{floating_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
+                      tab_normal_fullscreen   "#[bg=#dbd27b,fg=#517bac]█#[bg=#517bac,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{fullscreen_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
+                      tab_normal_sync         "#[bg=#dbd27b,fg=#517bac]█#[bg=#517bac,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{sync_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
 
-                      tab_active              "#[bg=#${colors.base03},fg=#${colors.base09}]█#[bg=#${colors.base09},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{floating_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
-                      tab_active_fullscreen   "#[bg=#${colors.base03},fg=#${colors.base09}]█#[bg=#${colors.base09},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{fullscreen_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
-                      tab_active_sync         "#[bg=#${colors.base03},fg=#${colors.base09}]█#[bg=#${colors.base09},fg=#${colors.base02},bold]{index} #[bg=#${colors.base02},fg=#${colors.base05},bold] {name}{sync_indicator}#[bg=#${colors.base03},fg=#${colors.base02},bold]█"
+                      tab_active              "#[bg=#dbd27b,fg=#e0605f]█#[bg=#e0605f,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{floating_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
+                      tab_active_fullscreen   "#[bg=#dbd27b,fg=#e0605f]█#[bg=#e0605f,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{fullscreen_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
+                      tab_active_sync         "#[bg=#dbd27b,fg=#e0605f]█#[bg=#e0605f,fg=#6fd66e,bold]{index} #[bg=#6fd66e,fg=#8e9dbf,bold] {name}{sync_indicator}#[bg=#dbd27b,fg=#6fd66e,bold]█"
 
-                      tab_separator           "#[bg=#${colors.base00}] "
+                      tab_separator           "#[bg=#111318] "
 
                       tab_sync_indicator       " "
                       tab_fullscreen_indicator " 󰊓"
@@ -155,20 +153,20 @@
           }
         '';
 
-        stylixTheme = ''
+        theme = ''
           themes {
             stylix {
-              bg "#${colors.base01}"
-              fg "#${colors.base05}"
-              red "#${colors.base08}"
-              green "#${colors.base0E}"
-              blue "#${colors.base0D}"
-              yellow "#${colors.base0A}"
-              magenta "#${colors.base0E}"
-              orange "#${colors.base09}"
-              cyan "#${colors.base0C}"
-              black "#${colors.base00}"
-              white "#${colors.base07}"
+              bg "#e54d45"
+              fg "#8e9dbf"
+              red "#5c6370"
+              green "#6b75b3"
+              blue "#517bac"
+              yellow "#86e086"
+              magenta "#6b75b3"
+              orange "#e0605f"
+              cyan "#b9d4ff"
+              black "#111318"
+              white "#abb2bf"
             }
           }
         '';
@@ -221,14 +219,13 @@
 
         xdg.configFile = {
           "zellij/config.kdl".text = ''
-            ${stylixTheme}
+            ${theme}
 
             ${builtins.readFile ./config.kdl}
           '';
           "zellij/layouts/dev.kdl".text = layoutDev;
           "zellij/layouts/default.kdl".text = layoutDefault;
         };
-
         programs.zellij.enable = true;
       };
   };

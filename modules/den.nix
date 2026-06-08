@@ -1,9 +1,8 @@
-
 { inputs, den, ... }:
 {
   flake-file.inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     den.url = "github:vic/den";
     import-tree.url = "github:vic/import-tree";
     flake-file.url = "github:vic/flake-file";
@@ -23,10 +22,6 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    stylix = {
-      url = "github:danth/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,6 +32,14 @@
     };
     impermanence.url = "github:nix-community/impermanence";
     nur.url = "github:nix-community/NUR";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-pkgs = {
+      url = "github:divyam234/nix-pkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   flake-file.outputs = ''

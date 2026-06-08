@@ -14,7 +14,6 @@
 
       den.aspects.kde
       den.aspects.dms
-      den.aspects.stylix
       den.aspects.fonts
       den.aspects.portals
       den.aspects.desktop-apps
@@ -23,8 +22,6 @@
       den.aspects.oci-base
       den.aspects.container-network
       den.aspects.tailscale
-      den.aspects.ollama
-      den.aspects.open-webui
     ];
 
     nixos = { ... }: {

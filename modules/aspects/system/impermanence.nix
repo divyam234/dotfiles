@@ -12,7 +12,7 @@
           "/var/lib/bluetooth"
           "/var/lib/systemd"
           "/var/lib/tailscale"
-          "/var/lib/killer-containers"
+          "/var/lib/containers"
           "/root"
         ];
         files = [
