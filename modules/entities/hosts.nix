@@ -13,7 +13,7 @@
 
   den.hosts.aarch64-linux.netcup = {
     users.bhunter = dotUsers.bhunter;
-    role = "server";
+    role = "minimal";
     features = [
       "containers"
       "tailscale"

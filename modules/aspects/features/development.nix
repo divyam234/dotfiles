@@ -3,6 +3,7 @@
   den.aspects.development = {
     includes = [
       den.aspects.gpg
+      den.aspects.stylix
       den.aspects.zellij
       den.aspects.neovim
       den.aspects.modern-unix

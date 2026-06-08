@@ -5,8 +5,6 @@
       { pkgs, lib, ... }:
       {
         home.packages = with pkgs; [
-          bat
-          broot
           chafa
           choose
           delta
@@ -15,7 +13,6 @@
           dysk
           eza
           fd
-          fzf
           glow
           gomi
           grex
@@ -39,11 +36,18 @@
           tokei
           unzip
           viddy
-          yazi
           yq-go
           zoxide
           zstd
         ];
+
+        programs = {
+          bat.enable = true;
+
+          broot.enable = true;
+
+          yazi.enable = true;
+        };
       };
   };
 }

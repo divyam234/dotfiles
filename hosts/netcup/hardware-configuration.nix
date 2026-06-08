@@ -12,6 +12,7 @@
   ];
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
+  boot.kernelParams = [ "console=ttyS0" ];
 
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";

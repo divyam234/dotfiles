@@ -40,6 +40,7 @@ in
           type = lib.types.enum [
             "workstation"
             "server"
+            "minimal"
           ];
           description = "High-level host role used by host-dispatch.";
         };

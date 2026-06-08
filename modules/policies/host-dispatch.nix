@@ -9,12 +9,12 @@ let
       den.aspects.desktop
     ];
 
-    server = [
+    minimal = [
       den.aspects.common
       den.aspects.users
       den.aspects.security
       den.aspects.sops
-      den.aspects.server
+      den.aspects.development
       den.aspects.firewall
       den.aspects.fail2ban
     ];
@@ -24,6 +24,8 @@ let
     btrfs = den.aspects.btrfs;
     containers = den.aspects.oci-base;
     development = den.aspects.development;
+    firewall = den.aspects.firewall;
+    fail2ban = den.aspects.fail2ban;
     gaming = den.aspects.gaming;
     tailscale = den.aspects.tailscale;
   };
