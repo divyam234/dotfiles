@@ -1,26 +1,26 @@
-# Replace with /etc/nixos/hardware-configuration.nix from the Netcup ARM64 machine.
-# This fallback is intentionally minimal and may not boot every VPS image.
-{ modulesPath, ... }:
+{ lib, modulesPath, ... }:
+
 {
-  imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+  ];
 
   boot.initrd.availableKernelModules = [
+    "xhci_pci"
     "virtio_pci"
     "virtio_scsi"
+    "usbhid"
+    "sr_mod"
     "virtio_blk"
-    "xhci_pci"
   ];
+
+  boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
   boot.kernelParams = [ "console=ttyS0" ];
+  services.qemuGuest.enable = true;
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-  };
+  swapDevices = [ ];
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/BOOT";
-    fsType = "vfat";
-  };
+  nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 }
