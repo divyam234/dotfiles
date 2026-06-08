@@ -10,6 +10,8 @@
       }:
       let
         secretsFile = host.secretsFile;
+        hasService = name: host.services.${name}.enable or false;
+        hasAny = names: lib.any (n: hasService n) names;
       in
       {
         assertions = [
@@ -19,18 +21,23 @@
           }
         ];
 
-        sops.secrets = lib.mkIf (secretsFile != null) {
-          "postgres/user".sopsFile = secretsFile;
-          "postgres/password".sopsFile = secretsFile;
-          "cloudflare/api_token".sopsFile = secretsFile;
-          "wireguard/private_key".sopsFile = secretsFile;
-          "wireguard/addresses".sopsFile = secretsFile;
-          "redis/password".sopsFile = secretsFile;
-          "vaultwarden/admin_token".sopsFile = secretsFile;
-        };
+        sops.secrets = lib.mkIf (secretsFile != null) (
+          let
+            postgresNeeded = hasAny [ "postgres" "forgejo" "vaultwarden" ];
+          in
+          {
+            "postgres/user".sopsFile = lib.mkIf postgresNeeded secretsFile;
+            "postgres/password".sopsFile = lib.mkIf postgresNeeded secretsFile;
+            "cloudflare/api_token".sopsFile = lib.mkIf (hasService "caddy") secretsFile;
+            "wireguard/private_key".sopsFile = lib.mkIf (hasService "gluetun") secretsFile;
+            "wireguard/addresses".sopsFile = lib.mkIf (hasService "gluetun") secretsFile;
+            "redis/password".sopsFile = lib.mkIf (hasService "redis") secretsFile;
+            "vaultwarden/admin_token".sopsFile = lib.mkIf (hasService "vaultwarden") secretsFile;
+          }
+        );
 
         sops.templates = lib.mkIf (secretsFile != null) {
-          "postgres.env" = {
+          "postgres.env" = lib.mkIf (hasService "postgres") {
             path = lib.dot.containerEnvFile "postgres";
             mode = "0440";
             content = ''
@@ -40,7 +47,7 @@
             '';
           };
 
-          "gluetun.env" = {
+          "gluetun.env" = lib.mkIf (hasService "gluetun") {
             path = lib.dot.containerEnvFile "gluetun";
             mode = "0440";
             content = ''
@@ -54,7 +61,7 @@
             '';
           };
 
-          "redis.env" = {
+          "redis.env" = lib.mkIf (hasService "redis") {
             path = lib.dot.containerEnvFile "redis";
             mode = "0440";
             content = ''
@@ -62,7 +69,7 @@
             '';
           };
 
-          "caddy.env" = {
+          "caddy.env" = lib.mkIf (hasService "caddy") {
             path = lib.dot.containerEnvFile "caddy";
             mode = "0440";
             content = ''
@@ -70,7 +77,7 @@
             '';
           };
 
-          "forgejo.env" = {
+          "forgejo.env" = lib.mkIf (hasService "forgejo") {
             path = lib.dot.containerEnvFile "forgejo";
             mode = "0440";
             content = ''
@@ -84,7 +91,7 @@
             '';
           };
 
-          "vaultwarden.env" = {
+          "vaultwarden.env" = lib.mkIf (hasService "vaultwarden") {
             path = lib.dot.containerEnvFile "vaultwarden";
             mode = "0440";
             content = ''

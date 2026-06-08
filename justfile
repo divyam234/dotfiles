@@ -1,7 +1,6 @@
-
 set dotenv-load
 
-host := "homepc"
+host := "laptop"
 netcup := env("NETCUP_HOST", "root@NETCUP_IP")
 
 fmt:
@@ -22,14 +21,17 @@ switch h=host:
 boot h=host:
     sudo nixos-rebuild boot --flake .#{{ h }} --show-trace
 
-home:
-    home-manager switch --flake .#bhunter@homepc
+home u=host:
+    home-manager switch --flake .#bhunter@{{ u }}
+
+deploy h=host:
+    nixos-rebuild switch --flake .#{{ h }} --target-host root@{{ ip }} --build-host root@{{ ip }} --use-remote-sudo --show-trace
 
 deploy-netcup:
     nixos-rebuild switch --flake .#netcup --target-host {{ netcup }} --build-host {{ netcup }} --use-remote-sudo --show-trace
 
-install-homepc disk:
-    sudo nix run github:nix-community/disko -- --mode disko --flake .#homepc
+install-laptop disk:
+    sudo nix run github:nix-community/disko -- --mode disko --flake .#laptop
 
 svc +args:
     ./scripts/svc {{ args }}

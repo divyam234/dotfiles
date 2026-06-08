@@ -235,23 +235,3 @@ Inspect a container service:
 just svc status caddy
 just svc logs forgejo
 ```
-
-## Invariants
-
-- Hosts declare intent; aspects own implementation.
-- Host-local modules stay hardware-focused.
-- Services run as Podman-backed OCI containers.
-- Caddy remains an OCI container using `ghcr.io/tgdrive/caddy`.
-- Service secrets come from `host.secretsFile`.
-- No giant host-local Compose module.
-- Run `just check` before considering changes complete.
-
-## Good Change Checklist
-
-Before committing, ask:
-
-- Did I add host intent to the host entity rather than service internals to the host?
-- Did I put reusable behavior in an aspect?
-- Did I register new role, feature, or service names in host dispatch?
-- Did I avoid hardcoding one host's secrets in a reusable service?
-- Does `just check` pass?

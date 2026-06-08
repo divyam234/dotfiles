@@ -1,6 +1,7 @@
 { dotUsers, ... }:
 {
   den.hosts.x86_64-linux.laptop = {
+    hostName = "laptop";
     users.bhunter = dotUsers.bhunter;
     role = "workstation";
     features = [
@@ -13,6 +14,7 @@
   };
 
   den.hosts.aarch64-linux.netcup = {
+    hostName = "netcup";
     users.bhunter = dotUsers.bhunter;
     role = "minimal";
     features = [
@@ -34,8 +36,7 @@
       siyuan.enable = true;
       vaultwarden.enable = true;
     };
-    domain = "example.com";
-    caddyEmail = dotUsers.bhunter.email;
+    domain = "bhunter.tech";
     secretsFile = ../../hosts/netcup/secrets.yaml;
   };
 }
