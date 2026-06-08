@@ -59,7 +59,7 @@
                 end
               '';
               rebuild = ''
-                set host homepc
+                set host laptop
                 if test (count $argv) -gt 0
                   set host $argv[1]
                 end

@@ -1,6 +1,6 @@
 { dotUsers, ... }:
 {
-  den.hosts.x86_64-linux.homepc = {
+  den.hosts.x86_64-linux.laptop = {
     users.bhunter = dotUsers.bhunter;
     role = "workstation";
     features = [
@@ -9,6 +9,7 @@
       "gaming"
       "tailscale"
     ];
+    secretsFile = ../../hosts/laptop/secrets.yaml;
   };
 
   den.hosts.aarch64-linux.netcup = {

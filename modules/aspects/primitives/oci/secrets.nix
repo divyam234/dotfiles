@@ -22,9 +22,9 @@
         sops.secrets = lib.mkIf (secretsFile != null) {
           "postgres/user".sopsFile = secretsFile;
           "postgres/password".sopsFile = secretsFile;
-          "caddy/cloudflare_api_token".sopsFile = secretsFile;
-          "gluetun/vpn_private_key".sopsFile = secretsFile;
-          "gluetun/vpn_addresses".sopsFile = secretsFile;
+          "cloudflare/api_token".sopsFile = secretsFile;
+          "wireguard/private_key".sopsFile = secretsFile;
+          "wireguard/addresses".sopsFile = secretsFile;
           "redis/password".sopsFile = secretsFile;
           "vaultwarden/admin_token".sopsFile = secretsFile;
         };
@@ -46,7 +46,7 @@
             content = ''
               VPN_SERVICE_PROVIDER=nordvpn
               VPN_TYPE=wireguard
-              WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."gluetun/vpn_private_key"}
+              WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."wireguard/private_key"}
               SERVER_HOSTNAMES=nl885.nordvpn.com,nl886.nordvpn.com
               httpProxy = "on";
               HTTPPROXY_LISTENING_ADDRESS=:3128
@@ -66,7 +66,7 @@
             path = lib.dot.containerEnvFile "caddy";
             mode = "0440";
             content = ''
-              CLOUDFLARE_API_TOKEN=${config.sops.placeholder."caddy/cloudflare_api_token"}
+              CLOUDFLARE_API_TOKEN=${config.sops.placeholder."cloudflare/api_token"}
             '';
           };
 
@@ -89,6 +89,7 @@
             mode = "0440";
             content = ''
               DOMAIN=https://vault.${host.domain}
+              ADMIN_TOKEN=${config.sops.placeholder."vaultwarden/admin_token"}
               DATABASE_URL=postgres://${config.sops.placeholder."postgres/user"}:${
                 config.sops.placeholder."postgres/password"
               }@postgres/postgres?application_name=bitwarden&options=-c%20search_path%3Dbitwarden

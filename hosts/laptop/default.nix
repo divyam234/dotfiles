@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.homepc = {
+  den.aspects.laptop = {
     nixos =
       { ... }:
       {

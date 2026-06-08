@@ -1,85 +1,183 @@
-# Killer Crock dotfiles
+# Dotfiles
 
-Nixicle-style Den/NixOS dotfiles for two machines:
+Den-based NixOS dotfiles for a workstation and an ARM server.
 
-- `homepc` — `x86_64-linux`, NixOS desktop, Btrfs, KDE Plasma 6, Matugen, Stylix.
-- `netcup` — `aarch64-linux`, NixOS ARM server, Podman OCI services.
+This repository is organized around one rule: **hosts declare intent, aspects own implementation**. A host should say what it is and what it needs. It should not contain a local pile of NixOS service configuration or a Docker Compose replacement.
+
+## Systems
+
+- `homepc`: x86_64 NixOS workstation with Btrfs, desktop apps, gaming, development tools, Tailscale, and Podman support.
+- `netcup`: aarch64 NixOS server with Podman-backed application services behind a Caddy container.
+
+## Mental Model
+
+Den separates the repo into data and behavior.
+
+**Entities** declare what exists.
+
+Examples: users, hosts, standalone homes.
+
+**Host data** declares what a machine should be.
+
+Each host has a role, optional features, optional services, domain metadata, and a host secrets file.
+
+**Policies** translate host data into aspects.
+
+The host dispatch policy maps `role`, `features`, and enabled `services` to the aspect graph.
+
+**Aspects** own real configuration.
+
+Roles, features, desktop pieces, system primitives, OCI primitives, and service catalog entries are aspects. Hosts do not configure those internals directly.
+
+**Libraries** provide small rendering/building helpers.
+
+The helper layer is intentionally small: package import helpers, OCI container helpers, Caddy rendering helpers, and bootstrap glue.
 
 ## Architecture
 
+The repo is split by responsibility:
+
+- Bootstrap modules define schema, Nixpkgs overlays, Home Manager integration, default includes, and instantiation behavior.
+- Entity modules define users, hosts, and standalone homes.
+- Policy modules translate host data into aspect includes.
+- Role aspects describe broad machine classes such as workstation and server.
+- Feature aspects describe optional capability bundles such as desktop, development, gaming, containers, and Tailscale.
+- Service catalog aspects describe applications such as Caddy, Forgejo, Vaultwarden, Postgres, Redis, and Hermes.
+- Primitive aspects hold low-level reusable building blocks such as Podman, container networking, and container secret templates.
+- Host-local modules are hardware-only: disk layout, generated hardware configuration, networking details, and state version.
+
+The expected flow is:
+
 ```text
-flake.nix
-  -> flake-parts
-  -> import-tree ./modules
-  -> Den aspects
-  -> hosts/homepc + hosts/netcup
+host entity data
+  -> schema validation
+  -> host dispatch policy
+  -> role, feature, and service aspects
+  -> NixOS and Home Manager configurations
 ```
 
-This repo intentionally does **not** use a separate variable layer. It follows the Nixicle-style layout:
+## Host Data
 
-```text
-modules/hosts.nix        user and host inventory
-hosts/*/default.nix      host aspect composition
-modules/aspects/*        feature/service/tool aspects
-lib/default.nix          small reusable helpers only
-```
+A host should read like an inventory record, not an implementation file.
 
-Services are not Docker Compose files. They are Den aspects that use:
+Example shape:
 
 ```nix
-virtualisation.oci-containers.containers.<name>
+den.hosts.x86_64-linux.homepc = {
+  users.bhunter = dotUsers.bhunter;
+  role = "workstation";
+  features = [
+    "btrfs"
+    "containers"
+    "gaming"
+    "tailscale"
+  ];
+};
 ```
 
-Caddy is intentionally an OCI container using:
+Server services use a typed service catalog:
+
+```nix
+den.hosts.aarch64-linux.netcup = {
+  users.bhunter = dotUsers.bhunter;
+  role = "server";
+  features = [
+    "containers"
+    "tailscale"
+  ];
+  services = {
+    caddy.enable = true;
+    postgres.enable = true;
+    forgejo.enable = true;
+    vaultwarden.enable = true;
+  };
+  domain = "example.com";
+  secretsFile = ../../hosts/netcup/secrets.yaml;
+};
+```
+
+Prefer typed service flags over string lists. Typos in service names should fail at evaluation time.
+
+## Adding A Host
+
+1. Add a host entity with a `role`.
+2. Attach users from the shared user inventory.
+3. Add feature names only for optional capabilities.
+4. Enable service catalog entries only for application services that should run on that host.
+5. Add a host secrets file if any enabled service needs SOPS material.
+6. Keep the host-local NixOS module hardware-focused: hardware configuration, disk layout, networking, and state version only.
+7. Run `just check`.
+
+Do not add a giant host-local compose file or a host-local list of service internals.
+
+## Adding A Feature
+
+Use a feature when the host wants a capability, not a single application service.
+
+Good feature examples:
+
+- desktop environment baseline
+- development toolchain
+- gaming support
+- container runtime support
+- Tailscale support
+
+After adding a feature aspect, register it in host dispatch so hosts can enable it through `features = [ ... ]`.
+
+## Adding A Service
+
+Use a service catalog aspect for an application service.
+
+To add a service:
+
+1. Add the service to the typed service catalog schema.
+2. Add the service aspect.
+3. Register the service in host dispatch.
+4. Enable it on the target host with `services.<name>.enable = true;`.
+5. If it needs secrets, read them from `host.secretsFile`.
+
+The service aspect should own:
+
+- container image
+- volumes
+- environment files
+- service dependencies
+- Caddy route, if public
+- service-specific systemd overrides
+
+The service aspect should not require host files to know how it works. A host should only enable it:
+
+```nix
+services.forgejo.enable = true;
+```
+
+If the service needs secrets, consume `host.secretsFile`. Do not hardcode one host's secrets file inside the service.
+
+## Containers
+
+Application services run through NixOS `virtualisation.oci-containers` with Podman as the backend.
+
+Shared conventions:
+
+- persistent data root: `/var/lib/containers`
+- runtime secret env files: `/run/secrets/container-env`
+- shared Podman network: `svc`
+
+Services should use the shared OCI helper functions instead of hand-writing repeated systemd/network boilerplate.
+
+## Caddy
+
+Caddy is an OCI container and must stay that way.
+
+Image:
 
 ```text
 ghcr.io/tgdrive/caddy
 ```
 
-## First edit checklist
+Public routes are collected from service aspects and rendered into a generated Caddyfile. A service that exposes HTTP owns its own route data.
 
-1. Replace `CHANGE_ME_killer_public_key` in `modules/hosts.nix`.
-2. Replace `CHANGE_ME_HOMEPC_DISK` in `hosts/homepc/disko.nix` before using Disko.
-3. Replace host hardware configs with real generated files.
-4. Configure `.sops.yaml`, then encrypt `hosts/*/secrets.yaml`.
-5. Replace placeholder `domain = "example.com"` / `domain = "home.example.com"` in `modules/hosts.nix`.
-6. Replace `theme/wallpaper.png`, run `just theme`.
-
-## Commands
-
-```bash
-nix develop
-just check
-just build homepc
-just switch homepc
-just deploy-netcup
-just svc status caddy
-just svc logs forgejo
-```
-
-## Service layout
-
-Persistent container data lives under:
-
-```text
-/var/lib/killer-containers/<service>
-```
-
-Shared Podman network:
-
-```text
-svc
-```
-
-Runtime env files from SOPS templates:
-
-```text
-/run/secrets/container-env/<service>.env
-```
-
-## Caddy route pattern
-
-Caddy is generated from a merged option set, not a central hand-written route list. Each service aspect owns its own public route:
+Example:
 
 ```nix
 dot.caddy.routes.forgejo = {
@@ -89,9 +187,71 @@ dot.caddy.routes.forgejo = {
 };
 ```
 
-The Caddy container aspect renders all `dot.caddy.routes.*` into `/etc/caddy/Caddyfile` and runs `ghcr.io/tgdrive/caddy`.
+## Secrets
 
+SOPS is the source of service secrets.
 
-## Server development tools
+Hosts that enable secret-backed services must set `secretsFile`. Service aspects read from that host-level file.
 
-Server hosts include `den.aspects.development`, so Netcup gets Fish, Git/SSH, Zellij, Neovim, Nix/Go/dev tooling, container tools, database clients, network tools, Attic client, and AI CLI tools. KDE/desktop/gaming apps remain homepc-only.
+This keeps services reusable: the Forgejo aspect should not know which physical machine currently runs it.
+
+## Commands
+
+Enter the development shell:
+
+```bash
+nix develop
+```
+
+Format and validate:
+
+```bash
+just fmt
+just check
+```
+
+Inspect outputs:
+
+```bash
+just show
+```
+
+Build or switch a host:
+
+```bash
+just build homepc
+just switch homepc
+```
+
+Deploy the server:
+
+```bash
+NETCUP_HOST=root@host.example just deploy-netcup
+```
+
+Inspect a container service:
+
+```bash
+just svc status caddy
+just svc logs forgejo
+```
+
+## Invariants
+
+- Hosts declare intent; aspects own implementation.
+- Host-local modules stay hardware-focused.
+- Services run as Podman-backed OCI containers.
+- Caddy remains an OCI container using `ghcr.io/tgdrive/caddy`.
+- Service secrets come from `host.secretsFile`.
+- No giant host-local Compose module.
+- Run `just check` before considering changes complete.
+
+## Good Change Checklist
+
+Before committing, ask:
+
+- Did I add host intent to the host entity rather than service internals to the host?
+- Did I put reusable behavior in an aspect?
+- Did I register new role, feature, or service names in host dispatch?
+- Did I avoid hardcoding one host's secrets in a reusable service?
+- Does `just check` pass?

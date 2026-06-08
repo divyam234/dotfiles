@@ -6,23 +6,14 @@
       {
         sops = {
           defaultSopsFormat = "yaml";
-          age = {
-            sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
-            keyFile = "/var/lib/sops-nix/key.txt";
-            generateKey = true;
-          };
+          age.keyFile = "/var/lib/sops-nix/key.txt";
         };
       };
 
     homeManager =
       { config, ... }:
       {
-        sops = {
-          age = {
-            generateKey = true;
-            keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
-          };
-        };
+        sops.age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
       };
   };
 }
