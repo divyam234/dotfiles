@@ -24,7 +24,7 @@ boot h=host:
 home u=host:
     home-manager switch --flake .#bhunter@{{ u }}
 
-deploy h=host:
+deploy ip h=host:
     nixos-rebuild switch --flake .#{{ h }} --target-host root@{{ ip }} --build-host root@{{ ip }} --use-remote-sudo --show-trace
 
 deploy-netcup:
