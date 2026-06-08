@@ -1,4 +1,10 @@
-{ lib, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -11,14 +17,24 @@
     "virtio_scsi"
     "usbhid"
     "sr_mod"
-    "virtio_blk"
   ];
-
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
-  boot.kernelParams = [ "console=ttyS0" ];
-  services.qemuGuest.enable = true;
+
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/474d9541-906e-4d04-a51c-43ae17e7191d";
+    fsType = "ext4";
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/2347-8B33";
+    fsType = "vfat";
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
+  };
 
   swapDevices = [ ];
 
