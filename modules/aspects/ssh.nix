@@ -10,18 +10,24 @@
 
         programs.ssh = {
           enable = true;
-          addKeysToAgent = "yes";
-          compression = true;
-          controlMaster = "auto";
-          controlPersist = "10m";
-          serverAliveInterval = 60;
-          serverAliveCountMax = 3;
-          matchBlocks = {
+          enableDefaultConfig = false;
+          settings = {
+            "*" = {
+              AddKeysToAgent = "yes";
+              Compression = true;
+              ControlMaster = "auto";
+              ControlPersist = "10m";
+              ServerAliveInterval = 60;
+              ServerAliveCountMax = 3;
+              HashKnownHosts = false;
+              UserKnownHostsFile = "~/.ssh/known_hosts";
+              ControlPath = "~/.ssh/master-%r@%n:%p";
+            };
             "github.com" = {
-              hostname = "github.com";
-              user = "git";
-              identitiesOnly = true;
-              identityFile = "~/.ssh/id_ed25519";
+              HostName = "github.com";
+              User = "git";
+              IdentitiesOnly = true;
+              IdentityFile = "~/.ssh/id_ed25519";
             };
           };
         };

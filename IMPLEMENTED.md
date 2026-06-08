@@ -5,14 +5,14 @@
 - Nixicle-style Den architecture.
 - `flake-parts` + `import-tree` + `flake-file` bootstrap.
 - Host inventory in `modules/hosts.nix`.
-- Host aspects in `hosts/homepc/default.nix` and `hosts/netcup/default.nix`.
+- Host aspects in `hosts/laptop/default.nix` and `hosts/netcup/default.nix`.
 - No separate variable directory.
 - Helper library under `lib/default.nix` for small repeated container/Caddy functions.
 - `dot.caddy.global` and `dot.caddy.routes` option schema for service-owned Caddy routes.
 
 ## Hosts
 
-- `homepc`: `x86_64-linux`, Btrfs/Disko, KDE Plasma 6, Matugen, Stylix, Fish, Zellij, dev tools, gaming, Podman, Ollama/Open-WebUI.
+- `laptop`: `x86_64-linux`, Btrfs/Disko, KDE Plasma 6, Matugen, Stylix, Fish, Zellij, dev tools, gaming, Podman, Ollama/Open-WebUI.
 - `netcup`: `aarch64-linux`, generic networking placeholder, server profile, Podman OCI services, container Caddy, SOPS, Restic.
 
 ## OCI services
@@ -28,7 +28,7 @@
 - Vaultwarden container.
 - Uptime Kuma container.
 - Gotify container.
-- Ollama/Open-WebUI containers for homepc.
+- Ollama/Open-WebUI containers for laptop.
 
 ## Secrets
 
@@ -56,4 +56,4 @@
 
 ## Server development tools
 
-Server hosts include `den.aspects.development`, so Netcup gets Fish, Git/SSH, Zellij, Neovim, Nix/Go/dev tooling, container tools, database clients, network tools, Attic client, and AI CLI tools. KDE/desktop/gaming apps remain homepc-only.
+Server hosts include `den.aspects.development`, so Netcup gets Fish, Git/SSH, Zellij, Neovim, Nix/Go/dev tooling, container tools, database clients, network tools, Attic client, and AI CLI tools. KDE/desktop/gaming apps remain laptop-only.

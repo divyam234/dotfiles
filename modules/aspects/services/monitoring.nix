@@ -1,10 +1,10 @@
 { den, ... }:
 {
   den.aspects.monitoring = {
-    nixos =
+    homeManager =
       { pkgs, ... }:
       {
-        environment.systemPackages = [ pkgs.btop ];
+        programs.btop.enable = true;
       };
   };
 }

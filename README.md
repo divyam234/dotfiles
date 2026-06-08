@@ -6,7 +6,7 @@ This repository is organized around one rule: **hosts declare intent, aspects ow
 
 ## Systems
 
-- `homepc`: x86_64 NixOS workstation with Btrfs, desktop apps, gaming, development tools, Tailscale, and Podman support.
+- `laptop`: x86_64 NixOS workstation with Btrfs, desktop apps, gaming, development tools, Tailscale, and Podman support.
 - `netcup`: aarch64 NixOS server with Podman-backed application services behind a Caddy container.
 
 ## Mental Model
@@ -63,7 +63,7 @@ A host should read like an inventory record, not an implementation file.
 Example shape:
 
 ```nix
-den.hosts.x86_64-linux.homepc = {
+den.hosts.x86_64-linux.laptop = {
   users.bhunter = dotUsers.bhunter;
   role = "workstation";
   features = [
@@ -219,8 +219,8 @@ just show
 Build or switch a host:
 
 ```bash
-just build homepc
-just switch homepc
+just build laptop
+just switch laptop
 ```
 
 Deploy the server:

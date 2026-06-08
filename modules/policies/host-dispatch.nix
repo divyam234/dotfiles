@@ -52,16 +52,31 @@ let
 
   enabledServices =
     services: lib.attrNames (lib.filterAttrs (_name: service: service.enable) services);
+
+  selectedAspects =
+    host:
+    roleAspects.${host.role}
+    ++ resolveNames "feature" featureAspects host.features
+    ++ resolveNames "service" serviceAspects (enabledServices host.services);
 in
 {
   den.schema.host.includes = [
     (
       { host, ... }:
+      let
+        aspects = selectedAspects host;
+      in
       {
-        includes =
-          roleAspects.${host.role}
-          ++ resolveNames "feature" featureAspects host.features
-          ++ resolveNames "service" serviceAspects (enabledServices host.services);
+        includes = aspects;
+
+        # Host-selected aspects should configure both the host class and the
+        # users/homes attached to that host. Den does not forward a host
+        # aspect's homeManager class to users automatically; this host-to-user
+        # provide keeps the inventory-driven feature selection as the single
+        # source of truth for NixOS and Home Manager config.
+        provides.to-users = { ... }: {
+          includes = aspects;
+        };
       }
     )
   ];

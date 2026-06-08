@@ -2,10 +2,21 @@
 {
   den.aspects.kde = {
     nixos =
-      { pkgs, user, ... }:
+      { user, ... }:
       {
+        users.users.${user.userName}.extraGroups = [
+          "networkmanager"
+          "audio"
+          "video"
+          "input"
+          "render"
+        ];
+      };
 
-        environment.systemPackages = with pkgs; [
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = with pkgs; [
           kdePackages.dolphin
           kdePackages.kate
           kdePackages.konsole
@@ -23,14 +34,6 @@
           kdePackages.qtstyleplugin-kvantum
           kdePackages.qtwayland
           libsForQt5.qt5ct
-        ];
-
-        users.users.${user.userName}.extraGroups = [
-          "networkmanager"
-          "audio"
-          "video"
-          "input"
-          "render"
         ];
       };
   };

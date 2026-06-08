@@ -101,15 +101,13 @@ in
     {
       config.instantiate = lib.mkDefault (
         { modules, ... }:
-        let
+        inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = import inputs.nixpkgs {
             system = home.system;
             inherit (dotBootstrap) overlays;
             config.allowUnfree = true;
           };
-        in
-        inputs.home-manager.lib.homeManagerConfiguration {
-          inherit pkgs modules;
+          modules = modules ++ [ inputs.sops-nix.homeManagerModules.sops ];
           extraSpecialArgs = {
             inherit inputs;
             dotLib = dotBootstrap.extendedLib;

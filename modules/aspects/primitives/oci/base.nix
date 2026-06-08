@@ -34,7 +34,16 @@
 
         users.users.${user.userName}.extraGroups = [ "podman" ];
 
-        environment.systemPackages = with pkgs; [
+        systemd.tmpfiles.rules = [
+          "d ${lib.dot.containerDataRoot} 0750 root root -"
+          "d ${lib.dot.containerSecretDir} 0750 root root -"
+        ];
+      };
+
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = with pkgs; [
           podman
           podman-compose
           podman-tui
@@ -42,16 +51,9 @@
           skopeo
         ];
 
-        systemd.tmpfiles.rules = [
-          "d ${lib.dot.containerDataRoot} 0750 root root -"
-          "d ${lib.dot.containerSecretDir} 0750 root root -"
-        ];
+        home.sessionVariables = {
+          DOCKER_HOST = "unix://%XDG_RUNTIME_DIR%/podman/podman.sock";
+        };
       };
-
-    homeManager = _: {
-      home.sessionVariables = {
-        DOCKER_HOST = "unix://%XDG_RUNTIME_DIR%/podman/podman.sock";
-      };
-    };
   };
 }

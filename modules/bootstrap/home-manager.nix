@@ -1,18 +1,21 @@
-{ inputs, ... }:
+{ inputs, dotBootstrap, ... }:
 {
   den.schema.user.includes = [
     (
       { host, user, ... }:
       {
         nixos.home-manager = {
-          useGlobalPkgs = true;
+          sharedModules = [
+            inputs.sops-nix.homeManagerModules.sops
+          ];
           useUserPackages = true;
           backupFileExtension = "hm-bak";
           extraSpecialArgs = {
-            inherit inputs host user;
+            inherit inputs;
           };
-          users.${user.userName}._module.args = {
-            inherit inputs host user;
+          users.${user.userName}.nixpkgs = {
+            config.allowUnfree = true;
+            inherit (dotBootstrap) overlays;
           };
         };
       }
