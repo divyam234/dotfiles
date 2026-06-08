@@ -30,7 +30,6 @@
             "postgres/password".sopsFile = lib.mkIf postgresNeeded secretsFile;
             "cloudflare/api_token".sopsFile = lib.mkIf (hasService "caddy") secretsFile;
             "wireguard/private_key".sopsFile = lib.mkIf (hasService "gluetun") secretsFile;
-            "wireguard/addresses".sopsFile = lib.mkIf (hasService "gluetun") secretsFile;
             "redis/password".sopsFile = lib.mkIf (hasService "redis") secretsFile;
             "vaultwarden/admin_token".sopsFile = lib.mkIf (hasService "vaultwarden") secretsFile;
           }
