@@ -17,6 +17,29 @@
   ];
   boot.extraModulePackages = [ ];
 
-  # Disko declares filesystems on fresh install.
-  # If you do not use disko, replace this file with real generated mounts.
+  # Declared by disko during fresh install.
+  # Defined here explicitly so flake evaluation passes (disko's fileSystems
+  # are not visible to nix flake check).
+  fileSystems."/" = {
+    device = "/dev/disk/by-partlabel/nixos-root";
+    fsType = "btrfs";
+    options = [ "subvol=@root" ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-partlabel/disk-main-ESP";
+    fsType = "vfat";
+  };
+
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-partlabel/nixos-root";
+    fsType = "btrfs";
+    options = [ "subvol=@nix" ];
+  };
+
+  fileSystems."/home" = {
+    device = "/dev/disk/by-partlabel/nixos-root";
+    fsType = "btrfs";
+    options = [ "subvol=@home" ];
+  };
 }
