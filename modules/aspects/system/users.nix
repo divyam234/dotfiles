@@ -1,22 +1,18 @@
 { den, ... }:
 {
   den.aspects.users = {
-    nixos = { pkgs, user, ... }: {
-      users.users.${user.userName} = {
-        isNormalUser = true;
-        description = user.fullName;
-        shell = pkgs.fish;
-        extraGroups = [ "wheel" ];
-        openssh.authorizedKeys.keys = user.authorizedKeys;
-      };
-    };
+    includes = [
+      den._.primary-user
+      (den._.user-shell "fish")
+    ];
 
-    # homeManager = { user, ... }: {
-    #   home = {
-    #     username = user.userName;
-    #     homeDirectory = "/home/${user.userName}";
-    #     stateVersion = "25.11";
-    #   };
-    # };
+    nixos =
+      { user, ... }:
+      {
+        users.users.${user.userName} = {
+          description = user.fullName or user.userName;
+          openssh.authorizedKeys.keys = user.authorizedKeys;
+        };
+      };
   };
 }

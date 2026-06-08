@@ -1,14 +1,21 @@
-{ lib, inputs ? { } }:
+{
+  lib,
+  inputs ? { },
+}:
 let
-  concatMapStringsSep = sep: f: xs: lib.concatStringsSep sep (map f xs);
+  concatMapStringsSep =
+    sep: f: xs:
+    lib.concatStringsSep sep (map f xs);
 
   containerNetwork = "svc";
   containerDataRoot = "/var/lib/containers";
   containerSecretDir = "/run/secrets/container-env";
 
-  indent = prefix: text:
-    concatMapStringsSep "\n" (line: if line == "" then "" else "${prefix}${line}")
-      (lib.splitString "\n" text);
+  indent =
+    prefix: text:
+    concatMapStringsSep "\n" (line: if line == "" then "" else "${prefix}${line}") (
+      lib.splitString "\n" text
+    );
 
   mkStaticCache = ''
     @static path *.css *.js *.mjs *.map *.png *.jpg *.jpeg *.gif *.webp *.svg *.ico *.woff *.woff2 *.ttf *.otf
@@ -18,31 +25,48 @@ in
 rec {
   inherit containerNetwork containerDataRoot containerSecretDir;
 
-  importPackages = pkgs: directory:
-    let
-      entries = builtins.readDir directory;
-      names = builtins.filter (name: entries.${name} == "directory" && builtins.pathExists (directory + "/${name}/default.nix")) (builtins.attrNames entries);
-    in
-    builtins.listToAttrs (map (name: {
-      inherit name;
-      value = pkgs.callPackage (directory + "/${name}") { };
-    }) names);
+  importPackages =
+    pkgs: directory:
+    if builtins.pathExists directory then
+      let
+        entries = builtins.readDir directory;
+        names = builtins.filter (
+          name: entries.${name} == "directory" && builtins.pathExists (directory + "/${name}/default.nix")
+        ) (builtins.attrNames entries);
+      in
+      builtins.listToAttrs (
+        map (name: {
+          inherit name;
+          value = pkgs.callPackage (directory + "/${name}") { };
+        }) names
+      )
+    else
+      { };
 
   containerName = name: name;
   containerDataDir = name: "${containerDataRoot}/${name}";
   containerEnvFile = name: "${containerSecretDir}/${name}.env";
 
-  mkContainerDeps = name: {
-    after = [ "podman-network-${containerNetwork}.service" ];
-    requires = [ "podman-network-${containerNetwork}.service" ];
-    wantedBy = [ "multi-user.target" ];
-  };
+  mkContainerDeps =
+    name: dependencies:
+    let
+      networkUnit = "podman-network-${containerNetwork}.service";
+      dependencyUnits = map (dependency: "podman-${dependency}.service") dependencies;
+      units = [ networkUnit ] ++ dependencyUnits;
+    in
+    {
+      after = units;
+      requires = units;
+      wantedBy = [ "multi-user.target" ];
+    };
 
-  mkServiceDirRules = names:
+  mkServiceDirRules =
+    names:
     [ "d ${containerDataRoot} 0750 root root -" ]
     ++ map (name: "d ${containerDataRoot}/${name} 0750 root root -") names;
 
-  mkOci = name: args:
+  mkOci =
+    name: args:
     let
       networkMode = args.networkMode or containerNetwork;
     in
@@ -60,19 +84,24 @@ rec {
     // lib.optionalAttrs (args ? dependsOn) { inherit (args) dependsOn; }
     // lib.optionalAttrs (args ? labels) { inherit (args) labels; };
 
-  mkCaddyTls = tls:
-    if tls == "cloudflare" then ''
-      tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-      }
-    ''
-    else if tls == "internal" then ''
-      tls internal
-    ''
-    else if tls == "off" then ''
-      tls off
-    ''
-    else "";
+  mkCaddyTls =
+    tls:
+    if tls == "cloudflare" then
+      ''
+        tls {
+          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+      ''
+    else if tls == "internal" then
+      ''
+        tls internal
+      ''
+    else if tls == "off" then
+      ''
+        tls off
+      ''
+    else
+      "";
 
   mkCaddySecurityHeaders = ''
     header {
@@ -83,7 +112,8 @@ rec {
     }
   '';
 
-  mkCaddyRoute = name: route:
+  mkCaddyRoute =
+    name: route:
     let
       tlsBlock = mkCaddyTls route.tls;
       cacheBlock = if route.cacheStatic then mkStaticCache else "";
@@ -103,7 +133,8 @@ rec {
       }
     '';
 
-  mkCaddyfile = { global, routes }:
+  mkCaddyfile =
+    { global, routes }:
     let
       enabledRoutes = lib.filterAttrs (_: route: route.enable) routes;
       renderedRoutes = lib.mapAttrsToList mkCaddyRoute enabledRoutes;

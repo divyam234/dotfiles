@@ -1,4 +1,3 @@
-
 { ... }:
 {
   disko.devices.disk.main = {
@@ -15,7 +14,10 @@
             format = "vfat";
             mountpoint = "/boot";
             mountOptions = [ "umask=0077" ];
-            extraArgs = [ "-n" "BOOT" ];
+            extraArgs = [
+              "-n"
+              "BOOT"
+            ];
           };
         };
         root = {
@@ -24,7 +26,10 @@
             type = "filesystem";
             format = "ext4";
             mountpoint = "/";
-            extraArgs = [ "-L" "nixos" ];
+            extraArgs = [
+              "-L"
+              "nixos"
+            ];
           };
         };
       };

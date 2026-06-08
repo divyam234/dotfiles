@@ -1,13 +1,15 @@
 { den, ... }:
 {
   den.aspects.gpg = {
-    homeManager = { pkgs, ... }: {
-      programs.gpg.enable = true;
-      services.gpg-agent = {
-        enable = true;
-        enableSshSupport = true;
-        pinentry.package = pkgs.pinentry-gnome3;
+    homeManager =
+      { pkgs, ... }:
+      {
+        programs.gpg.enable = true;
+        services.gpg-agent = {
+          enable = true;
+          enableSshSupport = true;
+          pinentry.package = pkgs.pinentry-gnome3;
+        };
       };
-    };
   };
 }

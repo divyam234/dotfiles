@@ -5,7 +5,6 @@
       den.aspects.common
       den.aspects.server
 
-      den.aspects.boot
       den.aspects.sops
       den.aspects.security
       den.aspects.users
@@ -13,9 +12,6 @@
       den.aspects.tailscale
       den.aspects.fail2ban
 
-      den.aspects.oci-base
-      den.aspects.container-network
-      den.aspects.container-secrets
       den.aspects.caddy
       den.aspects.postgres
       den.aspects.redis
@@ -34,14 +30,15 @@
       den.aspects.restic
     ];
 
-    nixos = { ... }: {
-      imports = [
-        ./hardware-configuration.nix
-        ./networking.nix
-      ];
+    nixos =
+      { ... }:
+      {
+        imports = [
+          ./hardware-configuration.nix
+          ./networking.nix
+        ];
 
-      networking.hostName = "netcup";
-      system.stateVersion = "25.11";
-    };
+        system.stateVersion = "25.11";
+      };
   };
 }

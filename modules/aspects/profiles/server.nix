@@ -8,15 +8,17 @@
       den.aspects.development
     ];
 
-    nixos = { ... }: {
-      documentation = {
-        enable = false;
-        man.enable = false;
-        nixos.enable = false;
+    nixos =
+      { ... }:
+      {
+        documentation = {
+          enable = false;
+          man.enable = false;
+          nixos.enable = false;
+        };
+        environment.defaultPackages = [ ];
+        services.qemuGuest.enable = true;
+        boot.kernelParams = [ "console=ttyS0" ];
       };
-      environment.defaultPackages = [ ];
-      services.qemuGuest.enable = true;
-      boot.kernelParams = [ "console=ttyS0" ];
-    };
   };
 }

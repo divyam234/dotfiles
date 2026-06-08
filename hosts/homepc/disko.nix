@@ -1,4 +1,3 @@
-
 { ... }:
 let
   commonMountOptions = [
@@ -31,15 +30,40 @@ in
           size = "100%";
           content = {
             type = "btrfs";
-            extraArgs = [ "-f" "-L" "nixos" ];
+            extraArgs = [
+              "-f"
+              "-L"
+              "nixos"
+            ];
             subvolumes = {
-              "@root" = { mountpoint = "/"; mountOptions = commonMountOptions; };
-              "@nix" = { mountpoint = "/nix"; mountOptions = commonMountOptions; };
-              "@home" = { mountpoint = "/home"; mountOptions = commonMountOptions; };
-              "@persist" = { mountpoint = "/persist"; mountOptions = commonMountOptions; };
-              "@log" = { mountpoint = "/var/log"; mountOptions = commonMountOptions; };
-              "@snapshots" = { mountpoint = "/.snapshots"; mountOptions = commonMountOptions; };
-              "@swap" = { mountpoint = "/swap"; mountOptions = [ "noatime" ]; };
+              "@root" = {
+                mountpoint = "/";
+                mountOptions = commonMountOptions;
+              };
+              "@nix" = {
+                mountpoint = "/nix";
+                mountOptions = commonMountOptions;
+              };
+              "@home" = {
+                mountpoint = "/home";
+                mountOptions = commonMountOptions;
+              };
+              "@persist" = {
+                mountpoint = "/persist";
+                mountOptions = commonMountOptions;
+              };
+              "@log" = {
+                mountpoint = "/var/log";
+                mountOptions = commonMountOptions;
+              };
+              "@snapshots" = {
+                mountpoint = "/.snapshots";
+                mountOptions = commonMountOptions;
+              };
+              "@swap" = {
+                mountpoint = "/swap";
+                mountOptions = [ "noatime" ];
+              };
             };
           };
         };

@@ -7,16 +7,6 @@
   };
 
   den.aspects.zellij = {
-    nixos =
-      { inputs, den, ... }:
-      {
-        nixpkgs.overlays = [
-          (_final: prev: {
-            zjstatus = inputs.zjstatus.packages.${prev.stdenv.hostPlatform.system}.default;
-          })
-        ];
-      };
-
     homeManager =
       { pkgs, ... }:
       let

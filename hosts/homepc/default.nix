@@ -6,7 +6,6 @@
       den.aspects.desktop
       den.aspects.gaming
 
-      den.aspects.boot
       den.aspects.btrfs
       den.aspects.sops
       den.aspects.security
@@ -24,14 +23,15 @@
       den.aspects.tailscale
     ];
 
-    nixos = { ... }: {
-      imports = [
-        ./hardware-configuration.nix
-        ./disko.nix
-      ];
+    nixos =
+      { ... }:
+      {
+        imports = [
+          ./hardware-configuration.nix
+          ./disko.nix
+        ];
 
-      networking.hostName = "homepc";
-      system.stateVersion = "25.11";
-    };
+        system.stateVersion = "25.11";
+      };
   };
 }
