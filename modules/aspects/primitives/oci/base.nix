@@ -47,5 +47,11 @@
           "d ${lib.dot.containerSecretDir} 0750 root root -"
         ];
       };
+
+    homeManager = _: {
+      home.sessionVariables = {
+        DOCKER_HOST = "unix://%XDG_RUNTIME_DIR%/podman/podman.sock";
+      };
+    };
   };
 }
