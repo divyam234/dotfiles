@@ -20,5 +20,20 @@
         services.qemuGuest.enable = true;
         boot.kernelParams = [ "console=ttyS0" ];
       };
+
+    homeManager =
+      { lib, ... }:
+      {
+        programs.zellij = lib.mkForce {
+          enable = true;
+          settings = {
+            default_layout = "compact";
+            pane_frames = false;
+            simplified_ui = true;
+            copy_on_select = true;
+            show_startup_tips = false;
+          };
+        };
+      };
   };
 }

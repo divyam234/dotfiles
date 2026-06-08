@@ -10,13 +10,13 @@
       }:
       {
         sops.secrets = {
-          "postgres/user".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "postgres/password".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "caddy/cloudflare_api_token".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "gluetun/vpn_private_key".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "gluetun/vpn_addresses".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "redis/password".sopsFile = ../../../hosts/netcup/secrets.yaml;
-          "vaultwarden/admin_token".sopsFile = ../../../hosts/netcup/secrets.yaml;
+          "postgres/user".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "postgres/password".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "caddy/cloudflare_api_token".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "gluetun/vpn_private_key".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "gluetun/vpn_addresses".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "redis/password".sopsFile = ../../../../hosts/netcup/secrets.yaml;
+          "vaultwarden/admin_token".sopsFile = ../../../../hosts/netcup/secrets.yaml;
         };
 
         sops.templates = {
