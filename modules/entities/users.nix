@@ -9,11 +9,8 @@
     ];
   };
 
-  den.aspects.bhunter = {
-    includes = [
-      # Den's built-in forwarding battery: host-selected homeManager aspects
-      # are projected into this user's Home Manager configuration.
-      den._.host-aspects
-    ];
-  };
+  # User marker aspect. Host-selected NixOS/Home Manager aspects are forwarded
+  # by modules/policies/host-dispatch.nix via provides.to-users. Keep this empty
+  # to avoid double-projecting host aspects into Home Manager.
+  den.aspects.bhunter = { };
 }

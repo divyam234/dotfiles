@@ -18,10 +18,14 @@
       {
         includes = aspects;
 
-        # User/Home Manager projection is handled by den._.host-aspects on the
-        # bhunter user aspect. Do not also forward the whole host aspect tree via
-        # provides.to-users here; doing both can make desktop-only Home Manager
-        # modules leak into non-desktop hosts during flake evaluation.
+        # Forward the host-selected aspect tree into attached users/homes.
+        # This is required for per-user NixOS config such as
+        # users.users.<name>.openssh.authorizedKeys and hashedPasswordFile.
+        # Without this, `nixos-rebuild test` removes
+        # /etc/ssh/authorized_keys.d/<user>, which breaks new SSH logins.
+        provides.to-users = { ... }: {
+          includes = aspects;
+        };
       }
     )
   ];

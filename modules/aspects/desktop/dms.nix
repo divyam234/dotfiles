@@ -1,7 +1,21 @@
 { inputs, den, ... }:
 let
   dmsHome =
-    { pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      dmsNiriIncludes = [
+        ''include "dms/alttab.kdl"''
+        ''include "dms/binds.kdl"''
+        ''include "dms/layout.kdl"''
+        ''include "dms/outputs.kdl"''
+        ''include "dms/wpblur.kdl"''
+      ];
+    in
     {
       imports = [
         inputs.niri-nix.homeModules.default
@@ -17,22 +31,24 @@ let
         systemd.enable = false;
 
         # Do not import inputs.dms.homeModules.niri here. The current DMS niri
-        # Home Manager module expects config.lib.niri.actions and can fail during
-        # non-desktop/server flake checks before the niri HM lib is available.
-        # Keep Niri enabled through niri-nix and include the DMS-generated KDL
-        # snippets explicitly via programs.niri.extraConfig below.
+        # Home Manager module expects config.lib.niri.actions from a different
+        # niri module family and fails during flake checks with this pinned
+        # BANanaD3V/niri-nix input.
       };
 
-      # DMS niri include files (alttab, binds, layout, outputs, wpblur)
-      # are installed by the DMS package. With override = false, we add
-      # the includes here via extraConfig instead of letting DMS replace
-      # the entire config.kdl (which would lose Stylix colors).
-      programs.niri.extraConfig = ''
-        include "dms/alttab.kdl"
-        include "dms/binds.kdl"
-        include "dms/layout.kdl"
-        include "dms/outputs.kdl"
-        include "dms/wpblur.kdl"
+      # BANanaD3V/niri-nix does not expose the Home Manager option
+      # `programs.niri.extraConfig`. Keep the DMS KDL snippets wired by appending
+      # the include lines after Home Manager has written the rest of the profile.
+      home.activation.dmsNiriIncludes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        config_file=${lib.escapeShellArg "${config.xdg.configHome}/niri/config.kdl"}
+        mkdir -p "$(dirname "$config_file")"
+        touch "$config_file"
+
+        ${lib.concatMapStringsSep "\n" (line: ''
+          if ! grep -qxF ${lib.escapeShellArg line} "$config_file"; then
+            printf '%s\n' ${lib.escapeShellArg line} >> "$config_file"
+          fi
+        '') dmsNiriIncludes}
       '';
     };
 in
