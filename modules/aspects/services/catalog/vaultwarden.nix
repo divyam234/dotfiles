@@ -9,6 +9,7 @@
     nixos =
       { lib, host, ... }:
       {
+        dot.oci.secrets.vaultwarden.enable = true;
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "vaultwarden" ];
 
         virtualisation.oci-containers.containers.vaultwarden = lib.dot.mkOci "vaultwarden" {
@@ -29,7 +30,7 @@
           '';
         };
 
-        systemd.services.podman-vaultwarden = lib.dot.mkContainerDeps "vaultwarden" [ "postgres" ];
+        systemd.services.podman-vaultwarden = lib.dot.mkContainerSecretDeps "vaultwarden" [ "postgres" ];
       };
   };
 }

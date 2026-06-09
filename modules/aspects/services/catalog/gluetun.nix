@@ -6,6 +6,8 @@
     nixos =
       { lib, ... }:
       {
+        boot.kernelModules = [ "tun" ];
+        dot.oci.secrets.gluetun.enable = true;
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "gluetun" ];
 
         virtualisation.oci-containers.containers.gluetun = lib.dot.mkOci "gluetun" {
@@ -24,7 +26,7 @@
           volumes = [ "${lib.dot.containerDataDir "gluetun"}:/gluetun" ];
         };
 
-        systemd.services.podman-gluetun = lib.dot.mkContainerDeps "gluetun" [ ];
+        systemd.services.podman-gluetun = lib.dot.mkContainerSecretDeps "gluetun" [ ];
       };
   };
 }

@@ -32,6 +32,7 @@
           oci-containers.backend = "podman";
         };
 
+        users.groups.podman = { };
         users.users.${user.userName}.extraGroups = [ "podman" ];
 
         systemd.tmpfiles.rules = [

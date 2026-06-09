@@ -4,31 +4,6 @@
   dotBootstrap,
   ...
 }:
-let
-  serviceNames = [
-    "adguard"
-    "caddy"
-    "camofox"
-    "databasus"
-    "forgejo"
-    "gluetun"
-    "hermes"
-    "pgdog"
-    "postgres"
-    "redis"
-    "restic"
-    "siyuan"
-    "vaultwarden"
-  ];
-
-  serviceOptions = lib.genAttrs serviceNames (name: {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether to enable the ${name} service aspect on this host.";
-    };
-  });
-in
 {
   den.schema.user.classes = lib.mkDefault [ "homeManager" ];
 
@@ -36,29 +11,6 @@ in
     { host, lib, ... }:
     {
       options = {
-        role = lib.mkOption {
-          type = lib.types.enum [
-            "workstation"
-            "server"
-            "minimal"
-          ];
-          description = "High-level host role used by host-dispatch.";
-        };
-
-        features = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ ];
-          description = "Feature aspect names enabled for this host.";
-        };
-
-        services = lib.mkOption {
-          type = lib.types.submodule {
-            options = serviceOptions;
-          };
-          default = { };
-          description = "Typed service catalog enabled for this host.";
-        };
-
         secretsFile = lib.mkOption {
           type = lib.types.nullOr lib.types.path;
           default = null;

@@ -3,18 +3,19 @@
   den.aspects.forgejo = {
     includes = [
       den.aspects.oci-service
-      den.aspects.postgres
+      den.aspects.pgdog
     ];
 
     nixos =
       { lib, host, ... }:
       {
+        dot.oci.secrets.forgejo.enable = true;
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "forgejo" ];
 
         virtualisation.oci-containers.containers.forgejo = lib.dot.mkOci "forgejo" {
           image = "codeberg.org/forgejo/forgejo:14";
           environmentFiles = [ (lib.dot.containerEnvFile "forgejo") ];
-          dependsOn = [ "postgres" ];
+          dependsOn = [ "pgdog" ];
           volumes = [
             "${lib.dot.containerDataDir "forgejo"}:/data:rw"
             "/etc/localtime:/etc/localtime:ro"
@@ -32,7 +33,7 @@
           '';
         };
 
-        systemd.services.podman-forgejo = lib.dot.mkContainerDeps "forgejo" [ "postgres" ];
+        systemd.services.podman-forgejo = lib.dot.mkContainerSecretDeps "forgejo" [ "pgdog" ];
       };
   };
 }

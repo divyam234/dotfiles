@@ -2,11 +2,12 @@
 {
   den.aspects.starship = {
     homeManager =
-      { ... }:
+      { config, ... }:
       {
         programs.starship = {
           enable = true;
           enableFishIntegration = true;
+          configPath = "${config.xdg.configHome}/starship.toml";
 
           settings = {
             format = ''

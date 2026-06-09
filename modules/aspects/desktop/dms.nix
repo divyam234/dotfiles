@@ -95,8 +95,6 @@ in
           "input"
           "render"
         ];
-
-        home-manager.users.${user.userName} = dmsHome;
       };
 
     homeManager = dmsHome;

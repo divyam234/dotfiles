@@ -1,7 +1,10 @@
 { den, ... }:
 {
   den.aspects.pgdog = {
-    includes = [ den.aspects.oci-service ];
+    includes = [
+      den.aspects.oci-service
+      den.aspects.postgres
+    ];
     nixos =
       { pkgs, lib, ... }:
       let

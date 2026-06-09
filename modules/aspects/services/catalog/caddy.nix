@@ -107,6 +107,7 @@
         };
 
         config = {
+          dot.oci.secrets.caddy.enable = true;
           dot.caddy.global.email = lib.mkDefault acmeEmail;
 
           systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [
@@ -134,7 +135,7 @@
             ];
           };
 
-          systemd.services.podman-caddy = lib.dot.mkContainerDeps "caddy" [ ];
+          systemd.services.podman-caddy = lib.dot.mkContainerSecretDeps "caddy" [ ];
 
           networking.firewall.allowedTCPPorts = [
             80

@@ -1,12 +1,17 @@
 { den, ... }:
+let
+  bhunterPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICWt7MJWVbCBzlYidynsuu9kP5kB5/gcUBFO+K6ciyCC";
+in
 {
   den.aspects.ssh = {
     homeManager =
       { config, ... }:
       {
-        home.file.".ssh/id_ed25519.pub".text = ''
-          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICWt7MJWVbCBzlYidynsuu9kP5kB5/gcUBFO+K6ciyCC
-        '';
+        # Home Manager's programs.ssh module writes ~/.ssh/config, but these
+        # companion files are deliberately managed here so git SSH signing and
+        # tools that expect the public key are deterministic too.
+        home.file.".ssh/id_ed25519.pub".text = bhunterPublicKey + "\n";
+        home.file.".ssh/allowed_signers".text = "* ${bhunterPublicKey}\n";
 
         programs.ssh = {
           enable = true;
