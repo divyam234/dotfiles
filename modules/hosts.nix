@@ -26,7 +26,10 @@ let
       };
     in
     inputs.home-manager.lib.homeManagerConfiguration {
-      inherit pkgs modules;
+      inherit pkgs;
+      modules = [
+        inputs.sops-nix.homeManagerModules.sops
+      ] ++ modules;
       extraSpecialArgs = {
         inherit inputs;
         lib = hmExtendedLib;
