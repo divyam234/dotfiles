@@ -33,6 +33,19 @@
           type = lib.types.attrsOf lib.types.anything;
           default = { };
         };
+
+        selectedAspects = lib.mkOption {
+          type = lib.types.listOf lib.types.anything;
+          default = [ ];
+          description = ''
+            Den aspects selected by this host inventory entry.
+
+            This intentionally does not use the raw entity attribute name
+            `includes`: host aspect selection is applied by
+            modules/policies/host-dispatch.nix through den.schema.host.includes
+            so the same selection is also forwarded to attached users.
+          '';
+        };
       };
 
       config.instantiate = lib.mkDefault (

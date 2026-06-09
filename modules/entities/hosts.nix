@@ -10,7 +10,7 @@ in
 
     users.bhunter = bhunter;
 
-    includes = [
+    selectedAspects = [
       den.aspects.laptop
       den.aspects.workstation
       den.aspects.btrfs
@@ -27,7 +27,7 @@ in
 
     users.bhunter = bhunter;
 
-    includes = [
+    selectedAspects = [
       den.aspects.netcup
       den.aspects.server
       den.aspects.oci-base
