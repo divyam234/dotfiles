@@ -6,7 +6,6 @@ let
       imports = [
         inputs.niri-nix.homeModules.default
         inputs.dms.homeModules.dank-material-shell
-        inputs.dms.homeModules.niri
       ];
 
       wayland.windowManager.niri.enable = true;
@@ -17,21 +16,11 @@ let
 
         systemd.enable = false;
 
-        niri = {
-          enableSpawn = true;
-          includes = {
-            enable = true;
-            override = false;
-            originalFileName = "hm";
-            filesToInclude = [
-              "alttab"
-              "binds"
-              "layout"
-              "outputs"
-              "wpblur"
-            ];
-          };
-        };
+        # Do not import inputs.dms.homeModules.niri here. The current DMS niri
+        # Home Manager module expects config.lib.niri.actions and can fail during
+        # non-desktop/server flake checks before the niri HM lib is available.
+        # Keep Niri enabled through niri-nix and include the DMS-generated KDL
+        # snippets explicitly via programs.niri.extraConfig below.
       };
 
       # DMS niri include files (alttab, binds, layout, outputs, wpblur)

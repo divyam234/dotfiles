@@ -18,13 +18,10 @@
       {
         includes = aspects;
 
-        # Host-selected aspects should also configure users attached to that
-        # host. This keeps `netcup` as one inventory entry while still allowing
-        # aspects such as fish/starship/ssh/git/zellij/neovim to contribute their
-        # Home Manager class to bhunter.
-        provides.to-users = { ... }: {
-          includes = aspects;
-        };
+        # User/Home Manager projection is handled by den._.host-aspects on the
+        # bhunter user aspect. Do not also forward the whole host aspect tree via
+        # provides.to-users here; doing both can make desktop-only Home Manager
+        # modules leak into non-desktop hosts during flake evaluation.
       }
     )
   ];

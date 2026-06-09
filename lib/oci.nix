@@ -49,11 +49,11 @@ rec {
     name: args:
     let
       networkMode = args.networkMode or containerNetwork;
-      command =
-        if args ? command then
-          args.command
-        else if args ? cmd then
+      cmd =
+        if args ? cmd then
           args.cmd
+        else if args ? command then
+          args.command
         else
           null;
     in
@@ -64,7 +64,7 @@ rec {
     }
     // lib.optionalAttrs (args ? environment) { inherit (args) environment; }
     // lib.optionalAttrs (args ? environmentFiles) { inherit (args) environmentFiles; }
-    // lib.optionalAttrs (command != null) { inherit command; }
+    // lib.optionalAttrs (cmd != null) { inherit cmd; }
     // lib.optionalAttrs (args ? entrypoint) { inherit (args) entrypoint; }
     // lib.optionalAttrs (args ? volumes) { inherit (args) volumes; }
     // lib.optionalAttrs (args ? ports) { inherit (args) ports; }
