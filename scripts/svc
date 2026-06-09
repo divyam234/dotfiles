@@ -1,23 +1,329 @@
+#!/usr/bin/env fish
 
-#!/usr/bin/env bash
-set -euo pipefail
+if set -q SVC_QUADLET_DIR
+  set -g quadlet_dir $SVC_QUADLET_DIR
+else
+  set -g quadlet_dir /etc/containers/systemd
+end
 
-cmd="${1:-}"
-name="${2:-}"
+set -g aliases \
+  adguard adguard-cli \
+  ai hermes \
+  camofox camofox-browser \
+  db postgres \
+  git forgejo \
+  notes siyuan \
+  vault vaultwarden
 
-if [[ -z "$cmd" || -z "$name" ]]; then
-  echo "usage: svc status|logs|restart|start|stop|shell <container>" >&2
+function color_setup
+  if test -t 1; and test -z "$NO_COLOR"
+    set -g bold (set_color --bold)
+    set -g dim (set_color brblack)
+    set -g red (set_color red)
+    set -g green (set_color green)
+    set -g yellow (set_color yellow)
+    set -g blue (set_color blue)
+    set -g magenta (set_color magenta)
+    set -g cyan (set_color cyan)
+    set -g reset (set_color normal)
+  else
+    set -g bold ""
+    set -g dim ""
+    set -g red ""
+    set -g green ""
+    set -g yellow ""
+    set -g blue ""
+    set -g magenta ""
+    set -g cyan ""
+    set -g reset ""
+  end
+end
+
+function usage
+  printf '%ssvc%s — Quadlet container service helper\n\n' $bold $reset
+  printf '%sUsage:%s\n' $cyan $reset
+  printf '  svc list\n'
+  printf '  svc ps\n'
+  printf '  svc status <service>\n'
+  printf '  svc logs <service>\n'
+  printf '  svc start <service>\n'
+  printf '  svc stop <service>\n'
+  printf '  svc restart <service>\n'
+  printf '  svc shell <service>\n'
+  printf '  svc pull <service|all>\n'
+  printf '  svc stack status|start|stop|restart|pull\n\n'
+  printf '%sDiscovery:%s %s/*.container\n\n' $cyan $reset $quadlet_dir
+  printf '%sAliases:%s\n' $cyan $reset
+  printf '  adguard -> adguard-cli   camofox -> camofox-browser\n'
+  printf '  ai      -> hermes        db      -> postgres\n'
+  printf '  git     -> forgejo       notes   -> siyuan\n'
+  printf '  vault   -> vaultwarden\n'
+end
+
+function die
+  printf '%serror:%s %s\n' $red $reset "$argv" >&2
   exit 2
-fi
+end
 
-unit="podman-${name}.service"
+function unit_of
+  printf '%s.service\n' $argv[1]
+end
 
-case "$cmd" in
-  status) systemctl status "$unit" ;;
-  logs) journalctl -u "$unit" -f ;;
-  restart) sudo systemctl restart "$unit" ;;
-  start) sudo systemctl start "$unit" ;;
-  stop) sudo systemctl stop "$unit" ;;
-  shell) sudo podman exec -it "$name" sh ;;
-  *) echo "unknown command: $cmd" >&2; exit 2 ;;
-esac
+function container_file
+  printf '%s/%s.container\n' $quadlet_dir $argv[1]
+end
+
+function network_file
+  printf '%s/%s.network\n' $quadlet_dir $argv[1]
+end
+
+function discovered_services
+  if not test -d $quadlet_dir
+    return 0
+  end
+
+  for file in $quadlet_dir/*.container
+    test -e $file; or continue
+    basename $file .container
+  end | sort
+end
+
+function resolve
+  set -l name $argv[1]
+
+  for idx in (seq 1 2 (count $aliases))
+    set -l alias $aliases[$idx]
+    set -l target $aliases[(math $idx + 1)]
+    if test "$name" = "$alias"
+      set name $target
+      break
+    end
+  end
+
+  if not contains -- $name (discovered_services)
+    die "unknown service: $name. Run 'svc list' to see discovered Quadlet containers."
+  end
+
+  printf '%s\n' $name
+end
+
+function image_of
+  set -l service $argv[1]
+  set -l file (container_file $service)
+
+  if not test -f $file
+    printf '%s\n' "-"
+    return 0
+  end
+
+  set -l image_lines (string match -r '^Image=.*' <$file)
+  set -l image ""
+  if test (count $image_lines) -gt 0
+    set image (string replace -r '^Image=' '' -- $image_lines[1])
+  end
+  if test -z "$image"
+    printf '%s\n' "-"
+  else
+    printf '%s\n' $image
+  end
+end
+
+function state_of
+  set -l service $argv[1]
+  systemctl is-active (unit_of $service) 2>/dev/null; or true
+end
+
+function enabled_of
+  set -l service $argv[1]
+  systemctl is-enabled (unit_of $service) 2>/dev/null; or true
+end
+
+function state_label
+  switch "$argv[1]"
+    case active
+      printf '%s● running%s' $green $reset
+    case activating
+      printf '%s◐ starting%s' $yellow $reset
+    case deactivating
+      printf '%s◑ stopping%s' $yellow $reset
+    case failed
+      printf '%s× failed%s' $red $reset
+    case inactive
+      printf '%s○ stopped%s' $dim $reset
+    case '*'
+      printf '%s? %s%s' $magenta "$argv[1]" $reset
+  end
+end
+
+function mode_label
+  switch "$argv[1]"
+    case enabled linked linked-runtime static generated indirect alias
+      printf '%sauto%s' $blue $reset
+    case disabled
+      printf '%smanual%s' $yellow $reset
+    case '*'
+      printf '%s%s%s' $dim "$argv[1]" $reset
+  end
+end
+
+function run_systemctl
+  if test (id -u) -eq 0
+    systemctl $argv
+  else
+    sudo systemctl $argv
+  end
+end
+
+function print_header
+  printf '%s%-20s %-14s %-14s %s%s\n' $bold SERVICE STATE MODE IMAGE $reset
+  printf '%s\n' '────────────────────────────────────────────────────────────────────────────────'
+end
+
+function list_services
+  set -l services (discovered_services)
+  if test (count $services) -eq 0
+    printf '%sNo Quadlet containers found in%s %s\n' $yellow $reset $quadlet_dir
+    return 0
+  end
+
+  print_header
+  for service in $services
+    set -l state (state_of $service)
+    set -l enabled (enabled_of $service)
+    set -l image (image_of $service)
+    printf '%-20s %-23s %-23s %s%s%s\n' \
+      $service \
+      (state_label $state) \
+      (mode_label $enabled) \
+      $dim $image $reset
+  end
+end
+
+function stack_status
+  set -l running 0
+  set -l failed 0
+  set -l other 0
+  set -l services (discovered_services)
+
+  list_services
+
+  for service in $services
+    switch (state_of $service)
+      case active
+        set running (math $running + 1)
+      case failed
+        set failed (math $failed + 1)
+      case '*'
+        set other (math $other + 1)
+    end
+  end
+
+  printf '\n%sSummary:%s %s running, %s stopped/other, %s failed, %s total\n' \
+    $bold $reset $running $other $failed (count $services)
+end
+
+function start_service
+  set -l service $argv[1]
+  printf '%sstart%s %s\n' $green $reset $service
+  run_systemctl start (unit_of $service)
+end
+
+function stop_service
+  set -l service $argv[1]
+  printf '%sstop%s %s\n' $yellow $reset $service
+  run_systemctl stop (unit_of $service)
+end
+
+function restart_service
+  set -l service $argv[1]
+  printf '%srestart%s %s\n' $cyan $reset $service
+  run_systemctl restart (unit_of $service)
+end
+
+function pull_service
+  set -l service $argv[1]
+  set -l image (image_of $service)
+  if test "$image" = "-"
+    die "could not find Image= for $service"
+  end
+  printf '%spull%s %s %s(%s)%s\n' $cyan $reset $service $dim $image $reset
+  podman pull $image
+end
+
+function stack_do
+  set -l action $argv[1]
+  set -l services (discovered_services)
+
+  switch $action
+    case status
+      stack_status
+    case start
+      for service in $services
+        start_service $service
+      end
+    case stop
+      for idx in (seq (count $services) -1 1)
+        stop_service $services[$idx]
+      end
+    case restart
+      stack_do stop
+      stack_do start
+    case pull
+      for service in $services
+        pull_service $service
+      end
+    case '*'
+      die "unknown stack command: $action"
+  end
+end
+
+color_setup
+
+set -l cmd (test (count $argv) -ge 1; and echo $argv[1]; or echo help)
+set -l name (test (count $argv) -ge 2; and echo $argv[2]; or echo '')
+
+switch $cmd
+  case help -h --help
+    usage
+  case list ls
+    list_services
+  case ps
+    podman ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+  case stack
+    if test -z "$name"
+      set name status
+    end
+    stack_do $name
+  case status
+    if test -z "$name"
+      stack_status
+    else
+      systemctl status (unit_of (resolve $name))
+    end
+  case logs log
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    journalctl -u (unit_of (resolve $name)) -f
+  case start
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    start_service (resolve $name)
+  case stop
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    stop_service (resolve $name)
+  case restart
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    restart_service (resolve $name)
+  case shell sh
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    podman exec -it (resolve $name) sh
+  case pull
+    test -n "$name"; or begin; usage >&2; exit 2; end
+    if test "$name" = all
+      stack_do pull
+    else
+      pull_service (resolve $name)
+    end
+  case '*'
+    printf '%sunknown command:%s %s\n\n' $red $reset $cmd >&2
+    usage >&2
+    exit 2
+end

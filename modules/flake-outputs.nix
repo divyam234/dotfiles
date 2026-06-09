@@ -9,6 +9,9 @@ in
 {
   perSystem =
     { pkgs, system, ... }:
+    let
+      svcFish = pkgs.writeText "svc.fish" (builtins.readFile ../scripts/svc);
+    in
     {
       formatter = pkgs.nixfmt;
 
@@ -33,8 +36,16 @@ in
       packages = {
         svc = pkgs.writeShellApplication {
           name = "svc";
-          runtimeInputs = with pkgs; [ systemd ];
-          text = builtins.readFile ../scripts/svc;
+          runtimeInputs = with pkgs; [
+            coreutils
+            fish
+            podman
+            sudo
+            systemd
+          ];
+          text = ''
+            exec fish ${svcFish} "$@"
+          '';
         };
       };
     };

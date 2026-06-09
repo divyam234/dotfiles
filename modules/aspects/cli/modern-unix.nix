@@ -31,6 +31,7 @@
           procs
           ripgrep
           sd
+          systemctl-tui
           tailspin
           tealdeer
           tokei

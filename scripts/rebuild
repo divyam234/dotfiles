@@ -1,5 +1,0 @@
-
-#!/usr/bin/env bash
-set -euo pipefail
-host="${1:-homepc}"
-exec sudo nixos-rebuild switch --flake "$HOME/dotfiles#$host" --show-trace

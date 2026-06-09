@@ -20,6 +20,7 @@
             enable = true;
             interactiveShellInit = ''
               fish_vi_key_bindings
+              set -g fish_greeting
               set -gx EDITOR nvim
               set -gx VISUAL nvim
               set -gx MANPAGER "nvim +Man!"
@@ -28,8 +29,7 @@
                 nix-your-shell fish | source
               end
             '';
-            shellAbbrs = {
-              "l." = "eza -a | grep -e '^\\.'";
+            shellAliases = {
               la = "eza -a --color=always --group-directories-first --icons";
               ll = "eza -l --color=always --group-directories-first --icons";
               ls = "eza -al --color=always --group-directories-first --icons";
@@ -43,16 +43,14 @@
               gp = "git push";
               gl = "git log --oneline --graph --decorate";
               lg = "lazygit";
-              nrs = "nh os switch";
-              nrb = "nh os boot";
               nfu = "nix flake update";
+              oc = "opencode";
               zj = "zellij";
               ".." = "cd ..";
               "..." = "cd ../..";
               "...." = "cd ../../..";
               "....." = "cd ../../../..";
               "......" = "cd ../../../../..";
-
             };
             functions = {
               mkcd = ''
@@ -65,15 +63,11 @@
                   set -gx $item[1] $item[2]
                 end
               '';
-              rebuild = ''
-                set host laptop
-                if test (count $argv) -gt 0
-                  set host $argv[1]
-                end
-                sudo nixos-rebuild switch --flake $HOME/dotfiles#$host
-              '';
-              deploy-netcup = ''
-                nixos-rebuild switch --flake $HOME/dotfiles#netcup --target-host root@$argv[1] --build-host root@$argv[1] --use-remote-sudo
+              dot = ''
+                command just \
+                  --justfile "$HOME/dotfiles/justfile" \
+                  --working-directory "$HOME/dotfiles" \
+                  $argv
               '';
             };
           };
@@ -87,7 +81,7 @@
           };
           direnv = {
             enable = true;
-            nix-direnv.enable = true;
+            nix-direnv.enable = false;
           };
         };
       };

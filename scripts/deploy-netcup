@@ -1,5 +1,0 @@
-
-#!/usr/bin/env bash
-set -euo pipefail
-target="${1:-${NETCUP_HOST:-root@NETCUP_IP}}"
-exec nixos-rebuild switch --flake .#netcup --target-host "$target" --build-host "$target" --use-remote-sudo --show-trace
