@@ -19,7 +19,10 @@
       in
       {
         sops.secrets = lib.mkIf (secretsFile != null) {
-          "users/bhunter_password".sopsFile = secretsFile;
+          "users/bhunter_password" = {
+            sopsFile = secretsFile;
+            neededForUsers = true;
+          };
         };
 
         users.users.${user.userName} = {
