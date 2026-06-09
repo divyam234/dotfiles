@@ -1,6 +1,11 @@
 { den, ... }:
 {
   den.aspects.starship = {
+    nixos =
+      { pkgs, ... }:
+      {
+        environment.systemPackages = [ pkgs.starship ];
+      };
     homeManager =
       { config, ... }:
       {

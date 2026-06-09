@@ -11,6 +11,7 @@
         ...
       }:
       let
+        quadlet = config.virtualisation.quadlet;
         caddyRouteType = lib.types.submodule (
           { ... }:
           {
@@ -120,22 +121,32 @@
             routes = config.dot.caddy.routes;
           };
 
-          virtualisation.oci-containers.containers.caddy = lib.dot.mkOci "caddy" {
-            image = "ghcr.io/tgdrive/caddy";
-            environmentFiles = [ (lib.dot.containerEnvFile "caddy") ];
-            ports = [
-              "80:80"
-              "443:443"
-              "443:443/udp"
-            ];
-            volumes = [
-              "/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
-              "${lib.dot.containerDataDir "caddy"}:/data"
-              "${lib.dot.containerDataDir "caddy-config"}:/config"
-            ];
+          virtualisation.quadlet.containers.caddy = {
+            autoStart = true;
+            containerConfig = {
+              image = "ghcr.io/tgdrive/caddy";
+              networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+              environmentFiles = [ (lib.dot.containerEnvFile "caddy") ];
+              publishPorts = [
+                "80:80"
+                "443:443"
+                "443:443/udp"
+              ];
+              volumes = [
+                "/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
+                "${lib.dot.containerDataDir "caddy"}:/data"
+                "${lib.dot.containerDataDir "caddy-config"}:/config"
+              ];
+            };
+            unitConfig = {
+              After = [ "sops-install-secrets.service" ];
+              Requires = [ "sops-install-secrets.service" ];
+            };
+            serviceConfig = {
+              Restart = "always";
+              RestartSec = "10s";
+            };
           };
-
-          systemd.services.podman-caddy = lib.dot.mkContainerSecretDeps "caddy" [ ];
 
           networking.firewall.allowedTCPPorts = [
             80

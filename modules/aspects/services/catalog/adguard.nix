@@ -4,23 +4,34 @@
     includes = [ den.aspects.oci-service ];
 
     nixos =
-      { lib, ... }:
+      { config, lib, ... }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "adguard-cli" ];
 
-        virtualisation.oci-containers.containers.adguard-cli = lib.dot.mkOci "adguard-cli" {
-          image = "ghcr.io/tgdrive/adguard-cli";
-          networkMode = "container:gluetun";
-          dependsOn = [ "gluetun" ];
-          cmd = [
-            "adguard-cli"
-            "start"
-            "--no-fork"
-          ];
-          volumes = [ "${lib.dot.containerDataDir "adguard-cli"}:/root/.local/share/adguard-cli" ];
+        virtualisation.quadlet.containers.adguard-cli = {
+          autoStart = true;
+          containerConfig = {
+            image = "ghcr.io/tgdrive/adguard-cli";
+            networks = [ "container:gluetun" ];
+            exec = [
+              "adguard-cli"
+              "start"
+              "--no-fork"
+            ];
+            volumes = [ "${lib.dot.containerDataDir "adguard-cli"}:/root/.local/share/adguard-cli" ];
+          };
+          unitConfig = {
+            After = [ quadlet.containers.gluetun.ref ];
+            Requires = [ quadlet.containers.gluetun.ref ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
-
-        systemd.services.podman-adguard-cli = lib.dot.mkContainerDeps "adguard-cli" [ "gluetun" ];
       };
   };
 }

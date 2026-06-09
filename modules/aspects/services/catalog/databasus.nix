@@ -3,14 +3,24 @@
   den.aspects.databasus = {
     includes = [ den.aspects.oci-service ];
     nixos =
-      { lib, ... }:
+      { config, lib, ... }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "databasus" ];
-        virtualisation.oci-containers.containers.databasus = lib.dot.mkOci "databasus" {
-          image = "databasus/databasus";
-          volumes = [ "${lib.dot.containerDataDir "databasus"}:/databasus-data" ];
+        virtualisation.quadlet.containers.databasus = {
+          autoStart = false;
+          containerConfig = {
+            image = "databasus/databasus";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            volumes = [ "${lib.dot.containerDataDir "databasus"}:/databasus-data" ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
-        systemd.services.podman-databasus = lib.dot.mkContainerDeps "databasus" [ ];
       };
   };
 }

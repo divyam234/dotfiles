@@ -10,7 +10,6 @@
         zstatusLayout =
           builtins.replaceStrings
             [
-              "https://github.com/dj95/zjstatus/releases/latest/download/zjstatus.wasm"
               "#616e88"
               "#2E3440"
               "#3B4252"
@@ -25,7 +24,6 @@
               "#6C7086"
             ]
             [
-              "file://${pkgs.zjstatus}/bin/zjstatus.wasm"
               colors.base05
               colors.base00
               colors.base01
@@ -46,9 +44,8 @@
 
         xdg.configFile = {
           "zellij/config.kdl".source = ./config.kdl;
-          "zellij/layouts/default.kdl".text = zstatusLayout;
+          "zellij/layouts/default.kdl".source = ./layouts/default.kdl;
         };
-
         programs.zellij.enable = true;
       };
   };

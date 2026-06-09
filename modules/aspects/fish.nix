@@ -29,9 +29,11 @@
               end
             '';
             shellAbbrs = {
-              ll = "eza -la --icons --git";
-              la = "eza -a --icons";
-              lt = "eza --tree --level=2 --icons";
+              "l." = "eza -a | grep -e '^\\.'";
+              la = "eza -a --color=always --group-directories-first --icons";
+              ll = "eza -l --color=always --group-directories-first --icons";
+              ls = "eza -al --color=always --group-directories-first --icons";
+              lt = "eza -aT --color=always --group-directories-first --icons";
               cat = "bat";
               grep = "rg";
               find = "fd";
@@ -45,7 +47,12 @@
               nrb = "nh os boot";
               nfu = "nix flake update";
               zj = "zellij";
-              zz = "sesh";
+              ".." = "cd ..";
+              "..." = "cd ../..";
+              "...." = "cd ../../..";
+              "....." = "cd ../../../..";
+              "......" = "cd ../../../../..";
+
             };
             functions = {
               mkcd = ''
@@ -75,10 +82,6 @@
             enableFishIntegration = true;
           };
           fzf = {
-            enable = true;
-            enableFishIntegration = true;
-          };
-          atuin = {
             enable = true;
             enableFishIntegration = true;
           };

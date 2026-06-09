@@ -43,6 +43,13 @@
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-pkgs = {
+      url = "github:divyam234/nix-pkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    quadlet-nix = {
+      url = "github:SEIAROTg/quadlet-nix";
+    };
   };
 
   flake-file.outputs = ''

@@ -3,7 +3,15 @@
   den.aspects.hermes = {
     includes = [ den.aspects.oci-service ];
     nixos =
-      { lib, host, ... }:
+      {
+        config,
+        lib,
+        host,
+        ...
+      }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "hermes" ];
 
@@ -20,31 +28,38 @@
           fi
         '';
 
-        virtualisation.oci-containers.containers.hermes = lib.dot.mkOci "hermes" {
-          image = "nousresearch/hermes-agent:latest";
-          cmd = [
-            "gateway"
-            "run"
-          ];
-          dependsOn = [ "camofox-browser" ];
-          environment = {
-            HERMES_DASHBOARD = "1";
-            HERMES_DASHBOARD_TUI = "1";
-            CAMOFOX_URL = "http://camofox-browser:9377";
+        virtualisation.quadlet.containers.hermes = {
+          autoStart = false;
+          containerConfig = {
+            image = "docker.io/nousresearch/hermes-agent:latest";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            exec = [
+              "gateway"
+              "run"
+            ];
+            environments = {
+              HERMES_DASHBOARD = "1";
+              HERMES_DASHBOARD_TUI = "1";
+              CAMOFOX_URL = "http://camofox-browser:9377";
+            };
+            memory = "4g";
+            podmanArgs = [ "--cpus=2.0" ];
+            volumes = [ "${lib.dot.containerDataDir "hermes"}:/opt/data" ];
           };
-          extraOptions = [
-            "--memory=4g"
-            "--cpus=2.0"
-          ];
-          volumes = [ "${lib.dot.containerDataDir "hermes"}:/opt/data" ];
+          unitConfig = {
+            After = [ quadlet.containers.camofox-browser.ref ];
+            Requires = [ quadlet.containers.camofox-browser.ref ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
 
         dot.caddy.routes.hermes = {
           host = "ai.${host.domain}";
           upstreams = [ "hermes:8642" ];
         };
-
-        systemd.services.podman-hermes = lib.dot.mkContainerDeps "hermes" [ "camofox-browser" ];
       };
   };
 }

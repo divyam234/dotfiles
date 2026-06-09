@@ -7,19 +7,44 @@
     ];
 
     nixos =
-      { lib, host, ... }:
+      {
+        config,
+        lib,
+        host,
+        ...
+      }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         dot.oci.secrets.forgejo.enable = true;
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "forgejo" ];
 
-        virtualisation.oci-containers.containers.forgejo = lib.dot.mkOci "forgejo" {
-          image = "codeberg.org/forgejo/forgejo:14";
-          environmentFiles = [ (lib.dot.containerEnvFile "forgejo") ];
-          dependsOn = [ "pgdog" ];
-          volumes = [
-            "${lib.dot.containerDataDir "forgejo"}:/data:rw"
-            "/etc/localtime:/etc/localtime:ro"
-          ];
+        virtualisation.quadlet.containers.forgejo = {
+          autoStart = true;
+          containerConfig = {
+            image = "codeberg.org/forgejo/forgejo:14";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            environmentFiles = [ (lib.dot.containerEnvFile "forgejo") ];
+            volumes = [
+              "${lib.dot.containerDataDir "forgejo"}:/data:rw"
+              "/etc/localtime:/etc/localtime:ro"
+            ];
+          };
+          unitConfig = {
+            After = [
+              quadlet.containers.pgdog.ref
+              "sops-install-secrets.service"
+            ];
+            Requires = [
+              quadlet.containers.pgdog.ref
+              "sops-install-secrets.service"
+            ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
 
         dot.caddy.routes.forgejo = {
@@ -32,8 +57,6 @@
             }
           '';
         };
-
-        systemd.services.podman-forgejo = lib.dot.mkContainerSecretDeps "forgejo" [ "pgdog" ];
       };
   };
 }

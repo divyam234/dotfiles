@@ -29,7 +29,7 @@
               flags = [ "--all" ];
             };
           };
-          oci-containers.backend = "podman";
+          quadlet.enable = true;
         };
 
         users.groups.podman = { };

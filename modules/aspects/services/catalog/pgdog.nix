@@ -6,8 +6,14 @@
       den.aspects.postgres
     ];
     nixos =
-      { pkgs, lib, ... }:
+      {
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
       let
+        quadlet = config.virtualisation.quadlet;
         toml = pkgs.formats.toml { };
         pgdogConfig = {
           general = {
@@ -35,13 +41,22 @@
 
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "pgdog" ];
 
-        virtualisation.oci-containers.containers.pgdog = lib.dot.mkOci "pgdog" {
-          image = "ghcr.io/pgdogdev/pgdog";
-          dependsOn = [ "postgres" ];
-          volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
+        virtualisation.quadlet.containers.pgdog = {
+          autoStart = true;
+          containerConfig = {
+            image = "ghcr.io/pgdogdev/pgdog";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
+          };
+          unitConfig = {
+            After = [ quadlet.containers.postgres.ref ];
+            Requires = [ quadlet.containers.postgres.ref ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
-
-        systemd.services.podman-pgdog = lib.dot.mkContainerDeps "pgdog" [ "postgres" ];
       };
   };
 }

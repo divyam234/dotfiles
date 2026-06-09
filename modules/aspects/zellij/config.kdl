@@ -261,9 +261,11 @@ plugins {
     welcome-screen location="zellij:session-manager" {
         welcome_screen true
     }
+    zjstatus location="file:/home/bhunter/.config/zellij/plugins/zjstatus.wasm"
 }
 
 load_plugins {
+  zjstatus
 }
 web_client {
     font "monospace"

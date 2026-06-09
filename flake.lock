@@ -436,6 +436,26 @@
         "type": "github"
       }
     },
+    "nix-pkgs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780997556,
+        "narHash": "sha256-c0eICLT4TRJSYA+JBrxU+EQHjyrMqxn0FIUWnFS0pLo=",
+        "owner": "divyam234",
+        "repo": "nix-pkgs",
+        "rev": "f47241e68af5c76d86db830e2762e684a51e09eb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "divyam234",
+        "repo": "nix-pkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1768564909,
@@ -544,6 +564,21 @@
         "type": "github"
       }
     },
+    "quadlet-nix": {
+      "locked": {
+        "lastModified": 1779658505,
+        "narHash": "sha256-hbVBnj18VyoFRNE5mKzYeKRat/INBxnIEIIATfF1JsA=",
+        "owner": "SEIAROTg",
+        "repo": "quadlet-nix",
+        "rev": "d536933bf89334bf9ccb036e84131793712965b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SEIAROTg",
+        "repo": "quadlet-nix",
+        "type": "github"
+      }
+    },
     "quickshell": {
       "inputs": {
         "nixpkgs": [
@@ -578,8 +613,10 @@
         "import-tree": "import-tree",
         "lazyvim": "lazyvim",
         "niri-nix": "niri-nix",
+        "nix-pkgs": "nix-pkgs",
         "nixpkgs": "nixpkgs_2",
         "nur": "nur",
+        "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
         "stylix": "stylix",

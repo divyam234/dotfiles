@@ -2,7 +2,10 @@
 {
   den.aspects.git = {
     homeManager =
-      { pkgs, user, ... }:
+      { pkgs, ... }@args:
+      let
+        user = args.user or { };
+      in
       {
         home.packages = with pkgs; [
           git-lfs
@@ -13,7 +16,7 @@
           enable = true;
           lfs.enable = true;
           signing = {
-            key = user.signingKey;
+            key = user.signingKey or "~/.ssh/id_ed25519.pub";
             format = "ssh";
             signByDefault = true;
           };

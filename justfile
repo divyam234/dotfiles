@@ -22,7 +22,7 @@ boot h=host:
     sudo nixos-rebuild boot --flake .#{{ h }} --show-trace
 
 home u=host:
-    home-manager switch --flake .#bhunter@{{ u }}
+    home-manager switch -b hm-bak --flake .#bhunter@{{ u }}
 
 deploy ip h=host:
     nixos-rebuild switch --flake .#{{ h }} --target-host root@{{ ip }} --build-host root@{{ ip }} --use-remote-sudo --show-trace

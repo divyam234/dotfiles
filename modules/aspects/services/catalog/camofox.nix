@@ -3,19 +3,29 @@
   den.aspects.camofox = {
     includes = [ den.aspects.oci-service ];
     nixos =
-      { lib, ... }:
+      { config, lib, ... }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "camofox" ];
-        virtualisation.oci-containers.containers.camofox-browser = lib.dot.mkOci "camofox-browser" {
-          image = "ghcr.io/redf0x1/camofox-browser";
-          environment = {
-            CAMOFOX_PORT = "9377";
-            CAMOFOX_AUTH_MODE = "disabled";
+        virtualisation.quadlet.containers.camofox-browser = {
+          autoStart = false;
+          containerConfig = {
+            image = "ghcr.io/tgdrive/camofox-browser";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            environments = {
+              CAMOFOX_PORT = "9377";
+              CAMOFOX_AUTH_MODE = "disabled";
+            };
+            publishPorts = [ "127.0.0.1:9377:9377" ];
+            volumes = [ "${lib.dot.containerDataDir "camofox"}:/home/node/.camofox" ];
           };
-          ports = [ "127.0.0.1:9377:9377" ];
-          volumes = [ "${lib.dot.containerDataDir "camofox"}:/home/node/.camofox" ];
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
-        systemd.services.podman-camofox-browser = lib.dot.mkContainerDeps "camofox-browser" [ ];
       };
   };
 }

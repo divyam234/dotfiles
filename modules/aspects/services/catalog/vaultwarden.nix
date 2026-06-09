@@ -7,16 +7,41 @@
     ];
 
     nixos =
-      { lib, host, ... }:
+      {
+        config,
+        lib,
+        host,
+        ...
+      }:
+      let
+        quadlet = config.virtualisation.quadlet;
+      in
       {
         dot.oci.secrets.vaultwarden.enable = true;
         systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "vaultwarden" ];
 
-        virtualisation.oci-containers.containers.vaultwarden = lib.dot.mkOci "vaultwarden" {
-          image = "vaultwarden/server:latest-alpine";
-          environmentFiles = [ (lib.dot.containerEnvFile "vaultwarden") ];
-          dependsOn = [ "postgres" ];
-          volumes = [ "${lib.dot.containerDataDir "vaultwarden"}:/data" ];
+        virtualisation.quadlet.containers.vaultwarden = {
+          autoStart = true;
+          containerConfig = {
+            image = "vaultwarden/server:latest-alpine";
+            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            environmentFiles = [ (lib.dot.containerEnvFile "vaultwarden") ];
+            volumes = [ "${lib.dot.containerDataDir "vaultwarden"}:/data" ];
+          };
+          unitConfig = {
+            After = [
+              quadlet.containers.postgres.ref
+              "sops-install-secrets.service"
+            ];
+            Requires = [
+              quadlet.containers.postgres.ref
+              "sops-install-secrets.service"
+            ];
+          };
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "10s";
+          };
         };
 
         dot.caddy.routes.vaultwarden = {
@@ -29,8 +54,6 @@
             }
           '';
         };
-
-        systemd.services.podman-vaultwarden = lib.dot.mkContainerSecretDeps "vaultwarden" [ "postgres" ];
       };
   };
 }
