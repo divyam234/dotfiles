@@ -31,10 +31,6 @@
             ];
             volumes = [ "${lib.dot.containerDataDir "gluetun"}:/gluetun" ];
           };
-          unitConfig = {
-            After = [ "sops-install-secrets.service" ];
-            Requires = [ "sops-install-secrets.service" ];
-          };
           serviceConfig = {
             Restart = "always";
             RestartSec = "10s";

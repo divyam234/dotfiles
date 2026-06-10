@@ -6,12 +6,7 @@
       {
         home.packages = with pkgs; [
           pgcli
-          postgresql
-          redis
-          termdbms
-          usql
           sqlite
-          litecli
         ];
       };
   };

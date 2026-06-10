@@ -18,10 +18,6 @@
             environmentFiles = [ (lib.dot.containerEnvFile "postgres") ];
             volumes = [ "${lib.dot.containerDataDir "postgres"}:/var/lib/postgresql" ];
           };
-          unitConfig = {
-            After = [ "sops-install-secrets.service" ];
-            Requires = [ "sops-install-secrets.service" ];
-          };
           serviceConfig = {
             Restart = "always";
             RestartSec = "10s";

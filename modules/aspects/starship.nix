@@ -1,19 +1,13 @@
 { den, ... }:
 {
   den.aspects.starship = {
-    nixos =
+    homeManager =
       { pkgs, ... }:
       {
-        environment.systemPackages = [ pkgs.starship ];
-      };
-    homeManager =
-      { config, ... }:
-      {
+        home.packages = [ pkgs.starship ];
         programs.starship = {
           enable = true;
           enableFishIntegration = true;
-          configPath = "${config.xdg.configHome}/starship.toml";
-
           settings = {
             format = ''
               [](bg:transparent fg:bright-purple)$os[](fg:bright-purple bg:cyan)$directory$git_branch$git_status$git_metrics[](fg:cyan bg:transparent)$status

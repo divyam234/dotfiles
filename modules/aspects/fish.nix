@@ -1,17 +1,18 @@
 { den, ... }:
 {
   den.aspects.fish = {
-    nixos =
-      { pkgs, ... }:
-      {
-        programs.fish.enable = true;
-        environment.shells = [ pkgs.fish ];
-      };
+    # nixos =
+    #   { pkgs, ... }:
+    #   {
+    #     programs.fish.enable = true;
+    #     environment.shells = [ pkgs.fish ];
+    #   };
 
     homeManager =
       { pkgs, config, ... }:
       {
         home.packages = with pkgs; [
+          fish
           nix-your-shell
         ];
 
@@ -81,7 +82,7 @@
           };
           direnv = {
             enable = true;
-            nix-direnv.enable = false;
+            nix-direnv.enable = true;
           };
         };
       };

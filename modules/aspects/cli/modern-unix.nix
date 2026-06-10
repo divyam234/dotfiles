@@ -5,6 +5,7 @@
       { pkgs, lib, ... }:
       {
         home.packages = with pkgs; [
+          btop
           chafa
           choose
           delta

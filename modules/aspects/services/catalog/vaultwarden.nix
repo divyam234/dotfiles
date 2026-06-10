@@ -29,14 +29,8 @@
             volumes = [ "${lib.dot.containerDataDir "vaultwarden"}:/data" ];
           };
           unitConfig = {
-            After = [
-              quadlet.containers.postgres.ref
-              "sops-install-secrets.service"
-            ];
-            Requires = [
-              quadlet.containers.postgres.ref
-              "sops-install-secrets.service"
-            ];
+            After = [ quadlet.containers.postgres.ref ];
+            Requires = [ quadlet.containers.postgres.ref ];
           };
           serviceConfig = {
             Restart = "always";

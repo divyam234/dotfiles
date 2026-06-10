@@ -19,19 +19,19 @@
           general = {
             host = "0.0.0.0";
             port = 6432;
+            default_pool_size = 20;
+            pooler_mode = "transaction";
+            passthrough_auth = "enabled_plain";
           };
-          users.proxy.password = "proxy";
-          pools."main" = {
-            mode = "transaction";
-            user = "proxy";
-            database = "postgres";
-            server = [
-              {
-                host = "postgres";
-                port = 5432;
-              }
-            ];
-          };
+          databases = [
+            {
+              name = "postgres";
+              host = "postgres";
+              port = 5432;
+              database_name = "postgres";
+              role = "primary";
+            }
+          ];
         };
       in
       {

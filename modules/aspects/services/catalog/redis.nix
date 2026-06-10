@@ -18,10 +18,6 @@
             environmentFiles = [ (lib.dot.containerEnvFile "redis") ];
             volumes = [ "${lib.dot.containerDataDir "redis"}:/bitnami/redis/data" ];
           };
-          unitConfig = {
-            After = [ "sops-install-secrets.service" ];
-            Requires = [ "sops-install-secrets.service" ];
-          };
           serviceConfig = {
             Restart = "always";
             RestartSec = "10s";

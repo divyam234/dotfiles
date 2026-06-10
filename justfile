@@ -12,19 +12,19 @@ show:
     nix flake show
 
 build h=host:
-    nh os build .#{{ h }} --show-trace
+    nh os build . -H {{ h }}
+
+test h=host:
+    nh os test . -H {{ h }}
 
 switch h=host:
-    nh os switch .#{{ h }} --show-trace
+    nh os switch . -H {{ h }}
 
 boot h=host:
-    nh os boot .#{{ h }} --show-trace
+    nh os boot . -H {{ h }}
 
 home u=host:
-    nh home switch .#bhunter@{{ u }} --show-trace
-
-install-laptop disk:
-    sudo nix run github:nix-community/disko -- --mode disko --flake .#laptop
+    nh home switch . -c bhunter@{{ u }}
 
 svc +args:
     nix run .#svc -- {{ args }}

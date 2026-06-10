@@ -22,8 +22,6 @@ let
         inputs.dms.homeModules.dank-material-shell
       ];
 
-      wayland.windowManager.niri.enable = true;
-
       programs.dank-material-shell = {
         enable = true;
         package = inputs.dms.packages.${pkgs.stdenv.hostPlatform.system}.default;

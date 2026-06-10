@@ -35,10 +35,10 @@
         users.groups.podman = { };
         users.users.${user.userName}.extraGroups = [ "podman" ];
 
-        systemd.tmpfiles.rules = [
-          "d ${lib.dot.containerDataRoot} 0750 root root -"
-          "d ${lib.dot.containerSecretDir} 0750 root root -"
-        ];
+        # systemd.tmpfiles.rules = [
+        #   "d ${lib.dot.containerDataRoot} 0750 root root -"
+        #   "d ${lib.dot.containerSecretDir} 0750 root root -"
+        # ];
       };
 
     homeManager =

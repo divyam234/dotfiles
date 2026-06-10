@@ -15,7 +15,7 @@
       home = {
         username = "bhunter";
         homeDirectory = "/home/bhunter";
-        stateVersion = "25.11";
+        stateVersion = "26.05";
       };
     };
   };
@@ -27,7 +27,7 @@
         ./boot.nix
       ];
 
-      system.stateVersion = "25.11";
+      system.stateVersion = "26.05";
     };
   };
 }
