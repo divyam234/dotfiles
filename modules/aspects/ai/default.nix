@@ -51,7 +51,7 @@
 
         opencodeConfig = {
           "$schema" = "https://opencode.ai/config.json";
-
+          autoupdate = false;
           tools = {
             task = false;
           };

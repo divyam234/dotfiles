@@ -26,6 +26,7 @@
               set -gx VISUAL nvim
               set -gx MANPAGER "nvim +Man!"
               set -gx NH_FLAKE "$HOME/dotfiles"
+              complete -c dot -f -a '(command just --justfile "$HOME/dotfiles/justfile" --working-directory "$HOME/dotfiles" --summary 2>/dev/null)'
               if command -q nix-your-shell
                 nix-your-shell fish | source
               end
@@ -66,10 +67,19 @@
                 end
               '';
               dot = ''
-                command just \
-                  --justfile "$HOME/dotfiles/justfile" \
-                  --working-directory "$HOME/dotfiles" \
-                  $argv
+                set -l repo "$HOME/dotfiles"
+                set -l justfile "$repo/justfile"
+
+                if not test -f "$justfile"
+                  printf 'dot: missing %s\n' "$justfile" >&2
+                  return 1
+                end
+
+                if test (count $argv) -eq 0
+                  command just --justfile "$justfile" --working-directory "$repo" --list
+                else
+                  command just --justfile "$justfile" --working-directory "$repo" $argv
+                end
               '';
             };
           };
