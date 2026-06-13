@@ -21,7 +21,7 @@
             enable = true;
             interactiveShellInit = ''
               fish_vi_key_bindings
-              set -g fish_greeting
+              set -g fish_greeting ""
               set -gx EDITOR nvim
               set -gx VISUAL nvim
               set -gx MANPAGER "nvim +Man!"
@@ -54,6 +54,7 @@
               "......" = "cd ../../../../..";
             };
             functions = {
+              fish_greeting = "";
               mkcd = ''
                 mkdir -p $argv[1]
                 cd $argv[1]

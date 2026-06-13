@@ -31,7 +31,7 @@ Roles, features, desktop pieces, system primitives, OCI primitives, and service 
 
 **Libraries** provide small rendering/building helpers.
 
-The helper layer is intentionally small: package import helpers, OCI container helpers, Caddy rendering helpers, and bootstrap glue.
+The helper layer is intentionally small: package import helpers, Caddy rendering helpers, and bootstrap glue.
 
 ## Architecture
 
@@ -155,15 +155,15 @@ If the service needs secrets, consume `host.secretsFile`. Do not hardcode one ho
 
 ## Containers
 
-Application services run through NixOS `virtualisation.oci-containers` with Podman as the backend.
+Application services run through rootful NixOS `virtualisation.quadlet` with Podman as the backend.
 
 Shared conventions:
 
-- persistent data root: `/var/lib/containers`
+- persistent service data root: `/home/bhunter/.local/state/container-services`
 - runtime secret env files: `/run/secrets/container-env`
 - shared Podman network: `svc`
 
-Services should use the shared OCI helper functions instead of hand-writing repeated systemd/network boilerplate.
+Services should use the shared `dot.containers` options instead of hand-writing repeated systemd/network boilerplate.
 
 ## Caddy
 

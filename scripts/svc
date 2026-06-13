@@ -69,6 +69,14 @@ function unit_of
   printf '%s.service\n' $argv[1]
 end
 
+function run_as_root
+  if test (id -u) -eq 0
+    command $argv
+  else
+    /run/wrappers/bin/sudo $argv
+  end
+end
+
 function container_file
   printf '%s/%s.container\n' $quadlet_dir $argv[1]
 end
@@ -78,14 +86,11 @@ function network_file
 end
 
 function discovered_services
-  if not test -d $quadlet_dir
+  if not run_as_root test -d $quadlet_dir
     return 0
   end
 
-  for file in $quadlet_dir/*.container
-    test -e $file; or continue
-    basename $file .container
-  end | sort
+  run_as_root fish -c 'for file in $argv[1]/*.container; test -e $file; and basename $file .container; end' -- $quadlet_dir | sort
 end
 
 function resolve
@@ -111,12 +116,12 @@ function image_of
   set -l service $argv[1]
   set -l file (container_file $service)
 
-  if not test -f $file
+  if not run_as_root test -f $file
     printf '%s\n' "-"
     return 0
   end
 
-  set -l image_lines (string match -r '^Image=.*' <$file)
+  set -l image_lines (run_as_root cat $file | string match -r '^Image=.*')
   set -l image ""
   if test (count $image_lines) -gt 0
     set image (string replace -r '^Image=' '' -- $image_lines[1])
@@ -167,11 +172,7 @@ function mode_label
 end
 
 function run_systemctl
-  if test (id -u) -eq 0
-    systemctl $argv
-  else
-    sudo systemctl $argv
-  end
+  run_as_root systemctl $argv
 end
 
 function print_header
@@ -247,7 +248,7 @@ function pull_service
     die "could not find Image= for $service"
   end
   printf '%spull%s %s %s(%s)%s\n' $cyan $reset $service $dim $image $reset
-  podman pull $image
+  run_as_root podman pull $image
 end
 
 function stack_do
@@ -288,7 +289,7 @@ switch $cmd
   case list ls
     list_services
   case ps
-    podman ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+    run_as_root podman ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
   case stack
     if test -z "$name"
       set name status
@@ -314,7 +315,7 @@ switch $cmd
     restart_service (resolve $name)
   case shell sh
     test -n "$name"; or begin; usage >&2; exit 2; end
-    podman exec -it (resolve $name) sh
+    run_as_root podman exec -it (resolve $name) sh
   case pull
     test -n "$name"; or begin; usage >&2; exit 2; end
     if test "$name" = all

@@ -3,20 +3,26 @@
   den.aspects.postgres = {
     includes = [ den.aspects.oci-service ];
     nixos =
-      { config, lib, ... }:
+      { config, ... }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
         dot.oci.secrets.postgres.enable = true;
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "postgres" ];
+        dot.containers.dataDirs.postgres = {
+          user = "999";
+          group = "999";
+        };
         virtualisation.quadlet.containers.postgres = {
           autoStart = true;
           containerConfig = {
+            name = "postgres";
             image = "ghcr.io/tgdrive/postgres:18";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
-            environmentFiles = [ (lib.dot.containerEnvFile "postgres") ];
-            volumes = [ "${lib.dot.containerDataDir "postgres"}:/var/lib/postgresql" ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "postgres" ];
+            environmentFiles = [ "${containers.secretDir}/postgres.env" ];
+            volumes = [ "${containers.dataRoot}/postgres:/var/lib/postgresql" ];
           };
           serviceConfig = {
             Restart = "always";

@@ -27,7 +27,7 @@
 
         services.restic.backups.netcup = {
           initialize = true;
-          paths = [ lib.dot.containerDataRoot ];
+          paths = [ config.dot.containers.dataRoot ];
           passwordFile = config.sops.secrets."restic/password".path;
           repository = config.sops.secrets."restic/repository".path;
           rcloneConfigFile = config.sops.secrets."restic/rclone_conf".path;

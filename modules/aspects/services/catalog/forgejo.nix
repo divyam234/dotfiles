@@ -15,19 +15,22 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
         dot.oci.secrets.forgejo.enable = true;
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "forgejo" ];
+        dot.containers.dataDirs.forgejo = { };
 
         virtualisation.quadlet.containers.forgejo = {
           autoStart = true;
           containerConfig = {
+            name = "forgejo";
             image = "codeberg.org/forgejo/forgejo:15";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
-            environmentFiles = [ (lib.dot.containerEnvFile "forgejo") ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "forgejo" ];
+            environmentFiles = [ "${containers.secretDir}/forgejo.env" ];
             volumes = [
-              "${lib.dot.containerDataDir "forgejo"}:/data:rw"
+              "${containers.dataRoot}/forgejo:/data:rw"
               # "/etc/localtime:/etc/localtime:ro"
             ];
           };

@@ -12,6 +12,7 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
         caddyRouteType = lib.types.submodule (
           { ... }:
           {
@@ -111,10 +112,10 @@
           dot.oci.secrets.caddy.enable = true;
           dot.caddy.global.email = lib.mkDefault acmeEmail;
 
-          systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [
-            "caddy"
-            "caddy-config"
-          ];
+          dot.containers.dataDirs = {
+            caddy = { };
+            "caddy-config" = { };
+          };
 
           environment.etc."caddy/Caddyfile".text = lib.dot.mkCaddyfile {
             global = config.dot.caddy.global;
@@ -124,9 +125,11 @@
           virtualisation.quadlet.containers.caddy = {
             autoStart = true;
             containerConfig = {
+              name = "caddy";
               image = "ghcr.io/tgdrive/caddy";
-              networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
-              environmentFiles = [ (lib.dot.containerEnvFile "caddy") ];
+              networks = [ quadlet.networks.${containers.networkName}.ref ];
+              networkAliases = [ "caddy" ];
+              environmentFiles = [ "${containers.secretDir}/caddy.env" ];
               publishPorts = [
                 "80:80"
                 "443:443"
@@ -134,8 +137,8 @@
               ];
               volumes = [
                 "/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
-                "${lib.dot.containerDataDir "caddy"}:/data"
-                "${lib.dot.containerDataDir "caddy-config"}:/config"
+                "${containers.dataRoot}/caddy:/data"
+                "${containers.dataRoot}/caddy-config:/config"
               ];
             };
             serviceConfig = {

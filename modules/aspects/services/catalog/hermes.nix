@@ -11,28 +11,31 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "hermes" ];
+        dot.containers.dataDirs.hermes = { };
 
         # Seed hermes config on first boot
         system.activationScripts.seedHermesConfig = ''
-          if [ ! -f ${lib.dot.containerDataDir "hermes"}/config.yaml ]; then
-            mkdir -p ${lib.dot.containerDataDir "hermes"}
-            cat > ${lib.dot.containerDataDir "hermes"}/config.yaml << 'EOF'
+          if [ ! -f ${containers.dataRoot}/hermes/config.yaml ]; then
+            mkdir -p ${containers.dataRoot}/hermes
+            cat > ${containers.dataRoot}/hermes/config.yaml << 'EOF'
           browser:
             camofox:
               managed_persistence: true
           EOF
-            chmod 666 ${lib.dot.containerDataDir "hermes"}/config.yaml
+            chmod 666 ${containers.dataRoot}/hermes/config.yaml
           fi
         '';
 
         virtualisation.quadlet.containers.hermes = {
           autoStart = false;
           containerConfig = {
+            name = "hermes";
             image = "docker.io/nousresearch/hermes-agent:latest";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "hermes" ];
             exec = [
               "gateway"
               "run"
@@ -44,7 +47,7 @@
             };
             memory = "4g";
             podmanArgs = [ "--cpus=2.0" ];
-            volumes = [ "${lib.dot.containerDataDir "hermes"}:/opt/data" ];
+            volumes = [ "${containers.dataRoot}/hermes:/opt/data" ];
           };
           unitConfig = {
             After = [ quadlet.containers.camofox-browser.ref ];

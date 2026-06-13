@@ -13,7 +13,7 @@
             "/var/lib/bluetooth"
             "/var/lib/systemd"
             "/var/lib/tailscale"
-            "/var/lib/containers"
+            "/home/bhunter/.local/state/container-services"
             "/root"
           ];
           files = [

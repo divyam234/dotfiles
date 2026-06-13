@@ -40,7 +40,6 @@ in
             coreutils
             fish
             podman
-            sudo
             systemd
           ];
           text = ''

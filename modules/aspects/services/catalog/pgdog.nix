@@ -14,6 +14,7 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
         toml = pkgs.formats.toml { };
         pgdogConfig = {
           general = {
@@ -39,13 +40,13 @@
           toml.generate "pgdog.toml" pgdogConfig
         );
 
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "pgdog" ];
-
         virtualisation.quadlet.containers.pgdog = {
           autoStart = true;
           containerConfig = {
+            name = "pgdog";
             image = "ghcr.io/pgdogdev/pgdog";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "pgdog" ];
             volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
           };
           unitConfig = {

@@ -15,18 +15,21 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
         dot.oci.secrets.vaultwarden.enable = true;
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "vaultwarden" ];
+        dot.containers.dataDirs.vaultwarden = { };
 
         virtualisation.quadlet.containers.vaultwarden = {
           autoStart = true;
           containerConfig = {
+            name = "vaultwarden";
             image = "vaultwarden/server:latest-alpine";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
-            environmentFiles = [ (lib.dot.containerEnvFile "vaultwarden") ];
-            volumes = [ "${lib.dot.containerDataDir "vaultwarden"}:/data" ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "vaultwarden" ];
+            environmentFiles = [ "${containers.secretDir}/vaultwarden.env" ];
+            volumes = [ "${containers.dataRoot}/vaultwarden:/data" ];
           };
           unitConfig = {
             After = [ quadlet.containers.postgres.ref ];

@@ -12,6 +12,7 @@
       }:
       let
         cfg = config.dot.oci.secrets;
+        containers = config.dot.containers;
         secretsFile = host.secretsFile;
         anyEnabled = lib.any (enabled: enabled) [
           cfg.caddy.enable
@@ -70,7 +71,7 @@
             lib.mkMerge [
               (lib.mkIf cfg.postgres.enable {
                 "postgres.env" = {
-                  path = lib.dot.containerEnvFile "postgres";
+                  path = "${containers.secretDir}/postgres.env";
                   mode = "0440";
                   content = ''
                     POSTGRES_USER=${config.sops.placeholder."postgres/user"}
@@ -82,7 +83,7 @@
 
               (lib.mkIf cfg.gluetun.enable {
                 "gluetun.env" = {
-                  path = lib.dot.containerEnvFile "gluetun";
+                  path = "${containers.secretDir}/gluetun.env";
                   mode = "0440";
                   content = ''
                     VPN_SERVICE_PROVIDER=nordvpn
@@ -100,7 +101,7 @@
 
               (lib.mkIf cfg.redis.enable {
                 "redis.env" = {
-                  path = lib.dot.containerEnvFile "redis";
+                  path = "${containers.secretDir}/redis.env";
                   mode = "0440";
                   content = ''
                     REDIS_PASSWORD=${config.sops.placeholder."redis/password"}
@@ -110,7 +111,7 @@
 
               (lib.mkIf cfg.caddy.enable {
                 "caddy.env" = {
-                  path = lib.dot.containerEnvFile "caddy";
+                  path = "${containers.secretDir}/caddy.env";
                   mode = "0440";
                   content = ''
                     CLOUDFLARE_API_TOKEN=${config.sops.placeholder."cloudflare/api_token"}
@@ -120,7 +121,7 @@
 
               (lib.mkIf cfg.forgejo.enable {
                 "forgejo.env" = {
-                  path = lib.dot.containerEnvFile "forgejo";
+                  path = "${containers.secretDir}/forgejo.env";
                   mode = "0440";
                   content = ''
                     FORGEJO__database__DB_TYPE=postgres
@@ -136,7 +137,7 @@
 
               (lib.mkIf cfg.vaultwarden.enable {
                 "vaultwarden.env" = {
-                  path = lib.dot.containerEnvFile "vaultwarden";
+                  path = "${containers.secretDir}/vaultwarden.env";
                   mode = "0440";
                   content = ''
                     DOMAIN=https://vault.${host.domain}

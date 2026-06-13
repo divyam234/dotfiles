@@ -7,13 +7,15 @@
       { config, lib, ... }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "adguard-cli" ];
+        dot.containers.dataDirs."adguard-cli" = { };
 
         virtualisation.quadlet.containers.adguard-cli = {
           autoStart = true;
           containerConfig = {
+            name = "adguard-cli";
             image = "ghcr.io/tgdrive/adguard-cli";
             networks = [ "container:gluetun" ];
             exec = [
@@ -21,7 +23,7 @@
               "start"
               "--no-fork"
             ];
-            volumes = [ "${lib.dot.containerDataDir "adguard-cli"}:/root/.local/share/adguard-cli" ];
+            volumes = [ "${containers.dataRoot}/adguard-cli:/root/.local/share/adguard-cli" ];
           };
           unitConfig = {
             After = [ quadlet.containers.gluetun.ref ];

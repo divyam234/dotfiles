@@ -11,21 +11,24 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "siyuan" ];
+        dot.containers.dataDirs.siyuan = { };
         virtualisation.quadlet.containers.siyuan = {
           autoStart = true;
           containerConfig = {
+            name = "siyuan";
             image = "b3log/siyuan";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "siyuan" ];
             exec = [ "--workspace=/siyuan/workspace" ];
             environments = {
               RUN_IN_CONTAINER = "true";
               SIYUAN_ACCESS_AUTH_CODE_BYPASS = "true";
               TZ = "UTC";
             };
-            volumes = [ "${lib.dot.containerDataDir "siyuan"}:/siyuan/workspace" ];
+            volumes = [ "${containers.dataRoot}/siyuan:/siyuan/workspace" ];
           };
           serviceConfig = {
             Restart = "always";

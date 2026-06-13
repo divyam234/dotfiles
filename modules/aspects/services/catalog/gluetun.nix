@@ -7,18 +7,21 @@
       { config, lib, ... }:
       let
         quadlet = config.virtualisation.quadlet;
+        containers = config.dot.containers;
       in
       {
         boot.kernelModules = [ "tun" ];
         dot.oci.secrets.gluetun.enable = true;
-        systemd.tmpfiles.rules = lib.dot.mkServiceDirRules [ "gluetun" ];
+        dot.containers.dataDirs.gluetun = { };
 
         virtualisation.quadlet.containers.gluetun = {
           autoStart = true;
           containerConfig = {
+            name = "gluetun";
             image = "qmcgaw/gluetun";
-            networks = [ quadlet.networks.${lib.dot.containerNetwork}.ref ];
-            environmentFiles = [ (lib.dot.containerEnvFile "gluetun") ];
+            networks = [ quadlet.networks.${containers.networkName}.ref ];
+            networkAliases = [ "gluetun" ];
+            environmentFiles = [ "${containers.secretDir}/gluetun.env" ];
             addCapabilities = [ "NET_ADMIN" ];
             devices = [ "/dev/net/tun:/dev/net/tun" ];
             sysctl = {
@@ -29,7 +32,7 @@
               "127.0.0.1:3128:3128" # HTTP proxy
               "127.0.0.1:1081:1081" # SOCKS5 proxy (for Caddy layer4)
             ];
-            volumes = [ "${lib.dot.containerDataDir "gluetun"}:/gluetun" ];
+            volumes = [ "${containers.dataRoot}/gluetun:/gluetun" ];
           };
           serviceConfig = {
             Restart = "always";
