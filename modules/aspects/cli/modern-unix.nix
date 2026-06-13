@@ -5,7 +5,6 @@
       { pkgs, lib, ... }:
       {
         home.packages = with pkgs; [
-          btop
           chafa
           choose
           delta
@@ -45,6 +44,8 @@
 
         programs = {
           bat.enable = true;
+
+          btop.enable = true;
 
           broot.enable = true;
 

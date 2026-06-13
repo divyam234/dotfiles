@@ -12,7 +12,9 @@
       {
         boot.kernelModules = [ "tun" ];
         dot.oci.secrets.gluetun.enable = true;
-        dot.containers.dataDirs.gluetun = { };
+        dot.containers.dataDirs.gluetun = {
+          inherit (containers.owners.home) user group;
+        };
 
         virtualisation.quadlet.containers.gluetun = {
           autoStart = true;

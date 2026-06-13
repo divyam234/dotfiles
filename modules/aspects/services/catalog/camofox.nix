@@ -9,7 +9,9 @@
         containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.camofox = { };
+        dot.containers.dataDirs.camofox = {
+          inherit (containers.owners.home) user group;
+        };
         virtualisation.quadlet.containers.camofox-browser = {
           autoStart = false;
           containerConfig = {

@@ -11,8 +11,7 @@
       {
         dot.oci.secrets.postgres.enable = true;
         dot.containers.dataDirs.postgres = {
-          user = "999";
-          group = "999";
+          inherit (containers.owners.postgres) user group;
         };
         virtualisation.quadlet.containers.postgres = {
           autoStart = true;

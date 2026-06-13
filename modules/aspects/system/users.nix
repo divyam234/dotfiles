@@ -28,7 +28,9 @@
         users.users.${user.userName} = {
           description = user.fullName or user.userName;
           openssh.authorizedKeys.keys = user.authorizedKeys;
-          hashedPasswordFile = lib.mkIf (secretsFile != null) config.sops.secrets."users/bhunter_password".path;
+          hashedPasswordFile = lib.mkIf (
+            secretsFile != null
+          ) config.sops.secrets."users/bhunter_password".path;
         };
       };
   };

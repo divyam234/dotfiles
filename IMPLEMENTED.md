@@ -7,34 +7,35 @@
 - Host inventory in `modules/hosts.nix`.
 - Host aspects in `hosts/laptop/default.nix` and `hosts/netcup/default.nix`.
 - No separate variable directory.
-- Helper library under `lib/default.nix` for small repeated container/Caddy functions.
+- Helper library under `lib/default.nix` for package imports and Caddy rendering.
 - `dot.caddy.global` and `dot.caddy.routes` option schema for service-owned Caddy routes.
+- `dot.containers.*` option schema for shared rootful Quadlet conventions.
 
 ## Hosts
 
 - `laptop`: `x86_64-linux`, Btrfs/Disko, KDE Plasma 6, Matugen, Stylix, Fish, Zellij, dev tools, gaming, Podman, Ollama/Open-WebUI.
-- `netcup`: `aarch64-linux`, generic networking placeholder, server profile, Podman OCI services, container Caddy, SOPS, Restic.
+- `netcup`: `aarch64-linux`, generic networking placeholder, server profile, rootful Quadlet services, container Caddy, SOPS, Restic.
 
-## OCI services
+## Container services
 
 - Caddy container with `ghcr.io/tgdrive/caddy`.
 - Generated Caddyfile from service-owned `dot.caddy.routes.*` declarations.
 - Shared Podman network `svc`.
+- Persistent service data under `/home/bhunter/.local/state/container-services`.
+- Per-service data directory ownership presets for container UIDs.
 - Postgres container.
-- Valkey container.
+- Redis container.
 - Forgejo container.
-- Atuin container.
-- Attic server container.
 - Vaultwarden container.
-- Uptime Kuma container.
-- Gotify container.
-- Ollama/Open-WebUI containers for laptop.
+- Siyuan container.
+- Gluetun container with AdGuard CLI sharing its network namespace.
+- Camofox, Databasus, and Hermes containers are available but manually started.
 
 ## Secrets
 
 - Host secret YAML stubs.
 - SOPS templates for container env files under `/run/secrets/container-env`.
-- Container paths centralized only in `lib/default.nix` helper constants, not a separate variable layer.
+- Container paths and ownership are centralized in `dot.containers` options, not host-local service internals.
 
 ## Tools
 
@@ -45,6 +46,7 @@
 - Neovim bootstrap.
 - Modern Unix, dev, network, database and container tool aspects.
 - Ghostty terminal aspect.
+- `svc` helper for rootful Quadlet service inspection.
 
 ## Theming
 

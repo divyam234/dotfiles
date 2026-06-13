@@ -27,6 +27,17 @@
           extraPackages = with pkgs; [
             alejandra
           ];
+          plugins.colorscheme = ''
+            return {
+              {
+                "LazyVim/LazyVim",
+                opts = {
+                  -- Stylix configures mini.base16 before LazyVim loads; keep LazyVim from replacing it.
+                  colorscheme = function() end,
+                },
+              },
+            }
+          '';
         };
       };
   };

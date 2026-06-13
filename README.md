@@ -15,7 +15,7 @@ Den separates the repo into data and behavior.
 
 **Entities** declare what exists.
 
-Examples: users, hosts, standalone homes.
+Examples: users, hosts, and standalone homes.
 
 **Host data** declares what a machine should be.
 
@@ -221,6 +221,14 @@ Build or switch a host:
 ```bash
 just build laptop
 just switch laptop
+```
+
+Home Manager is integrated into each NixOS host, so normal user configuration is applied by `just switch <host>`. The `netcup` host uses integrated Home Manager only.
+
+The laptop also exports a standalone Home Manager output through `den.homes` for the documented Den `user@host` pattern. Activate it explicitly when needed:
+
+```bash
+just home-standalone laptop
 ```
 
 Deploy the server:

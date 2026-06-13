@@ -11,8 +11,7 @@
       {
         dot.oci.secrets.redis.enable = true;
         dot.containers.dataDirs.redis = {
-          user = "1001";
-          group = "0";
+          inherit (containers.owners.bitnami) user group;
         };
         virtualisation.quadlet.containers.redis = {
           autoStart = true;

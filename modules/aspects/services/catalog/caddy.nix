@@ -113,8 +113,12 @@
           dot.caddy.global.email = lib.mkDefault acmeEmail;
 
           dot.containers.dataDirs = {
-            caddy = { };
-            "caddy-config" = { };
+            caddy = {
+              inherit (containers.owners.home) user group;
+            };
+            "caddy-config" = {
+              inherit (containers.owners.home) user group;
+            };
           };
 
           environment.etc."caddy/Caddyfile".text = lib.dot.mkCaddyfile {

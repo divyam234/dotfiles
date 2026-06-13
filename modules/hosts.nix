@@ -29,7 +29,8 @@ let
       inherit pkgs;
       modules = [
         inputs.sops-nix.homeManagerModules.sops
-      ] ++ modules;
+      ]
+      ++ modules;
       extraSpecialArgs = {
         inherit inputs;
         lib = hmExtendedLib;
@@ -67,10 +68,6 @@ in
   den.homes = {
     x86_64-linux."bhunter@laptop" = {
       instantiate = mkHomeInstantiate "x86_64-linux";
-    };
-
-    aarch64-linux."bhunter@netcup" = {
-      instantiate = mkHomeInstantiate "aarch64-linux";
     };
   };
 }

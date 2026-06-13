@@ -13,7 +13,16 @@ in
       svcFish = pkgs.writeText "svc.fish" (builtins.readFile ../scripts/svc);
     in
     {
-      formatter = pkgs.nixfmt;
+      formatter = pkgs.writeShellApplication {
+        name = "dotfiles-fmt";
+        runtimeInputs = with pkgs; [
+          git
+          nixfmt
+        ];
+        text = ''
+          git ls-files '*.nix' -z | xargs -0 nixfmt
+        '';
+      };
 
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [

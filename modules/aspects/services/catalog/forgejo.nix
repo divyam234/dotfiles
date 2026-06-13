@@ -19,7 +19,9 @@
       in
       {
         dot.oci.secrets.forgejo.enable = true;
-        dot.containers.dataDirs.forgejo = { };
+        dot.containers.dataDirs.forgejo = {
+          inherit (containers.owners.home) user group;
+        };
 
         virtualisation.quadlet.containers.forgejo = {
           autoStart = true;

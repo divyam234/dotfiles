@@ -14,7 +14,9 @@
         containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.hermes = { };
+        dot.containers.dataDirs.hermes = {
+          inherit (containers.owners.home) user group;
+        };
 
         # Seed hermes config on first boot
         system.activationScripts.seedHermesConfig = ''

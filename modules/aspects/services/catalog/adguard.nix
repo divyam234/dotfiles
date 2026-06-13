@@ -10,7 +10,9 @@
         containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs."adguard-cli" = { };
+        dot.containers.dataDirs."adguard-cli" = {
+          inherit (containers.owners.home) user group;
+        };
 
         virtualisation.quadlet.containers.adguard-cli = {
           autoStart = true;

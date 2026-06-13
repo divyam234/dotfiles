@@ -87,16 +87,17 @@
           };
 
           targets = {
-          bat.enable = true;
-          broot.enable = true;
-          fzf.enable = true;
-          ghostty.enable = true;
-          neovim.enable = true;
-          starship.enable = true;
-          yazi.enable = true;
-          zellij.enable = true;
+            bat.enable = true;
+            btop.enable = true;
+            broot.enable = true;
+            fzf.enable = true;
+            ghostty.enable = true;
+            neovim.enable = true;
+            starship.enable = true;
+            yazi.enable = true;
+            zellij.enable = true;
+          };
         };
       };
-    };
   };
 }

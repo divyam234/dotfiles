@@ -19,7 +19,9 @@
       in
       {
         dot.oci.secrets.vaultwarden.enable = true;
-        dot.containers.dataDirs.vaultwarden = { };
+        dot.containers.dataDirs.vaultwarden = {
+          inherit (containers.owners.home) user group;
+        };
 
         virtualisation.quadlet.containers.vaultwarden = {
           autoStart = true;

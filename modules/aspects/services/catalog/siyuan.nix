@@ -14,7 +14,9 @@
         containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.siyuan = { };
+        dot.containers.dataDirs.siyuan = {
+          inherit (containers.owners.home) user group;
+        };
         virtualisation.quadlet.containers.siyuan = {
           autoStart = true;
           containerConfig = {

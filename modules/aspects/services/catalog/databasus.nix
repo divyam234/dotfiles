@@ -9,7 +9,9 @@
         containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.databasus = { };
+        dot.containers.dataDirs.databasus = {
+          inherit (containers.owners.home) user group;
+        };
         virtualisation.quadlet.containers.databasus = {
           autoStart = false;
           containerConfig = {
