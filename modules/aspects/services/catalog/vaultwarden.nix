@@ -27,11 +27,12 @@
           autoStart = true;
           containerConfig = {
             name = "vaultwarden";
-            image = "vaultwarden/server:latest-alpine";
+            image = "docker.io/vaultwarden/server:latest-alpine";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "vaultwarden" ];
             environmentFiles = [ "${containers.secretDir}/vaultwarden.env" ];
             volumes = [ "${containers.dataRoot}/vaultwarden:/data" ];
+            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.postgres.ref ];

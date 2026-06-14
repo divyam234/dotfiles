@@ -35,6 +35,7 @@
               "${containers.dataRoot}/forgejo:/data:rw"
               # "/etc/localtime:/etc/localtime:ro"
             ];
+            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.pgdog.ref ];

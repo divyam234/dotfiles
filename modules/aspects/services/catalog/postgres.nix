@@ -22,6 +22,7 @@
             networkAliases = [ "postgres" ];
             environmentFiles = [ "${containers.secretDir}/postgres.env" ];
             volumes = [ "${containers.dataRoot}/postgres:/var/lib/postgresql" ];
+            autoUpdate = "registry";
           };
           serviceConfig = {
             Restart = "always";

@@ -21,6 +21,15 @@ eval-all:
 show:
     nix flake show
 
+clean:
+    nh clean all
+
+update:
+    nix flake update --commit-lock-file
+
+commit-locked:
+    nix flake update --commit-lock-file
+
 build h=host:
     nh os build . -H {{ h }}
 

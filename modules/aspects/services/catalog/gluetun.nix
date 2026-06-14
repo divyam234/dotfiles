@@ -20,7 +20,7 @@
           autoStart = true;
           containerConfig = {
             name = "gluetun";
-            image = "qmcgaw/gluetun";
+            image = "docker.io/qmcgaw/gluetun";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gluetun" ];
             environmentFiles = [ "${containers.secretDir}/gluetun.env" ];
@@ -35,6 +35,7 @@
               "127.0.0.1:1081:1081" # SOCKS5 proxy (for Caddy layer4)
             ];
             volumes = [ "${containers.dataRoot}/gluetun:/gluetun" ];
+            autoUpdate = "registry";
           };
           serviceConfig = {
             Restart = "always";

@@ -144,6 +144,7 @@
                 "${containers.dataRoot}/caddy:/data"
                 "${containers.dataRoot}/caddy-config:/config"
               ];
+              autoUpdate = "registry";
             };
             serviceConfig = {
               Restart = "always";

@@ -16,10 +16,11 @@
       }:
       let
         secretsFile = host.secretsFile;
+        passwordSecret = "users/${user.userName}_password";
       in
       {
         sops.secrets = lib.mkIf (secretsFile != null) {
-          "users/bhunter_password" = {
+          ${passwordSecret} = {
             sopsFile = secretsFile;
             neededForUsers = true;
           };
@@ -28,9 +29,7 @@
         users.users.${user.userName} = {
           description = user.fullName or user.userName;
           openssh.authorizedKeys.keys = user.authorizedKeys;
-          hashedPasswordFile = lib.mkIf (
-            secretsFile != null
-          ) config.sops.secrets."users/bhunter_password".path;
+          hashedPasswordFile = lib.mkIf (secretsFile != null) config.sops.secrets.${passwordSecret}.path;
         };
       };
   };

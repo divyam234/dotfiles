@@ -26,6 +26,7 @@
               "--no-fork"
             ];
             volumes = [ "${containers.dataRoot}/adguard-cli:/root/.local/share/adguard-cli" ];
+            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.gluetun.ref ];

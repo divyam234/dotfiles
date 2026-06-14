@@ -70,13 +70,13 @@
               args = [ "mcp" ];
             };
 
-            browser = mkLocalMcp {
-              package = "camofox-mcp";
-              enabled = true;
-              environment = {
-                CAMOFOX_URL = "http://localhost:9377";
-              };
-            };
+            # browser = mkLocalMcp {
+            #   package = "camofox-mcp";
+            #   enabled = true;
+            #   environment = {
+            #     CAMOFOX_URL = "http://localhost:9377";
+            #   };
+            # };
           };
 
           plugin = [

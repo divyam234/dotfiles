@@ -135,6 +135,20 @@
             default = "/run/secrets/container-env";
             description = "Runtime directory for generated container environment files.";
           };
+
+          autoUpdate = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to run podman auto-update for labelled containers.";
+            };
+
+            calendar = lib.mkOption {
+              type = lib.types.str;
+              default = "daily";
+              description = "Systemd calendar expression for podman auto-update.";
+            };
+          };
         };
 
         config = {
@@ -172,6 +186,32 @@
           ++ lib.mapAttrsToList (
             name: dir: "d ${cfg.dataRoot}/${name} ${dir.mode} ${dir.user} ${dir.group} -"
           ) cfg.dataDirs;
+
+          system.activationScripts.createContainerDataDirs = lib.concatStringsSep "\n" (
+            [
+              "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${cfg.dataRoot}"
+            ]
+            ++ lib.mapAttrsToList (
+              name: dir:
+              "${pkgs.coreutils}/bin/install -d -m ${dir.mode} -o ${dir.user} -g ${dir.group} ${cfg.dataRoot}/${name}"
+            ) cfg.dataDirs
+          );
+
+          systemd.services.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
+            description = "Podman auto-update containers";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.podman}/bin/podman auto-update";
+            };
+          };
+
+          systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.autoUpdate.calendar;
+              Persistent = true;
+            };
+          };
         };
       };
 

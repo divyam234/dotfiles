@@ -21,7 +21,7 @@
           autoStart = true;
           containerConfig = {
             name = "siyuan";
-            image = "b3log/siyuan";
+            image = "docker.io/b3log/siyuan";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "siyuan" ];
             exec = [ "--workspace=/siyuan/workspace" ];
@@ -31,6 +31,7 @@
               TZ = "UTC";
             };
             volumes = [ "${containers.dataRoot}/siyuan:/siyuan/workspace" ];
+            autoUpdate = "registry";
           };
           serviceConfig = {
             Restart = "always";

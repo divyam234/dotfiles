@@ -16,10 +16,11 @@
           autoStart = false;
           containerConfig = {
             name = "databasus";
-            image = "databasus/databasus";
+            image = "docker.io/databasus/databasus";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "databasus" ];
             volumes = [ "${containers.dataRoot}/databasus:/databasus-data" ];
+            autoUpdate = "registry";
           };
           serviceConfig = {
             Restart = "always";

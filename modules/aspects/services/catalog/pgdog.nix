@@ -48,6 +48,7 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "pgdog" ];
             volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
+            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.postgres.ref ];

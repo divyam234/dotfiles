@@ -17,11 +17,12 @@
           autoStart = true;
           containerConfig = {
             name = "redis";
-            image = "bitnami/redis";
+            image = "docker.io/bitnami/redis";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "redis" ];
             environmentFiles = [ "${containers.secretDir}/redis.env" ];
             volumes = [ "${containers.dataRoot}/redis:/bitnami/redis/data" ];
+            autoUpdate = "registry";
           };
           serviceConfig = {
             Restart = "always";

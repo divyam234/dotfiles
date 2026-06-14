@@ -27,12 +27,12 @@
             camofox:
               managed_persistence: true
           EOF
-            chmod 666 ${containers.dataRoot}/hermes/config.yaml
+            chmod 644 ${containers.dataRoot}/hermes/config.yaml
           fi
         '';
 
         virtualisation.quadlet.containers.hermes = {
-          autoStart = false;
+          autoStart = true;
           containerConfig = {
             name = "hermes";
             image = "docker.io/nousresearch/hermes-agent:latest";
@@ -41,6 +41,7 @@
             exec = [
               "gateway"
               "run"
+              "--insecure"
             ];
             environments = {
               HERMES_DASHBOARD = "1";
@@ -48,6 +49,7 @@
               CAMOFOX_URL = "http://camofox-browser:9377";
             };
             memory = "4g";
+            autoUpdate = "registry";
             podmanArgs = [ "--cpus=2.0" ];
             volumes = [ "${containers.dataRoot}/hermes:/opt/data" ];
           };

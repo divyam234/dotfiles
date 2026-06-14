@@ -11,13 +11,15 @@
       den.aspects.tailscale
     ];
 
-    homeManager = _: {
-      home = {
-        username = "bhunter";
-        homeDirectory = "/home/bhunter";
-        stateVersion = "26.05";
+    homeManager =
+      { user, ... }:
+      {
+        home = {
+          username = user.userName;
+          homeDirectory = "/home/${user.userName}";
+          stateVersion = "26.05";
+        };
       };
-    };
   };
 
   den.aspects.laptop = {
