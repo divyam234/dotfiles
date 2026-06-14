@@ -151,6 +151,17 @@
           };
         };
 
+        options.virtualisation.quadlet.containers = lib.mkOption {
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              config = {
+                containerConfig.stopTimeout = lib.mkDefault 60;
+                serviceConfig.TimeoutStopSec = lib.mkDefault "70s";
+              };
+            }
+          );
+        };
+
         config = {
           assertions = [
             {

@@ -126,6 +126,10 @@
             routes = config.dot.caddy.routes;
           };
 
+          systemd.services.caddy.restartTriggers = [
+            config.environment.etc."caddy/Caddyfile".source
+          ];
+
           virtualisation.quadlet.containers.caddy = {
             autoStart = true;
             containerConfig = {
