@@ -191,9 +191,14 @@
         };
       in
       {
-        home.packages = [
-          pkgs.opencode
-        ];
+        programs.opencode = {
+          enable = true;
+          package = pkgs.opencode;
+          settings = opencodeConfig;
+        };
+
+        stylix.targets.opencode.enable = true;
+
         programs.bunGlobalCli = {
           enable = true;
           packages = lib.mkAfter [
@@ -204,8 +209,6 @@
             calendar = "daily";
           };
         };
-
-        home.file.".config/opencode/opencode.json".source = json.generate "opencode.json" opencodeConfig;
 
         home.file.".config/opencode/oh-my-opencode-slim.json".source =
           json.generate "oh-my-opencode-slim.json" omoSlimConfig;
