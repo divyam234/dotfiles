@@ -41,11 +41,12 @@
             exec = [
               "gateway"
               "run"
-              "--insecure"
             ];
             environments = {
               HERMES_DASHBOARD = "1";
               HERMES_DASHBOARD_TUI = "1";
+              HERMES_DASHBOARD_INSECURE = "1";
+              HERMES_GATEWAY_NO_SUPERVISE = "1";
               CAMOFOX_URL = "http://camofox-browser:9377";
             };
             memory = "4g";
@@ -65,7 +66,7 @@
 
         dot.caddy.routes.hermes = {
           host = "ai.${host.domain}";
-          upstreams = [ "hermes:8642" ];
+          upstreams = [ "hermes:9119" ];
         };
       };
   };
