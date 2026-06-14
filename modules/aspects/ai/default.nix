@@ -181,13 +181,15 @@
               };
             };
           };
-
           balanceProviderUsage = false;
 
           fallback = {
             enabled = false;
             timeoutMs = 15000;
           };
+          # multiplexer = {
+          #   type = "zellij";
+          # };
         };
       in
       {

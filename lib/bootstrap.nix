@@ -13,9 +13,6 @@ let
     inputs.nur.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
-    (_final: prev: {
-      zjstatus = inputs.zjstatus.packages.${prev.stdenv.hostPlatform.system}.default;
-    })
     (final: _prev: {
       dot = extendedLib.dot;
       local = extendedLib.dot.importPackages final ../packages;

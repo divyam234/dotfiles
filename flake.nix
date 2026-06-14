@@ -57,6 +57,5 @@
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zjstatus.url = "github:dj95/zjstatus";
   };
 }

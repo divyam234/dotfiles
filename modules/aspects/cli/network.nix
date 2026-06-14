@@ -16,6 +16,7 @@
           ipcalc
           iperf3
           mtr
+          net-tools
           nmap
           rclone
           rsync
