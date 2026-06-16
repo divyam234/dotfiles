@@ -55,7 +55,7 @@
           enable = true;
           polarity = "dark";
           base16Scheme = ./nordic-night.yaml;
-
+          autoEnable = true;
           cursor = {
             name = "Bibata-Modern-Classic";
             package = pkgs.bibata-cursors;
@@ -84,18 +84,6 @@
               package = pkgs.noto-fonts-color-emoji;
               name = "Noto Color Emoji";
             };
-          };
-
-          targets = {
-            bat.enable = true;
-            btop.enable = true;
-            broot.enable = true;
-            fzf.enable = true;
-            ghostty.enable = true;
-            neovim.enable = true;
-            starship.enable = true;
-            yazi.enable = true;
-            zellij.enable = true;
           };
         };
       };

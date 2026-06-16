@@ -25,7 +25,7 @@ clean:
     nh clean all
 
 update:
-    nix flake update --commit-lock-file
+    nix flake update
 
 commit-locked:
     nix flake update --commit-lock-file
