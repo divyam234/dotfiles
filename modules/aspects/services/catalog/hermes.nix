@@ -32,7 +32,7 @@
         '';
 
         virtualisation.quadlet.containers.hermes = {
-          autoStart = true;
+          autoStart = false;
           containerConfig = {
             name = "hermes";
             image = "docker.io/nousresearch/hermes-agent:latest";

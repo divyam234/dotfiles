@@ -3,6 +3,7 @@
   den.aspects.forgejo = {
     includes = [
       den.aspects.oci-service
+      den.aspects.caddy
       den.aspects.pgdog
     ];
 
@@ -22,6 +23,15 @@
         dot.containers.dataDirs.forgejo = {
           inherit (containers.owners.home) user group;
         };
+
+        # dot.caddy.global.layer4Routes = [
+        #   ''
+        #     @ssh ssh
+        #     route @ssh {
+        #       proxy forgejo:2240
+        #     }
+        #   ''
+        # ];
 
         virtualisation.quadlet.containers.forgejo = {
           autoStart = true;

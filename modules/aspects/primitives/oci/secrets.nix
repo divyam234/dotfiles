@@ -130,7 +130,12 @@
                     FORGEJO__database__USER=${config.sops.placeholder."postgres/user"}
                     FORGEJO__database__PASSWD=${config.sops.placeholder."postgres/password"}
                     FORGEJO__database__SCHEMA=forgejo
-                    FORGEJO__database__SSL_MODE=disable
+                    # FORGEJO__database__SSL_MODE=disable
+                    # FORGEJO__server__DISABLE_SSH=false
+                    # FORGEJO__server__START_SSH_SERVER=true
+                    # FORGEJO__server__SSH_SERVER_USE_PROXY_PROTOCOL=false
+                    # FORGEJO__server__SSH_PORT=443
+                    # FORGEJO__server__SSH_LISTEN_PORT=2240
                   '';
                 };
               })

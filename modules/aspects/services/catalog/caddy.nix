@@ -99,6 +99,12 @@
               default = [ ];
               description = "Extra global Caddyfile directives.";
             };
+
+            layer4Routes = lib.mkOption {
+              type = lib.types.listOf lib.types.lines;
+              default = [ ];
+              description = "Layer4 listener wrapper routes inserted before TLS handling.";
+            };
           };
 
           routes = lib.mkOption {

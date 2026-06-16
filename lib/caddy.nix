@@ -70,12 +70,27 @@ rec {
     let
       enabledRoutes = lib.filterAttrs (_: route: route.enable) routes;
       renderedRoutes = lib.mapAttrsToList mkCaddyRoute enabledRoutes;
+      layer4Block =
+        if global.layer4Routes == [ ] then
+          ""
+        else
+          ''
+              servers {
+                listener_wrappers {
+                  layer4 {
+            ${indent "        " (lib.concatStringsSep "\n\n" global.layer4Routes)}
+                  }
+                  tls
+                }
+              }
+          '';
       globalOptions = lib.concatStringsSep "\n" (
         [
           "email ${global.email}"
           "admin ${global.admin}"
         ]
         ++ lib.optional global.debug "debug"
+        ++ lib.optional (layer4Block != "") layer4Block
         ++ global.extraGlobalConfig
       );
     in

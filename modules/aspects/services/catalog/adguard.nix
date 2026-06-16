@@ -1,7 +1,10 @@
 { den, ... }:
 {
   den.aspects.adguard = {
-    includes = [ den.aspects.oci-service ];
+    includes = [
+      den.aspects.oci-service
+      den.aspects.caddy
+    ];
 
     nixos =
       { config, lib, ... }:
@@ -10,6 +13,15 @@
         containers = config.dot.containers;
       in
       {
+        dot.caddy.global.layer4Routes = [
+          ''
+            @s5 socks5
+            route @s5 {
+              proxy gluetun:1081
+            }
+          ''
+        ];
+
         dot.containers.dataDirs."adguard-cli" = {
           inherit (containers.owners.home) user group;
         };
