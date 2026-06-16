@@ -64,10 +64,10 @@
           };
         };
 
-        dot.caddy.routes.hermes = {
-          host = "ai.${host.domain}";
-          upstreams = [ "hermes:9119" ];
-        };
+        # dot.caddy.routes.hermes = {
+        #   host = "ai.${host.domain}";
+        #   upstreams = [ "hermes:9119" ];
+        # };
       };
   };
 }

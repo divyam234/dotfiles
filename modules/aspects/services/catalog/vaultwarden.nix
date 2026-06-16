@@ -47,7 +47,9 @@
         dot.caddy.routes.vaultwarden = {
           host = "vault.${host.domain}";
           upstreams = [ "vaultwarden:80" ];
+          encode = false;
           cacheStatic = false;
+          tls = "internal";
           extraConfig = ''
             request_body {
               max_size 128MB
