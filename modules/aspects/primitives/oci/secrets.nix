@@ -13,7 +13,7 @@
       let
         cfg = config.dot.oci.secrets;
         containers = config.dot.containers;
-        secretsFile = host.secretsFile;
+        inherit (host) secretsFile;
         anyEnabled = lib.any (enabled: enabled) [
           cfg.caddy.enable
           cfg.forgejo.enable

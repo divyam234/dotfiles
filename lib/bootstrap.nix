@@ -14,7 +14,7 @@ let
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
     (final: _prev: {
-      dot = extendedLib.dot;
+      inherit (extendedLib) dot;
       local = extendedLib.dot.importPackages final ../packages;
     })
   ];

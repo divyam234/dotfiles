@@ -1,12 +1,10 @@
 { den, ... }:
 {
   den.aspects.gaming = {
-    nixos =
-      { ... }:
-      {
-        programs.steam.enable = true;
-        programs.gamemode.enable = true;
-      };
+    nixos = _: {
+      programs.steam.enable = true;
+      programs.gamemode.enable = true;
+    };
 
     homeManager =
       { pkgs, ... }:

@@ -1,4 +1,9 @@
-{ inputs, lib, ... }:
+{
+  self,
+  inputs,
+  lib,
+  ...
+}:
 let
   systems = [
     "x86_64-linux"
@@ -61,6 +66,36 @@ in
             exec fish ${svcFish} "$@"
           '';
         };
+      };
+
+      checks = {
+        formatter = pkgs.runCommand "dotfiles-format-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
+          cp -r ${../.} source
+          chmod -R u+w source
+          cd source
+          find . -name '*.nix' -print0 | xargs -0 nixfmt --check
+          touch $out
+        '';
+
+        deadnix = pkgs.runCommand "dotfiles-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
+          deadnix --fail ${../.}
+          touch $out
+        '';
+
+        statix = pkgs.runCommand "dotfiles-statix" { nativeBuildInputs = [ pkgs.statix ]; } ''
+          statix check ${../.}
+          touch $out
+        '';
+
+        registry-resolver = pkgs.runCommand "registry-resolver-tests" { } ''
+          ${pkgs.nix}/bin/nix-instantiate --eval --strict --expr 'import ${../tests/registry/resolve.nix} { lib = import ${inputs.nixpkgs}/lib; }' >/dev/null
+          touch $out
+        '';
+      }
+      // lib.optionalAttrs (system == "x86_64-linux") {
+        laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;
+        netcup-nixos-eval = self.nixosConfigurations.netcup.config.system.build.toplevel;
+        laptop-home-eval = self.homeConfigurations."bhunter@laptop".activationPackage;
       };
     };
 }

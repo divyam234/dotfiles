@@ -1,14 +1,12 @@
 { den, ... }:
 {
   den.aspects.sops = {
-    nixos =
-      { ... }:
-      {
-        sops = {
-          defaultSopsFormat = "yaml";
-          age.keyFile = "/var/lib/sops-nix/key.txt";
-        };
+    nixos = _: {
+      sops = {
+        defaultSopsFormat = "yaml";
+        age.keyFile = "/var/lib/sops-nix/key.txt";
       };
+    };
 
     homeManager =
       { config, ... }:

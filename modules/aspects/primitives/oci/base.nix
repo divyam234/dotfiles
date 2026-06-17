@@ -139,7 +139,7 @@
           autoUpdate = {
             enable = lib.mkOption {
               type = lib.types.bool;
-              default = true;
+              default = false;
               description = "Whether to run podman auto-update for labelled containers.";
             };
 
@@ -236,10 +236,6 @@
           dive
           skopeo
         ];
-
-        home.sessionVariables = {
-          DOCKER_HOST = "unix://%XDG_RUNTIME_DIR%/podman/podman.sock";
-        };
       };
   };
 }

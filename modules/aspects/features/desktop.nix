@@ -6,6 +6,8 @@
       den.aspects.fonts
       den.aspects.portals
       den.aspects.desktop-apps
+      den.aspects.noctalia
+      den.aspects.kde
       den.aspects.ghostty
     ];
 

@@ -15,7 +15,7 @@
         ...
       }:
       let
-        secretsFile = host.secretsFile;
+        inherit (host) secretsFile;
         passwordSecret = "users/${user.userName}_password";
       in
       {

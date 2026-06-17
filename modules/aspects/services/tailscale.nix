@@ -13,7 +13,7 @@
       }:
       let
         cfg = config.dot.tailscale;
-        secretsFile = host.secretsFile;
+        inherit (host) secretsFile;
         authSecretPath = config.sops.secrets.${cfg.authSecret}.path;
         boolString = value: if value then "true" else "false";
         joinComma = lib.concatStringsSep ",";
@@ -103,7 +103,7 @@
 
           services.tailscale = {
             enable = true;
-            package = cfg.package;
+            inherit (cfg) package;
             useRoutingFeatures = "server";
           };
 

@@ -22,10 +22,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
-    dms = {
-      url = "github:AvengeMedia/DankMaterialShell/stable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     niri-nix = {
       url = "git+https://codeberg.org/BANanaD3V/niri-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -62,6 +58,7 @@
   imports = [
     inputs.flake-file.flakeModules.dendritic
     inputs.den.flakeModule
+    ./core/defaults.nix
     (inputs.import-tree.match ".*/default\\.nix" ../hosts)
   ];
 
