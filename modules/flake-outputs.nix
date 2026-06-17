@@ -20,7 +20,13 @@ in
           nixfmt
         ];
         text = ''
-          git ls-files '*.nix' -z | xargs -0 nixfmt
+          git ls-files '*.nix' -z \
+            | while IFS= read -r -d ''' file; do
+                if [ -e "$file" ]; then
+                  printf '%s\0' "$file"
+                fi
+              done \
+            | xargs -0 --no-run-if-empty nixfmt
         '';
       };
 

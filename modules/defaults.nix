@@ -6,6 +6,22 @@
 }:
 let
   dotBootstrap = import ../lib/bootstrap.nix { inherit inputs lib; };
+  serviceNames = [
+    "adguard"
+    "caddy"
+    "camofox"
+    "databasus"
+    "forgejo"
+    "gluetun"
+    "hermes"
+    "openchamber"
+    "pgdog"
+    "postgres"
+    "redis"
+    "restic"
+    "siyuan"
+    "vaultwarden"
+  ];
 in
 {
   # Nixicle-style context defaults: user entities opt into Home Manager inside
@@ -85,6 +101,34 @@ in
     { lib, ... }:
     {
       options = {
+        profiles = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.enum [
+              "desktop"
+              "server"
+            ]
+          );
+          default = [ ];
+          description = "High-level host profile bundles to include.";
+        };
+
+        features = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.enum [
+              "btrfs"
+              "containers"
+              "gaming"
+              "tailscale"
+            ]
+          );
+          default = [ ];
+          description = "Optional host capabilities to include.";
+        };
+
+        services = lib.genAttrs serviceNames (name: {
+          enable = lib.mkEnableOption "${name} service aspect";
+        });
+
         secretsFile = lib.mkOption {
           type = lib.types.nullOr lib.types.path;
           default = null;
