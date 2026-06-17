@@ -11,7 +11,7 @@ in
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/disk/by-id/CHANGE_ME_HOMEPC_DISK";
+    device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_M.2_250GB_S413NX0KA09386Y";
     content = {
       type = "gpt";
       partitions = {
@@ -59,10 +59,6 @@ in
               "@snapshots" = {
                 mountpoint = "/.snapshots";
                 mountOptions = commonMountOptions;
-              };
-              "@swap" = {
-                mountpoint = "/swap";
-                mountOptions = [ "noatime" ];
               };
             };
           };
