@@ -28,7 +28,7 @@
 
   den.aspects.security-server = {
     nixos = {
-      security.sudo.wheelNeedsPassword = true;
+      security.sudo.wheelNeedsPassword = false;
       services.openssh = {
         openFirewall = true;
         settings = {
