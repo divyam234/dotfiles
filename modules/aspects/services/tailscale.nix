@@ -12,7 +12,21 @@
         ...
       }:
       let
-        cfg = config.dot.tailscale;
+        cfg = {
+          enable = true;
+          package = pkgs.tailscale;
+          ssh = true;
+          hostname = config.networking.hostName or null;
+          exitNode = false;
+          advertiseRoutes = [ ];
+          acceptRoutes = false;
+          advertiseTags = [ "tag:nixos" ];
+          acceptRisk = null;
+          authSecret = "tailscale/oauth_client_secret";
+          ephemeral = false;
+          preauthorized = true;
+        }
+        // (host.tailscale or { });
         inherit (host) secretsFile;
         authSecretPath = config.sops.secrets.${cfg.authSecret}.path;
         boolString = value: if value then "true" else "false";
@@ -30,69 +44,6 @@
         upArgsText = lib.concatMapStringsSep " " lib.escapeShellArg upArgs;
       in
       {
-        options.dot.tailscale = {
-          enable = lib.mkEnableOption "Tailscale" // {
-            default = true;
-          };
-          package = lib.mkPackageOption pkgs "tailscale" { };
-          ssh = lib.mkOption {
-            description = "Enable Tailscale SSH.";
-            type = lib.types.bool;
-            default = true;
-          };
-          hostname = lib.mkOption {
-            description = "Machine name to advertise to Tailscale.";
-            type = lib.types.nullOr lib.types.str;
-            default = config.networking.hostName or null;
-          };
-          exitNode = lib.mkOption {
-            description = "Advertise this machine as a Tailscale exit node.";
-            type = lib.types.bool;
-            default = false;
-          };
-          advertiseRoutes = lib.mkOption {
-            description = "Routes to advertise to the tailnet.";
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-            example = [ "192.168.1.0/24" ];
-          };
-          acceptRoutes = lib.mkOption {
-            description = "Accept routes advertised by other tailnet nodes.";
-            type = lib.types.bool;
-            default = false;
-          };
-          advertiseTags = lib.mkOption {
-            description = "Tags to advertise when authenticating.";
-            type = lib.types.listOf lib.types.str;
-            default = [ "tag:nixos" ];
-          };
-          acceptRisk = lib.mkOption {
-            description = "Risk acknowledgement passed to tailscale up.";
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-          };
-          autoconnect = lib.mkOption {
-            description = "Authenticate automatically using the configured SOPS OAuth client secret.";
-            type = lib.types.bool;
-            default = false;
-          };
-          authSecret = lib.mkOption {
-            description = "SOPS secret key containing the Tailscale OAuth client secret.";
-            type = lib.types.str;
-            default = "tailscale/oauth_client_secret";
-          };
-          ephemeral = lib.mkOption {
-            description = "Whether OAuth-authenticated nodes should be ephemeral.";
-            type = lib.types.bool;
-            default = false;
-          };
-          preauthorized = lib.mkOption {
-            description = "Whether OAuth-authenticated nodes should be preauthorized.";
-            type = lib.types.bool;
-            default = true;
-          };
-        };
-
         config = lib.mkIf cfg.enable {
           assertions = [
             {

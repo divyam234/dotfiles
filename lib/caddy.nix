@@ -47,15 +47,24 @@ rec {
   mkCaddyRoute =
     name: route:
     let
-      tlsBlock = mkCaddyTls route.tls;
-      cacheBlock = if route.cacheStatic then mkStaticCache else "";
-      headersBlock = if route.securityHeaders then mkCaddySecurityHeaders else "";
-      encodeBlock = if route.encode then "encode zstd gzip" else "";
-      upstreams = lib.concatStringsSep " " route.upstreams;
-      extraConfig = route.extraConfig or "";
+      normalized = {
+        enable = true;
+        encode = true;
+        cacheStatic = false;
+        securityHeaders = true;
+        tls = "cloudflare";
+        extraConfig = "";
+      }
+      // route;
+      tlsBlock = mkCaddyTls normalized.tls;
+      cacheBlock = if normalized.cacheStatic then mkStaticCache else "";
+      headersBlock = if normalized.securityHeaders then mkCaddySecurityHeaders else "";
+      encodeBlock = if normalized.encode then "encode zstd gzip" else "";
+      upstreams = lib.concatStringsSep " " normalized.upstreams;
+      extraConfig = normalized.extraConfig;
     in
     ''
-      ${route.host} {
+      ${normalized.host} {
         ${encodeBlock}
         ${tlsBlock}
         ${headersBlock}
@@ -68,7 +77,7 @@ rec {
   mkCaddyfile =
     { global, routes }:
     let
-      enabledRoutes = lib.filterAttrs (_: route: route.enable) routes;
+      enabledRoutes = lib.filterAttrs (_: route: route.enable or true) routes;
       renderedRoutes = lib.mapAttrsToList mkCaddyRoute enabledRoutes;
       layer4Block =
         if global.layer4Routes == [ ] then

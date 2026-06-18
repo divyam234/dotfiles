@@ -50,5 +50,6 @@
 
     domain = "bhunter.tech";
     secretsFile = ../hosts/netcup/secrets.yaml;
+    tailscale.autoconnect = true;
   };
 }

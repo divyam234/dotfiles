@@ -15,10 +15,43 @@
         user,
         lib,
         config,
+        containerDataDirs,
         ...
       }:
       let
-        cfg = config.dot.containers;
+        rawDataDirs = lib.foldl' lib.recursiveUpdate { } containerDataDirs;
+        normalizeDataDir =
+          dir:
+          {
+            user = user.userName;
+            group = "users";
+            mode = "0750";
+          }
+          // dir;
+        cfg = {
+          dataRoot = "/home/${user.userName}/.local/state/container-services";
+          dataDirs = lib.mapAttrs (_name: normalizeDataDir) rawDataDirs;
+          owners = {
+            home = {
+              user = user.userName;
+              group = "users";
+            };
+            postgres = {
+              user = "999";
+              group = "999";
+            };
+            bitnami = {
+              user = "1001";
+              group = "0";
+            };
+          };
+          networkName = "svc";
+          secretDir = "/run/secrets/container-env";
+          autoUpdate = {
+            enable = false;
+            calendar = "daily";
+          };
+        };
         pathPrefixes =
           path:
           let
@@ -34,45 +67,11 @@
                 [ next ] ++ go next (builtins.tail rest);
           in
           go "" parts;
-        ownerType = lib.types.submodule {
-          options = {
-            user = lib.mkOption {
-              type = lib.types.str;
-              description = "Host UID or username used as a container data owner.";
-            };
-
-            group = lib.mkOption {
-              type = lib.types.str;
-              description = "Host GID or group name used as a container data group.";
-            };
-          };
-        };
         dataDirUsers = lib.unique (
           lib.filter (dirUser: dirUser != user.userName) (
             lib.mapAttrsToList (_name: dir: dir.user) cfg.dataDirs
           )
         );
-        dataDirType = lib.types.submodule {
-          options = {
-            user = lib.mkOption {
-              type = lib.types.str;
-              default = user.userName;
-              description = "Owner used for this service container data directory.";
-            };
-
-            group = lib.mkOption {
-              type = lib.types.str;
-              default = "users";
-              description = "Group used for this service container data directory.";
-            };
-
-            mode = lib.mkOption {
-              type = lib.types.str;
-              default = "0750";
-              description = "Mode used for this service container data directory.";
-            };
-          };
-        };
         dataRootPrefix = "${cfg.dataRoot}/";
         mountedDataDirs = lib.unique (
           lib.concatLists (
@@ -92,65 +91,6 @@
         missingDataDirs = lib.filter (name: !(builtins.hasAttr name cfg.dataDirs)) mountedDataDirs;
       in
       {
-        options.dot.containers = {
-          dataRoot = lib.mkOption {
-            type = lib.types.str;
-            default = "/home/${user.userName}/.local/state/container-services";
-            description = "Host directory root for persistent service container bind mounts.";
-          };
-
-          dataDirs = lib.mkOption {
-            type = lib.types.attrsOf dataDirType;
-            default = { };
-            description = "Service container data directories created below dot.containers.dataRoot.";
-          };
-
-          owners = lib.mkOption {
-            type = lib.types.attrsOf ownerType;
-            default = {
-              home = {
-                user = user.userName;
-                group = "users";
-              };
-              postgres = {
-                user = "999";
-                group = "999";
-              };
-              bitnami = {
-                user = "1001";
-                group = "0";
-              };
-            };
-            description = "Semantic host ownership presets for service container data directories.";
-          };
-
-          networkName = lib.mkOption {
-            type = lib.types.str;
-            default = "svc";
-            description = "Shared Podman network name for service containers.";
-          };
-
-          secretDir = lib.mkOption {
-            type = lib.types.str;
-            default = "/run/secrets/container-env";
-            description = "Runtime directory for generated container environment files.";
-          };
-
-          autoUpdate = {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Whether to run podman auto-update for labelled containers.";
-            };
-
-            calendar = lib.mkOption {
-              type = lib.types.str;
-              default = "daily";
-              description = "Systemd calendar expression for podman auto-update.";
-            };
-          };
-        };
-
         options.virtualisation.quadlet.containers = lib.mkOption {
           type = lib.types.attrsOf (
             lib.types.submodule {
@@ -163,10 +103,12 @@
         };
 
         config = {
+          _module.args.containers = cfg;
+
           assertions = [
             {
               assertion = missingDataDirs == [ ];
-              message = "Container dataRoot bind mounts are missing dot.containers.dataDirs entries: ${lib.concatStringsSep ", " missingDataDirs}";
+              message = "Container dataRoot bind mounts are missing containerDataDirs quirk entries: ${lib.concatStringsSep ", " missingDataDirs}";
             }
           ];
 

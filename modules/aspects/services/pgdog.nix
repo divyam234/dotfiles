@@ -5,13 +5,12 @@
     nixos =
       {
         config,
+        containers,
         pkgs,
-        lib,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
         toml = pkgs.formats.toml { };
         pgdogConfig = {
           general = {

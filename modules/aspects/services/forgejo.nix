@@ -1,34 +1,35 @@
 { den, ... }:
 {
-  den.aspects.forgejo = {
+  den.aspects.forgejo = { user, host, ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "forgejo" ];
+    containerDataDirs.forgejo = {
+      user = user.userName;
+      group = "users";
+    };
+    caddyRoutes = {
+      forgejo = {
+        host = "git.${host.domain}";
+        upstreams = [ "forgejo:3000" ];
+        cacheStatic = true;
+        extraConfig = ''
+          request_body {
+            max_size 512MB
+          }
+        '';
+      };
+    };
 
     nixos =
       {
         config,
-        lib,
-        host,
+        containers,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.oci.secrets.forgejo.enable = true;
-        dot.containers.dataDirs.forgejo = {
-          inherit (containers.owners.home) user group;
-        };
-
-        # dot.caddy.global.layer4Routes = [
-        #   ''
-        #     @ssh ssh
-        #     route @ssh {
-        #       proxy forgejo:2240
-        #     }
-        #   ''
-        # ];
-
         virtualisation.quadlet.containers.forgejo = {
           autoStart = true;
           containerConfig = {
@@ -55,17 +56,6 @@
             MemoryMax = "1G";
             CPUQuota = "150%";
           };
-        };
-
-        dot.caddy.routes.forgejo = {
-          host = "git.${host.domain}";
-          upstreams = [ "forgejo:3000" ];
-          cacheStatic = true;
-          extraConfig = ''
-            request_body {
-              max_size 512MB
-            }
-          '';
         };
       };
   };

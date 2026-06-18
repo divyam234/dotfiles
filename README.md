@@ -76,8 +76,8 @@ Service modules may keep runtime ordering such as Quadlet `After` and `Requires`
 ## Inspecting resolved plans
 
 ```bash
-nix eval --json .#nixosConfigurations.laptop.config.dot.inventory
-nix eval --json .#nixosConfigurations.netcup.config.dot.inventory
+nix eval --json .#resolvedHosts.laptop
+nix eval --json .#resolvedHosts.netcup
 ```
 
 The output shows requested features/services and resolved transitive dependencies.
@@ -101,7 +101,7 @@ Application services run as rootful system Quadlets through Podman.
 - Shared Podman network: `svc`.
 - Runtime secret env directory: `/run/secrets/container-env`.
 - Persistent data root: `/home/<user>/.local/state/container-services`.
-- Automatic registry updates are disabled by default; image updates are deliberate config changes.
+- Service container images use their provided tags/references and opt into Podman `autoUpdate = "registry"`.
 
 ## Backups and restore
 
@@ -113,6 +113,6 @@ Restore outline:
 
 1. Restore Restic data to a temporary directory.
 2. Stop affected Quadlet services.
-3. Restore service data directories under `dot.containers.dataRoot`.
+3. Restore service data directories under `/home/<user>/.local/state/container-services`.
 4. For PostgreSQL, restore from the dump with `psql`/`pg_restore` into a fresh container instead of relying only on copied live data files.
 5. Start dependencies first, then application services.

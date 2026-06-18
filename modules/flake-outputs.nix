@@ -10,8 +10,16 @@ let
     "aarch64-linux"
   ];
   forAllSystems = lib.genAttrs systems;
+  registry = import ../registry;
+  users = import ../inventory/users.nix;
+  hosts = import ../inventory/hosts.nix;
+  inherit ((import ../lib/registry/resolve.nix { inherit lib; })) resolveHost;
 in
 {
+  flake.resolvedHosts = lib.mapAttrs (
+    _name: host: resolveHost { inherit registry users host; }
+  ) hosts;
+
   perSystem =
     { pkgs, system, ... }:
     let

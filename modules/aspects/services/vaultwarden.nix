@@ -1,25 +1,37 @@
 { den, ... }:
 {
-  den.aspects.vaultwarden = {
+  den.aspects.vaultwarden = { user, host, ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "vaultwarden" ];
+    containerDataDirs.vaultwarden = {
+      user = user.userName;
+      group = "users";
+    };
+    caddyRoutes = {
+      vaultwarden = {
+        host = "vault.${host.domain}";
+        upstreams = [ "vaultwarden:80" ];
+        encode = false;
+        cacheStatic = false;
+        tls = "internal";
+        extraConfig = ''
+          request_body {
+            max_size 128MB
+          }
+        '';
+      };
+    };
 
     nixos =
       {
         config,
-        lib,
-        host,
+        containers,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.oci.secrets.vaultwarden.enable = true;
-        dot.containers.dataDirs.vaultwarden = {
-          inherit (containers.owners.home) user group;
-        };
-
         virtualisation.quadlet.containers.vaultwarden = {
           autoStart = true;
           containerConfig = {
@@ -43,19 +55,6 @@
             MemoryMax = "512M";
             CPUQuota = "100%";
           };
-        };
-
-        dot.caddy.routes.vaultwarden = {
-          host = "vault.${host.domain}";
-          upstreams = [ "vaultwarden:80" ];
-          encode = false;
-          cacheStatic = false;
-          tls = "internal";
-          extraConfig = ''
-            request_body {
-              max_size 128MB
-            }
-          '';
         };
       };
   };

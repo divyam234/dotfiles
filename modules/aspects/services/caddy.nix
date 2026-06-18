@@ -1,18 +1,39 @@
 { den, ... }:
 {
-  den.aspects.caddy = {
+  den.aspects.caddy = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "caddy" ];
+    containerDataDirs = {
+      caddy = {
+        user = user.userName;
+        group = "users";
+      };
+      "caddy-config" = {
+        user = user.userName;
+        group = "users";
+      };
+    };
 
     nixos =
       {
         config,
+        caddyLayer4Routes,
+        caddyRoutes,
+        containers,
         lib,
         host,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
+        global = {
+          email = acmeEmail;
+          admin = "off";
+          debug = false;
+          extraGlobalConfig = [ ];
+          layer4Routes = lib.flatten caddyLayer4Routes;
+        };
+        routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
         caddyRouteType = lib.types.submodule (_: {
           options = {
             enable = lib.mkOption {
@@ -71,62 +92,9 @@
         acmeEmail = if host.caddyEmail != null then host.caddyEmail else "admin@${host.domain}";
       in
       {
-        options.dot.caddy = {
-          global = {
-            email = lib.mkOption {
-              type = lib.types.str;
-              default = "admin@example.com";
-              description = "ACME contact email used in the generated Caddyfile.";
-            };
-
-            admin = lib.mkOption {
-              type = lib.types.str;
-              default = "off";
-              description = "Caddy admin endpoint value.";
-            };
-
-            debug = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Enable Caddy debug logging.";
-            };
-
-            extraGlobalConfig = lib.mkOption {
-              type = lib.types.listOf lib.types.lines;
-              default = [ ];
-              description = "Extra global Caddyfile directives.";
-            };
-
-            layer4Routes = lib.mkOption {
-              type = lib.types.listOf lib.types.lines;
-              default = [ ];
-              description = "Layer4 listener wrapper routes inserted before TLS handling.";
-            };
-          };
-
-          routes = lib.mkOption {
-            type = lib.types.attrsOf caddyRouteType;
-            default = { };
-            description = "Routes collected from service aspects and rendered by the Caddy container aspect.";
-          };
-        };
-
         config = {
-          dot.oci.secrets.caddy.enable = true;
-          dot.caddy.global.email = lib.mkDefault acmeEmail;
-
-          dot.containers.dataDirs = {
-            caddy = {
-              inherit (containers.owners.home) user group;
-            };
-            "caddy-config" = {
-              inherit (containers.owners.home) user group;
-            };
-          };
-
-          environment.etc."caddy/Caddyfile".text = lib.dot.mkCaddyfile {
-            global = config.dot.caddy.global;
-            routes = config.dot.caddy.routes;
+          environment.etc."caddy/Caddyfile".text = lib.denful.mkCaddyfile {
+            inherit global routes;
           };
 
           systemd.services.caddy.restartTriggers = [

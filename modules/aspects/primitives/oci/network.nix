@@ -2,18 +2,18 @@
 {
   den.aspects.container-network = {
     nixos =
-      { config, ... }:
+      { ... }:
       let
-        cfg = config.dot.containers;
+        networkName = "svc";
       in
       {
-        virtualisation.quadlet.networks.${cfg.networkName}.networkConfig = {
-          name = cfg.networkName;
+        virtualisation.quadlet.networks.${networkName}.networkConfig = {
+          name = networkName;
           driver = "bridge";
-          interfaceName = "br-${cfg.networkName}";
+          interfaceName = "br-${networkName}";
         };
 
-        networking.firewall.interfaces."br-${cfg.networkName}".allowedUDPPorts = [ 53 ];
+        networking.firewall.interfaces."br-${networkName}".allowedUDPPorts = [ 53 ];
       };
   };
 }

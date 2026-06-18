@@ -1,7 +1,13 @@
 { den, ... }:
 {
-  den.aspects.openchamber = {
+  den.aspects.openchamber = { host, ... }: {
     includes = [ ];
+    caddyRoutes = {
+      openchamber = {
+        host = "ai.${host.domain}";
+        upstreams = [ "host.containers.internal:39173" ];
+      };
+    };
 
     homeManager =
       { lib, pkgs, ... }:
@@ -53,16 +59,11 @@
       };
 
     nixos =
-      { config, host, ... }:
+      { containers, ... }:
       {
-        networking.firewall.interfaces."br-${config.dot.containers.networkName}".allowedTCPPorts = [
+        networking.firewall.interfaces."br-${containers.networkName}".allowedTCPPorts = [
           39173
         ];
-
-        dot.caddy.routes.openchamber = {
-          host = "ai.${host.domain}";
-          upstreams = [ "host.containers.internal:39173" ];
-        };
       };
   };
 }

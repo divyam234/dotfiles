@@ -2,7 +2,7 @@
 let
   extendedLib = lib.extend (
     self: _super: {
-      dot = import ./default.nix {
+      denful = import ./default.nix {
         inherit inputs;
         lib = self;
       };
@@ -14,8 +14,7 @@ let
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
     (final: _prev: {
-      inherit (extendedLib) dot;
-      local = extendedLib.dot.importPackages final ../packages;
+      local = extendedLib.denful.importPackages final ../packages;
     })
   ];
 in

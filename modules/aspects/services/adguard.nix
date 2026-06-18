@@ -1,28 +1,26 @@
 { den, ... }:
 {
-  den.aspects.adguard = {
+  den.aspects.adguard = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    caddyLayer4Routes = [
+      ''
+        @s5 socks5
+        route @s5 {
+          proxy gluetun:1081
+        }
+      ''
+    ];
+    containerDataDirs."adguard-cli" = {
+      user = user.userName;
+      group = "users";
+    };
 
     nixos =
-      { config, lib, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.caddy.global.layer4Routes = [
-          ''
-            @s5 socks5
-            route @s5 {
-              proxy gluetun:1081
-            }
-          ''
-        ];
-
-        dot.containers.dataDirs."adguard-cli" = {
-          inherit (containers.owners.home) user group;
-        };
-
         virtualisation.quadlet.containers.adguard-cli = {
           autoStart = true;
           containerConfig = {

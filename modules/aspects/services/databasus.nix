@@ -1,17 +1,18 @@
 { den, ... }:
 {
-  den.aspects.databasus = {
+  den.aspects.databasus = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    containerDataDirs.databasus = {
+      user = user.userName;
+      group = "users";
+    };
+
     nixos =
-      { config, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.databasus = {
-          inherit (containers.owners.home) user group;
-        };
         virtualisation.quadlet.containers.databasus = {
           autoStart = false;
           containerConfig = {

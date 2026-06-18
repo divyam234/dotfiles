@@ -4,6 +4,7 @@
     nixos =
       {
         config,
+        containers,
         host,
         lib,
         pkgs,
@@ -35,7 +36,7 @@
         services.restic.backups.${backupName} = {
           initialize = true;
           paths = [
-            config.dot.containers.dataRoot
+            containers.dataRoot
             postgresDumpDir
           ];
           passwordFile = config.sops.secrets."restic/password".path;

@@ -1,22 +1,28 @@
 { den, ... }:
 {
-  den.aspects.siyuan = {
+  den.aspects.siyuan = { user, host, ... }: {
     includes = [ den.aspects.oci-service ];
+    containerDataDirs.siyuan = {
+      user = user.userName;
+      group = "users";
+    };
+    caddyRoutes = {
+      siyuan = {
+        host = "notes.${host.domain}";
+        upstreams = [ "siyuan:6806" ];
+      };
+    };
+
     nixos =
       {
         config,
-        lib,
-        host,
+        containers,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.siyuan = {
-          inherit (containers.owners.home) user group;
-        };
         virtualisation.quadlet.containers.siyuan = {
           autoStart = true;
           containerConfig = {
@@ -40,11 +46,6 @@
             MemoryMax = "1G";
             CPUQuota = "100%";
           };
-        };
-
-        dot.caddy.routes.siyuan = {
-          host = "notes.${host.domain}";
-          upstreams = [ "siyuan:6806" ];
         };
       };
   };

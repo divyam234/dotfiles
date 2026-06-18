@@ -12,7 +12,6 @@
 
         services.qemuGuest.enable = true;
         networking.domain = host.domain;
-        dot.tailscale.autoconnect = true;
         system.stateVersion = "26.05";
       };
   };

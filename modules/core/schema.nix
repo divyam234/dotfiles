@@ -73,6 +73,20 @@ in
           default = { };
           description = "Typed primary monitor metadata used by desktop aspects.";
         };
+
+        tailscale = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              autoconnect = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Authenticate automatically using the configured SOPS OAuth client secret.";
+              };
+            };
+          };
+          default = { };
+          description = "Host-specific Tailscale settings.";
+        };
       };
     };
 }

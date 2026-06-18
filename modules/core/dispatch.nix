@@ -29,18 +29,6 @@ let
         serviceName: den.aspects.${registry.services.${serviceName}.aspect}
       ) resolved.resolvedServices;
 
-      nixos =
-        { lib, ... }:
-        {
-          options.dot.inventory = lib.mkOption {
-            type = lib.types.attrs;
-            readOnly = true;
-            description = "Resolved inventory plan for this host.";
-          };
-
-          config.dot.inventory = resolved;
-        };
-
       homeManager =
         { user, ... }:
         {

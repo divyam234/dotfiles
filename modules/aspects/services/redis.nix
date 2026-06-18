@@ -1,18 +1,19 @@
 { den, ... }:
 {
-  den.aspects.redis = {
+  den.aspects.redis = { ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "redis" ];
+    containerDataDirs.redis = {
+      user = "1001";
+      group = "0";
+    };
+
     nixos =
-      { config, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.oci.secrets.redis.enable = true;
-        dot.containers.dataDirs.redis = {
-          inherit (containers.owners.bitnami) user group;
-        };
         virtualisation.quadlet.containers.redis = {
           autoStart = true;
           containerConfig = {

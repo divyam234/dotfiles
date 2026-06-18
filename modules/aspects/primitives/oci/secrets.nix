@@ -6,38 +6,30 @@
     nixos =
       {
         config,
+        ociSecrets,
         lib,
         host,
         ...
       }:
       let
-        cfg = config.dot.oci.secrets;
-        containers = config.dot.containers;
+        enabled = name: builtins.elem name (lib.flatten ociSecrets);
+        containers.secretDir = "/run/secrets/container-env";
         inherit (host) secretsFile;
         anyEnabled = lib.any (enabled: enabled) [
-          cfg.caddy.enable
-          cfg.forgejo.enable
-          cfg.gluetun.enable
-          cfg.postgres.enable
-          cfg.redis.enable
-          cfg.vaultwarden.enable
+          (enabled "caddy")
+          (enabled "forgejo")
+          (enabled "gluetun")
+          (enabled "postgres")
+          (enabled "redis")
+          (enabled "vaultwarden")
         ];
         postgresCredentialsNeeded = lib.any (enabled: enabled) [
-          cfg.forgejo.enable
-          cfg.postgres.enable
-          cfg.vaultwarden.enable
+          (enabled "forgejo")
+          (enabled "postgres")
+          (enabled "vaultwarden")
         ];
       in
       {
-        options.dot.oci.secrets = {
-          caddy.enable = lib.mkEnableOption "Caddy Cloudflare environment file";
-          forgejo.enable = lib.mkEnableOption "Forgejo database environment file";
-          gluetun.enable = lib.mkEnableOption "Gluetun VPN environment file";
-          postgres.enable = lib.mkEnableOption "Postgres environment file";
-          redis.enable = lib.mkEnableOption "Redis environment file";
-          vaultwarden.enable = lib.mkEnableOption "Vaultwarden environment file";
-        };
-
         config = {
           assertions = [
             {
@@ -52,16 +44,16 @@
                 "postgres/user".sopsFile = secretsFile;
                 "postgres/password".sopsFile = secretsFile;
               })
-              (lib.mkIf cfg.caddy.enable {
+              (lib.mkIf (enabled "caddy") {
                 "cloudflare/api_token".sopsFile = secretsFile;
               })
-              (lib.mkIf cfg.gluetun.enable {
+              (lib.mkIf (enabled "gluetun") {
                 "wireguard/private_key".sopsFile = secretsFile;
               })
-              (lib.mkIf cfg.redis.enable {
+              (lib.mkIf (enabled "redis") {
                 "redis/password".sopsFile = secretsFile;
               })
-              (lib.mkIf cfg.vaultwarden.enable {
+              (lib.mkIf (enabled "vaultwarden") {
                 "vaultwarden/admin_token".sopsFile = secretsFile;
               })
             ]
@@ -69,7 +61,7 @@
 
           sops.templates = lib.mkIf (secretsFile != null) (
             lib.mkMerge [
-              (lib.mkIf cfg.postgres.enable {
+              (lib.mkIf (enabled "postgres") {
                 "postgres.env" = {
                   path = "${containers.secretDir}/postgres.env";
                   mode = "0440";
@@ -81,7 +73,7 @@
                 };
               })
 
-              (lib.mkIf cfg.gluetun.enable {
+              (lib.mkIf (enabled "gluetun") {
                 "gluetun.env" = {
                   path = "${containers.secretDir}/gluetun.env";
                   mode = "0440";
@@ -99,7 +91,7 @@
                 };
               })
 
-              (lib.mkIf cfg.redis.enable {
+              (lib.mkIf (enabled "redis") {
                 "redis.env" = {
                   path = "${containers.secretDir}/redis.env";
                   mode = "0440";
@@ -109,7 +101,7 @@
                 };
               })
 
-              (lib.mkIf cfg.caddy.enable {
+              (lib.mkIf (enabled "caddy") {
                 "caddy.env" = {
                   path = "${containers.secretDir}/caddy.env";
                   mode = "0440";
@@ -119,7 +111,7 @@
                 };
               })
 
-              (lib.mkIf cfg.forgejo.enable {
+              (lib.mkIf (enabled "forgejo") {
                 "forgejo.env" = {
                   path = "${containers.secretDir}/forgejo.env";
                   mode = "0440";
@@ -140,7 +132,7 @@
                 };
               })
 
-              (lib.mkIf cfg.vaultwarden.enable {
+              (lib.mkIf (enabled "vaultwarden") {
                 "vaultwarden.env" = {
                   path = "${containers.secretDir}/vaultwarden.env";
                   mode = "0440";

@@ -1,23 +1,22 @@
 { den, ... }:
 {
-  den.aspects.hermes = {
+  den.aspects.hermes = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    containerDataDirs.hermes = {
+      user = user.userName;
+      group = "users";
+    };
+
     nixos =
       {
         config,
-        lib,
-        host,
+        containers,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.hermes = {
-          inherit (containers.owners.home) user group;
-        };
-
         # Seed hermes config on first boot
         system.activationScripts.seedHermesConfig = ''
           if [ ! -f ${containers.dataRoot}/hermes/config.yaml ]; then
@@ -65,10 +64,6 @@
           };
         };
 
-        # dot.caddy.routes.hermes = {
-        #   host = "ai.${host.domain}";
-        #   upstreams = [ "hermes:9119" ];
-        # };
       };
   };
 }

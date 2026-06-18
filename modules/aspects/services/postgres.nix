@@ -1,18 +1,19 @@
 { den, ... }:
 {
-  den.aspects.postgres = {
+  den.aspects.postgres = { ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "postgres" ];
+    containerDataDirs.postgres = {
+      user = "999";
+      group = "999";
+    };
+
     nixos =
-      { config, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.oci.secrets.postgres.enable = true;
-        dot.containers.dataDirs.postgres = {
-          inherit (containers.owners.postgres) user group;
-        };
         virtualisation.quadlet.containers.postgres = {
           autoStart = true;
           containerConfig = {

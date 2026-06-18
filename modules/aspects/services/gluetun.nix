@@ -1,20 +1,20 @@
 { den, ... }:
 {
-  den.aspects.gluetun = {
+  den.aspects.gluetun = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    ociSecrets = [ "gluetun" ];
+    containerDataDirs.gluetun = {
+      user = user.userName;
+      group = "users";
+    };
 
     nixos =
-      { config, lib, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
         boot.kernelModules = [ "tun" ];
-        dot.oci.secrets.gluetun.enable = true;
-        dot.containers.dataDirs.gluetun = {
-          inherit (containers.owners.home) user group;
-        };
 
         virtualisation.quadlet.containers.gluetun = {
           autoStart = true;

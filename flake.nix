@@ -11,7 +11,7 @@
       ];
 
   inputs = {
-    den.url = "github:vic/den";
+    den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";

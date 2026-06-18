@@ -1,17 +1,18 @@
 { den, ... }:
 {
-  den.aspects.camofox = {
+  den.aspects.camofox = { user, ... }: {
     includes = [ den.aspects.oci-service ];
+    containerDataDirs.camofox = {
+      user = user.userName;
+      group = "users";
+    };
+
     nixos =
-      { config, ... }:
+      { config, containers, ... }:
       let
         quadlet = config.virtualisation.quadlet;
-        containers = config.dot.containers;
       in
       {
-        dot.containers.dataDirs.camofox = {
-          inherit (containers.owners.home) user group;
-        };
         virtualisation.quadlet.containers.camofox-browser = {
           autoStart = true;
           containerConfig = {

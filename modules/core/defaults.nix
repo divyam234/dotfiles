@@ -8,11 +8,43 @@ let
   dotBootstrap = import ../../lib/bootstrap.nix { inherit inputs lib; };
 in
 {
+  flake-file.inputs = {
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
+    nur.url = "github:nix-community/NUR";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-pkgs = {
+      url = "github:divyam234/nix-pkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
   imports = [
     ./schema.nix
     ./entities.nix
     ./dispatch.nix
   ];
+
+  den.quirks = {
+    caddyLayer4Routes.description = "Caddy layer4 route snippets emitted by service aspects.";
+    caddyRoutes.description = "Caddy virtual host routes emitted by service aspects.";
+    containerDataDirs.description = "Persistent container data directories emitted by service aspects.";
+    ociSecrets.description = "OCI secret environment files requested by service aspects.";
+  };
 
   den.schema.home.includes = [
     den._.mutual-provider

@@ -21,6 +21,9 @@ eval-all:
 show:
     nix flake show
 
+write-flake:
+    nix run .#write-flake --show-trace
+
 clean:
     nh clean all
 

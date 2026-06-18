@@ -1,5 +1,10 @@
 { inputs, den, ... }:
 {
+  flake-file.inputs.niri-nix = {
+    url = "git+https://codeberg.org/BANanaD3V/niri-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.noctalia = {
     nixos =
       { pkgs, user, ... }:
