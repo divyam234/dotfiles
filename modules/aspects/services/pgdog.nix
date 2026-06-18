@@ -44,7 +44,6 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "pgdog" ];
             volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
-            healthCmd = "pgdog healthcheck || exit 1";
             autoUpdate = "registry";
           };
           unitConfig = {

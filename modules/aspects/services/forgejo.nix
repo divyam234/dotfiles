@@ -42,7 +42,6 @@
               "${containers.dataRoot}/forgejo:/data:rw"
               # "/etc/localtime:/etc/localtime:ro"
             ];
-            healthCmd = "wget --spider -q http://127.0.0.1:3000/api/healthz || exit 1";
             autoUpdate = "registry";
           };
           unitConfig = {
