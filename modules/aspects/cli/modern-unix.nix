@@ -24,6 +24,7 @@
           jqp
           jq
           moreutils
+          ncdu
           nh
           nix-output-monitor
           nvd

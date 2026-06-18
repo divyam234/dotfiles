@@ -39,15 +39,31 @@
             containers.dataRoot
             postgresDumpDir
           ];
+          exclude = [
+            "${containers.dataRoot}/hermes"
+          ];
           passwordFile = config.sops.secrets."restic/password".path;
-          repository = config.sops.secrets."restic/repository".path;
+          repositoryFile = config.sops.secrets."restic/repository".path;
           rcloneConfigFile = config.sops.secrets."restic/rclone_conf".path;
           backupPrepareCommand = ''
-            set -eu
-            mkdir -p ${postgresDumpDir}
-            if ${pkgs.podman}/bin/podman container exists postgres; then
-              ${pkgs.podman}/bin/podman exec postgres pg_dumpall -U postgres > ${postgresDumpDir}/postgres.sql
-            fi
+            set -Eeuo pipefail
+
+            dump_file=${postgresDumpDir}/postgres.sql
+            temporary_file="$dump_file.tmp"
+
+            install -d -m 0750 ${postgresDumpDir}
+            rm -f "$temporary_file"
+
+            ${pkgs.podman}/bin/podman container exists postgres
+            ${pkgs.podman}/bin/podman exec postgres \
+              pg_dumpall \
+                --username=postgres \
+                --no-role-passwords \
+                > "$temporary_file"
+
+            test -s "$temporary_file"
+            chmod 0600 "$temporary_file"
+            mv "$temporary_file" "$dump_file"
           '';
           timerConfig = {
             OnCalendar = "03:30";
