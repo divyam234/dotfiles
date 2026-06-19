@@ -3,7 +3,6 @@
 }:
 let
   concat = builtins.concatStringsSep;
-  names = builtins.attrNames;
   has = builtins.hasAttr;
   inherit (builtins) elem;
   inherit (lib) unique;

@@ -28,6 +28,69 @@ Hosts contain intent only. Aspects own implementation.
 - `modules/core/`: Den schema, entity creation, and dispatch.
 - `modules/aspects/`: implementation aspects.
 
+## Desktop stack
+
+The workstation is a focused Wayland setup rather than a full desktop environment:
+
+- **Niri** owns windows, workspaces, inputs, outputs, screenshots, and compositor keybindings.
+- **Noctalia v5** owns the bar, launcher, control center, wallpaper, notifications, OSDs, lock screen, and session menu.
+- **GTK/GNOME infrastructure** provides portals, secrets, removable-drive support, file pickers, and application theming.
+- **GNOME applications only** provide Files (Nautilus), Loupe, Evince, File Roller, Text Editor, and Calculator. GNOME Shell is not installed.
+- **No KDE/Plasma stack** is enabled or installed by the desktop aspects.
+
+Important bindings:
+
+- `Super+Enter`: Ghostty
+- `Super+B`: Brave
+- `Super+E`: Nautilus
+- `Super+S`: Text Editor
+- `Super+Space`: Noctalia launcher
+- `Super+Shift+Space`: Noctalia control center
+- `Super+Ctrl+Space`: Noctalia session menu
+- `Super+Alt+L`: lock screen
+- `Super+O`: Niri overview
+
+Noctalia's declarative config establishes wallpaper-derived dark-theme defaults. Settings changed in the Noctalia UI remain writable under `~/.local/state/noctalia/` and override the Nix-managed defaults.
+
+## Laptop graphics and kernel
+
+The laptop configuration is derived from `hosts/laptop/facter.json`:
+
+- Intel UHD 630 (`0000:00:02.0`) drives Niri and is the default VAAPI device through the `iHD` media driver.
+- NVIDIA GTX 1050 Mobile (`0000:01:00.0`, Pascal) uses the proprietary NVIDIA 580 legacy branch.
+- PRIME offload keeps normal desktop work on Intel. Prefix demanding applications with `nvidia-offload`.
+- The kernel is CachyOS LTS, optimized for `x86-64-v3`, from the CI-tested `nix-cachyos-kernel/release` input.
+
+Useful checks after switching:
+
+```bash
+vainfo
+nvidia-smi
+nvidia-offload glxinfo -B
+nvidia-offload vulkaninfo --summary
+intel_gpu_top
+nvtop
+```
+
+For media applications, prefer Intel VAAPI for efficient everyday playback. Use NVIDIA's native NVDEC/NVENC paths for explicit GPU work, for example:
+
+```bash
+mpv --hwdec=vaapi video.mkv
+nvidia-offload mpv --hwdec=nvdec video.mkv
+nvidia-offload ffmpeg -hwaccel cuda -i input.mkv -c:v h264_nvenc output.mkv
+```
+
+The NVIDIA VAAPI bridge is also installed for applications that specifically require VAAPI. Select it explicitly rather than globally so opening a browser does not wake the discrete GPU:
+
+```bash
+env LIBVA_DRIVER_NAME=nvidia NVD_BACKEND=direct \
+  vainfo --display drm --device /dev/dri/by-path/pci-0000:01:00.0-render
+```
+
+## Brave policy
+
+Brave is the default browser. A managed policy under `/etc/brave/policies/managed/` disables Rewards/ads, Wallet/web3, VPN, Leo AI, News, Talk, Playlist, Tor, telemetry, promotional tabs, background mode, and the sponsored new-tab surface. Inspect the active policy at `brave://policy`.
+
 ## Adding a host
 
 1. Add pure host data to `inventory/hosts.nix`.

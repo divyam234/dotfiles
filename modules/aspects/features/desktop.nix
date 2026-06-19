@@ -6,8 +6,10 @@
       den.aspects.fonts
       den.aspects.portals
       den.aspects.desktop-apps
+      den.aspects.gnome-apps
+      den.aspects.brave
+      den.aspects.niri
       den.aspects.noctalia
-      den.aspects.kde
       den.aspects.ghostty
     ];
 
@@ -17,12 +19,15 @@
         networking.networkmanager.enable = true;
         hardware.bluetooth.enable = true;
         security.polkit.enable = true;
+        programs.dconf.enable = true;
 
         services = {
           dbus.enable = true;
           gvfs.enable = true;
           udisks2.enable = true;
           upower.enable = true;
+          power-profiles-daemon.enable = true;
+          gnome.gnome-keyring.enable = true;
           blueman.enable = true;
           pipewire = {
             enable = true;
@@ -42,11 +47,22 @@
         ];
 
         environment.sessionVariables = {
+          GDK_BACKEND = "wayland,x11";
           NIXOS_OZONE_WL = "1";
-          MOZ_ENABLE_WAYLAND = "1";
-          QT_QPA_PLATFORM = "wayland;xcb";
           SDL_VIDEODRIVER = "wayland";
         };
       };
+
+    homeManager = {
+      gtk.enable = true;
+
+      xdg = {
+        enable = true;
+        userDirs = {
+          enable = true;
+          createDirectories = true;
+        };
+      };
+    };
   };
 }

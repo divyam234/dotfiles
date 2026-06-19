@@ -1,9 +1,10 @@
 {
   lib ? import <nixpkgs/lib>,
+  root ? ../..,
 }:
 let
-  resolver = import ../../lib/registry/resolve.nix { inherit lib; };
-  normalize = import ../../lib/registry/normalize.nix { };
+  resolver = import (root + /lib/registry/resolve.nix) { inherit lib; };
+  normalize = import (root + /lib/registry/normalize.nix) { };
   users = {
     alice = {
       userName = "alice";

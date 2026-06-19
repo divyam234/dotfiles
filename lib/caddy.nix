@@ -45,7 +45,7 @@ rec {
   '';
 
   mkCaddyRoute =
-    name: route:
+    _name: route:
     let
       normalized = {
         enable = true;
@@ -61,7 +61,7 @@ rec {
       headersBlock = if normalized.securityHeaders then mkCaddySecurityHeaders else "";
       encodeBlock = if normalized.encode then "encode zstd gzip" else "";
       upstreams = lib.concatStringsSep " " normalized.upstreams;
-      extraConfig = normalized.extraConfig;
+      inherit (normalized) extraConfig;
     in
     ''
       ${normalized.host} {

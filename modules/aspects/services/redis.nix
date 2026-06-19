@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.redis = { ... }: {
+  den.aspects.redis = _: {
     includes = [ den.aspects.oci-service ];
     ociSecrets = [ "redis" ];
     containerDataDirs.redis = {

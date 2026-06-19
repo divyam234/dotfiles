@@ -2,7 +2,7 @@
 {
   den.aspects.container-network = {
     nixos =
-      { ... }:
+      _:
       let
         networkName = "svc";
       in

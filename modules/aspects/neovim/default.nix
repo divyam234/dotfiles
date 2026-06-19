@@ -15,18 +15,20 @@
         programs.lazyvim = {
           enable = true;
           extras = {
-            lang.nix.enable = true;
-            lang.python = {
-              enable = true;
-              installDependencies = true;
-            };
-            lang.go = {
-              enable = true;
-              installDependencies = true;
-            };
-            lang.typescript = {
-              enable = true;
-              installDependencies = false;
+            lang = {
+              nix.enable = true;
+              python = {
+                enable = true;
+                installDependencies = true;
+              };
+              go = {
+                enable = true;
+                installDependencies = true;
+              };
+              typescript = {
+                enable = true;
+                installDependencies = false;
+              };
             };
           };
           extraPackages = with pkgs; [

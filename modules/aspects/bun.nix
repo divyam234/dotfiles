@@ -168,31 +168,33 @@
         };
 
         config = lib.mkIf cfg.enable {
-          home.packages = lib.optional cfg.installBun pkgs.bun ++ [
-            syncScript
-          ];
+          home = {
+            packages = lib.optional cfg.installBun pkgs.bun ++ [
+              syncScript
+            ];
 
-          home.sessionVariables = {
-            BUN_INSTALL = "${config.home.homeDirectory}/.bun";
-            BUN_INSTALL_GLOBAL_DIR = "${config.home.homeDirectory}/.bun/install/global";
-            BUN_INSTALL_BIN = "${config.home.homeDirectory}/.bun/bin";
+            sessionVariables = {
+              BUN_INSTALL = "${config.home.homeDirectory}/.bun";
+              BUN_INSTALL_GLOBAL_DIR = "${config.home.homeDirectory}/.bun/install/global";
+              BUN_INSTALL_BIN = "${config.home.homeDirectory}/.bun/bin";
+            };
+
+            sessionPath = [
+              "${config.home.homeDirectory}/.bun/bin"
+            ];
+
+            file.".config/bun/global-cli-packages.txt".source = packagesFile;
+
+            shellAliases = {
+              bun-cli-sync = "bun-global-cli-sync";
+              bun-cli-list = "cat ~/.config/bun/global-cli-packages.txt";
+              bun-cli-versions = "cat ${config.xdg.stateHome}/bun-global-cli/versions";
+            };
+
+            activation.syncBunGlobalCliPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              ${syncScript}/bin/bun-global-cli-sync
+            '';
           };
-
-          home.sessionPath = [
-            "${config.home.homeDirectory}/.bun/bin"
-          ];
-
-          home.file.".config/bun/global-cli-packages.txt".source = packagesFile;
-
-          home.shellAliases = {
-            bun-cli-sync = "bun-global-cli-sync";
-            bun-cli-list = "cat ~/.config/bun/global-cli-packages.txt";
-            bun-cli-versions = "cat ${config.xdg.stateHome}/bun-global-cli/versions";
-          };
-
-          home.activation.syncBunGlobalCliPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            ${syncScript}/bin/bun-global-cli-sync
-          '';
 
           systemd.user.services.bun-global-cli-sync = lib.mkIf cfg.timer.enable {
             Unit = {

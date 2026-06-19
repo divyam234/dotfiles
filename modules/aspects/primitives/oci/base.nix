@@ -130,16 +130,6 @@
           users.groups.podman = { };
           users.users.${user.userName}.extraGroups = [ "podman" ];
 
-          systemd.tmpfiles.rules = [
-            "d ${cfg.dataRoot} 0750 ${user.userName} users -"
-          ]
-          ++ lib.concatMap (
-            dirUser: map (path: "a+ ${path} - - - - u:${dirUser}:--x") (pathPrefixes cfg.dataRoot)
-          ) dataDirUsers
-          ++ lib.mapAttrsToList (
-            name: dir: "d ${cfg.dataRoot}/${name} ${dir.mode} ${dir.user} ${dir.group} -"
-          ) cfg.dataDirs;
-
           system.activationScripts.createContainerDataDirs = lib.concatStringsSep "\n" (
             [
               "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${cfg.dataRoot}"
@@ -150,19 +140,31 @@
             ) cfg.dataDirs
           );
 
-          systemd.services.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
-            description = "Podman auto-update containers";
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = "${pkgs.podman}/bin/podman auto-update";
-            };
-          };
+          systemd = {
+            tmpfiles.rules = [
+              "d ${cfg.dataRoot} 0750 ${user.userName} users -"
+            ]
+            ++ lib.concatMap (
+              dirUser: map (path: "a+ ${path} - - - - u:${dirUser}:--x") (pathPrefixes cfg.dataRoot)
+            ) dataDirUsers
+            ++ lib.mapAttrsToList (
+              name: dir: "d ${cfg.dataRoot}/${name} ${dir.mode} ${dir.user} ${dir.group} -"
+            ) cfg.dataDirs;
 
-          systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnCalendar = cfg.autoUpdate.calendar;
-              Persistent = true;
+            services.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
+              description = "Podman auto-update containers";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${pkgs.podman}/bin/podman auto-update";
+              };
+            };
+
+            timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnCalendar = cfg.autoUpdate.calendar;
+                Persistent = true;
+              };
             };
           };
         };

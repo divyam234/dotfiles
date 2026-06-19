@@ -4,15 +4,28 @@
     nixos =
       { pkgs, ... }:
       {
-        # Niri/Noctalia session portals. KDE apps are used, but KDE/Plasma is not
-        # the desktop environment, so do not use the KDE portal as the default.
+        # Niri follows the upstream GNOME/GTK portal routing. This provides
+        # file pickers, screenshots, screencasting, notifications and secrets
+        # without installing a GNOME Shell session.
         xdg.portal = {
           enable = true;
           xdgOpenUsePortal = true;
-          config.common.default = [
-            "gnome"
-            "gtk"
-          ];
+          config = {
+            common.default = [
+              "gnome"
+              "gtk"
+            ];
+
+            niri = {
+              default = [
+                "gnome"
+                "gtk"
+              ];
+              "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+              "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
+              "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+            };
+          };
           extraPortals = [
             pkgs.xdg-desktop-portal-gnome
             pkgs.xdg-desktop-portal-gtk

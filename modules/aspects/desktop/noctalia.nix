@@ -1,63 +1,54 @@
 { inputs, den, ... }:
 {
-  flake-file.inputs.niri-nix = {
-    url = "git+https://codeberg.org/BANanaD3V/niri-nix";
+  flake-file.inputs.noctalia = {
+    url = "github:noctalia-dev/noctalia";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
   den.aspects.noctalia = {
     nixos =
-      { pkgs, user, ... }:
+      { lib, pkgs, ... }:
       {
-        imports = [ inputs.niri-nix.nixosModules.default ];
-
-        programs.niri.enable = true;
-
-        services.greetd = {
-          enable = true;
-          settings.default_session = {
-            user = user.userName;
-            command = "${pkgs.niri}/bin/niri-session";
-          };
+        nix.settings = {
+          extra-substituters = [ "https://noctalia.cachix.org" ];
+          extra-trusted-public-keys = [
+            "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+          ];
         };
 
-        environment.systemPackages = with pkgs; [ noctalia-shell ];
-
-        users.users.${user.userName}.extraGroups = [
-          "video"
-          "input"
-          "render"
+        environment.systemPackages = [
+          inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
         ];
       };
 
     homeManager =
       { pkgs, ... }:
       {
-        imports = [ inputs.niri-nix.homeModules.default ];
+        imports = [ inputs.noctalia.homeModules.default ];
 
-        home.packages = with pkgs; [ noctalia-shell ];
+        home.packages = [ inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default ];
 
-        systemd.user.services.noctalia = {
-          Unit = {
-            Description = "Noctalia desktop shell";
-            PartOf = [ "graphical-session.target" ];
-            After = [ "graphical-session.target" ];
+        programs.noctalia = {
+          enable = true;
+
+          # Niri starts the shell. Do not create a second lifecycle owner.
+          systemd.enable = false;
+
+          # Keep the declarative layer small. GUI changes remain writable in
+          # ~/.local/state/noctalia/settings.toml and override these defaults.
+          settings = {
+            theme = {
+              mode = "dark";
+              source = "wallpaper";
+              wallpaper_scheme = "m3-content";
+            };
+
+            wallpaper = {
+              enabled = true;
+              default.path = "${../../../theme/wallpaper.png}";
+            };
           };
-          Service = {
-            ExecStart = "${pkgs.noctalia-shell}/bin/noctalia-shell";
-            Restart = "on-failure";
-            RestartSec = "3s";
-          };
-          Install.WantedBy = [ "graphical-session.target" ];
         };
-
-        xdg.configFile."niri/config.kdl".text = ''
-          spawn-at-startup "systemctl" "--user" "start" "noctalia.service"
-
-          hotkey-overlay {
-              skip-at-startup
-          }
-        '';
       };
   };
 }

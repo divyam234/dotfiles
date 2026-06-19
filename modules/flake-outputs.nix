@@ -5,11 +5,6 @@
   ...
 }:
 let
-  systems = [
-    "x86_64-linux"
-    "aarch64-linux"
-  ];
-  forAllSystems = lib.genAttrs systems;
   registry = import ../registry;
   users = import ../inventory/users.nix;
   hosts = import ../inventory/hosts.nix;
@@ -86,7 +81,7 @@ in
         '';
 
         deadnix = pkgs.runCommand "dotfiles-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
-          deadnix --fail ${../.}
+          deadnix --no-lambda-pattern-names --fail ${../.}
           touch $out
         '';
 
@@ -96,7 +91,9 @@ in
         '';
 
         registry-resolver = pkgs.runCommand "registry-resolver-tests" { } ''
-          ${pkgs.nix}/bin/nix-instantiate --eval --strict --expr 'import ${../tests/registry/resolve.nix} { lib = import ${inputs.nixpkgs}/lib; }' >/dev/null
+          export NIX_STATE_DIR=$TMPDIR/nix-state
+          mkdir -p "$NIX_STATE_DIR/profiles"
+          ${pkgs.nix}/bin/nix-instantiate --eval --strict --expr 'import ${../tests/registry/resolve.nix} { lib = import ${inputs.nixpkgs}/lib; root = ${../.}; }' >/dev/null
           touch $out
         '';
       }

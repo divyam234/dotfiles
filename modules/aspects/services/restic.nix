@@ -29,10 +29,6 @@
           "restic/rclone_conf".sopsFile = secretsFile;
         };
 
-        systemd.tmpfiles.rules = [
-          "d ${postgresDumpDir} 0750 root root -"
-        ];
-
         services.restic.backups.${backupName} = {
           initialize = true;
           paths = [
@@ -77,16 +73,24 @@
           checkOpts = [ "--read-data-subset=1G" ];
         };
 
-        systemd.services."restic-backups-${backupName}".unitConfig.OnFailure = [
-          "restic-backups-${backupName}-failure.service"
-        ];
+        systemd = {
+          tmpfiles.rules = [
+            "d ${postgresDumpDir} 0750 root root -"
+          ];
 
-        systemd.services."restic-backups-${backupName}-failure" = {
-          description = "Report failed ${backupName} Restic backup";
-          serviceConfig.Type = "oneshot";
-          script = ''
-            ${pkgs.systemd}/bin/journalctl -u restic-backups-${backupName}.service -n 100 --no-pager >&2
-          '';
+          services = {
+            "restic-backups-${backupName}".unitConfig.OnFailure = [
+              "restic-backups-${backupName}-failure.service"
+            ];
+
+            "restic-backups-${backupName}-failure" = {
+              description = "Report failed ${backupName} Restic backup";
+              serviceConfig.Type = "oneshot";
+              script = ''
+                ${pkgs.systemd}/bin/journalctl -u restic-backups-${backupName}.service -n 100 --no-pager >&2
+              '';
+            };
+          };
         };
       };
   };

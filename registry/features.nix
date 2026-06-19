@@ -14,7 +14,7 @@
   };
 
   desktop = {
-    description = "Niri desktop, Noctalia shell, KDE applications, portals and theming";
+    description = "Niri desktop, Noctalia shell, GTK/GNOME applications, portals and theming";
     supportedSystems = [ "x86_64-linux" ];
   };
 
