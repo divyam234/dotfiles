@@ -5,26 +5,48 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
+  flake-file.inputs.noctalia-greeter = {
+    url = "github:noctalia-dev/noctalia-greeter";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.niri = {
     nixos =
-      { pkgs, ... }:
       {
-        imports = [ inputs.niri.nixosModules.niri ];
+        pkgs,
+        user,
+        ...
+      }:
+      {
+        imports = [
+          inputs.niri.nixosModules.niri
+          inputs.noctalia-greeter.nixosModules.default
+        ];
 
         programs.niri.enable = true;
 
         services.greetd = {
           enable = true;
-          settings.default_session = {
-            user = "greeter";
-            command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd ${pkgs.niri}/bin/niri-session";
+          settings.default_session.user = "greeter";
+        };
+
+        programs.noctalia-greeter = {
+          enable = true;
+          package = inputs.noctalia-greeter.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
+          # Must match a session listed by `noctalia-greeter sessions`. The
+          # greeter output layout is synced from Noctalia Shell after first
+          # login because greeter needs connector names, not Niri display names.
+          greeter-args = "--session niri --user ${user.userName}";
+
+          settings.cursor = {
+            theme = "Bibata-Modern-Classic";
+            size = 24;
+            package = pkgs.bibata-cursors;
           };
         };
 
-        environment.systemPackages = with pkgs; [
-          tuigreet
-          xwayland-satellite
-        ];
+        environment.systemPackages = [ pkgs.xwayland-satellite ];
       };
 
     homeManager =

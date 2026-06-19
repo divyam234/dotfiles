@@ -34,6 +34,7 @@ The workstation is a focused Wayland setup rather than a full desktop environmen
 
 - **Niri** owns windows, workspaces, inputs, outputs, screenshots, and compositor keybindings.
 - **Noctalia v5** owns the bar, launcher, control center, wallpaper, notifications, OSDs, lock screen, and session menu.
+- **Noctalia Greeter** owns the greetd login screen and defaults to the Niri session.
 - **GTK/GNOME infrastructure** provides portals, secrets, removable-drive support, file pickers, and application theming.
 - **GNOME applications only** provide Files (Nautilus), Loupe, Evince, File Roller, Text Editor, and Calculator. GNOME Shell is not installed.
 - **No KDE/Plasma stack** is enabled or installed by the desktop aspects.
@@ -50,7 +51,9 @@ Important bindings:
 - `Super+Alt+L`: lock screen
 - `Super+O`: Niri overview
 
-Noctalia's declarative config establishes wallpaper-derived dark-theme defaults. Settings changed in the Noctalia UI remain writable under `~/.local/state/noctalia/` and override the Nix-managed defaults.
+Noctalia's declarative config establishes a Stylix-derived dark palette and enables GTK/Qt template generation. Settings changed in the Noctalia UI remain writable under `~/.local/state/noctalia/` and override the Nix-managed defaults. Use Noctalia Settings → Shell → Security → Noctalia Greeter → Sync Now to copy the current wallpaper, palette, and monitor layout to the greetd greeter.
+
+The Niri config pins the laptop dock layout to two 1080p external displays at 1.25 scale and disables the internal panel. Noctalia Greeter uses connector names for static output configuration, so sync it from Noctalia Shell after first login or inspect `noctalia-greeter outputs` before adding a greeter-local `output_layout`.
 
 ## Laptop graphics and kernel
 

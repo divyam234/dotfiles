@@ -13,6 +13,24 @@ input {
     }
 }
 
+output "Lenovo Group Limited L22e-40 UMW1DC64" {
+    mode "1920x1080@74.973"
+    scale 1.25
+    position x=0 y=0
+}
+
+output "Chimei Innolux Corporation 0x15D6 Unknown" {
+    off
+    scale 1
+    position x=0 y=0
+}
+
+output "LG Electronics LG FULL HD 104NTGY0L167" {
+    mode "1920x1080@74.973"
+    scale 1.25
+    position x=1536 y=0
+}
+
 layout {
     background-color "transparent"
     gaps 12
