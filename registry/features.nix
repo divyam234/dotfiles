@@ -9,8 +9,8 @@
   };
 
   containers = {
-    description = "Rootful Podman and Quadlet service containers";
-    aspect = "oci-base";
+    description = "Rootful Podman runtime and container tools";
+    aspect = "oci-runtime";
   };
 
   desktop = {
