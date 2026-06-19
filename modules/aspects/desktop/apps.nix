@@ -11,6 +11,7 @@
           playerctl
           mpv
           obsidian
+          sublime4
           vesktop
         ];
       };

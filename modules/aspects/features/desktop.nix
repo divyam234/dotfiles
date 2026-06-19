@@ -14,7 +14,7 @@
     ];
 
     nixos =
-      { user, ... }:
+      { pkgs, user, ... }:
       {
         networking.networkmanager.enable = true;
         hardware.bluetooth.enable = true;
@@ -46,10 +46,15 @@
           "render"
         ];
 
-        environment.sessionVariables = {
-          GDK_BACKEND = "wayland,x11";
-          NIXOS_OZONE_WL = "1";
-          SDL_VIDEODRIVER = "wayland";
+        environment = {
+          sessionVariables = {
+            GDK_BACKEND = "wayland,x11";
+            NIXOS_OZONE_WL = "1";
+            QT_QPA_PLATFORMTHEME = "qt6ct";
+            SDL_VIDEODRIVER = "wayland";
+          };
+
+          systemPackages = [ pkgs.qt6Packages.qt6ct ];
         };
       };
 

@@ -79,6 +79,7 @@ in
                   _module.args.host = host.hostName;
                   nixpkgs = {
                     config.allowUnfree = true;
+                    config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
                     inherit (dotBootstrap) overlays;
                   };
                 };
@@ -131,6 +132,7 @@ in
           _module.args.lib = dotBootstrap.extendedLib;
           nixpkgs = {
             config.allowUnfree = true;
+            config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
             inherit (dotBootstrap) overlays;
           };
         };

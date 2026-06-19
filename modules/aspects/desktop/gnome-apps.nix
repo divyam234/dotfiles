@@ -5,17 +5,20 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
+          adw-gtk3
           nautilus
           loupe
           evince
           file-roller
           gnome-text-editor
           gnome-calculator
+          nwg-look
         ];
 
         dconf.settings = {
           "org/gnome/desktop/interface" = {
             color-scheme = "prefer-dark";
+            gtk-theme = "adw-gtk3";
           };
 
           "org/gnome/nautilus/preferences" = {
@@ -39,7 +42,10 @@
             "image/png" = [ "org.gnome.Loupe.desktop" ];
             "image/webp" = [ "org.gnome.Loupe.desktop" ];
             "image/gif" = [ "org.gnome.Loupe.desktop" ];
-            "text/plain" = [ "org.gnome.TextEditor.desktop" ];
+            "application/json" = [ "sublime_text.desktop" ];
+            "application/x-shellscript" = [ "sublime_text.desktop" ];
+            "text/markdown" = [ "sublime_text.desktop" ];
+            "text/plain" = [ "sublime_text.desktop" ];
           };
         };
       };
