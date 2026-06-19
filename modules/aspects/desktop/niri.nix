@@ -1,10 +1,5 @@
 { inputs, den, ... }:
 {
-  flake-file.inputs.niri = {
-    url = "github:sodiboo/niri-flake";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   flake-file.inputs.noctalia-greeter = {
     url = "github:noctalia-dev/noctalia-greeter";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -19,11 +14,13 @@
       }:
       {
         imports = [
-          inputs.niri.nixosModules.niri
           inputs.noctalia-greeter.nixosModules.default
         ];
 
-        programs.niri.enable = true;
+        programs.niri = {
+          enable = true;
+          package = pkgs.niri;
+        };
 
         services.greetd = {
           enable = true;
@@ -55,7 +52,7 @@
         colors = config.lib.stylix.colors;
       in
       {
-        programs.niri.config =
+        xdg.configFile."niri/config.kdl".text =
           builtins.replaceStrings
             [
               "@active@"

@@ -42,10 +42,10 @@
             "image/png" = [ "org.gnome.Loupe.desktop" ];
             "image/webp" = [ "org.gnome.Loupe.desktop" ];
             "image/gif" = [ "org.gnome.Loupe.desktop" ];
-            "application/json" = [ "sublime_text.desktop" ];
-            "application/x-shellscript" = [ "sublime_text.desktop" ];
-            "text/markdown" = [ "sublime_text.desktop" ];
-            "text/plain" = [ "sublime_text.desktop" ];
+            "application/json" = [ "org.gnome.TextEditor.desktop" ];
+            "application/x-shellscript" = [ "org.gnome.TextEditor.desktop" ];
+            "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
+            "text/plain" = [ "org.gnome.TextEditor.desktop" ];
           };
         };
       };

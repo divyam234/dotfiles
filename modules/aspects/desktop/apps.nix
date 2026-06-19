@@ -20,7 +20,6 @@
           obsidian
           solaar
           spotify
-          sublime4
           telegram-desktop
           vesktop
         ];
