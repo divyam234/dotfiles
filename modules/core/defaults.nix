@@ -130,6 +130,7 @@ in
 
         config = {
           _module.args.lib = dotBootstrap.extendedLib;
+          _module.args.secrets = dotBootstrap.extendedLib.denful.secrets;
           nixpkgs = {
             config.allowUnfree = true;
             config.permittedInsecurePackages = [ "openssl-1.1.1w" ];

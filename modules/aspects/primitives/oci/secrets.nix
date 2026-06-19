@@ -9,12 +9,12 @@
         ociSecrets,
         lib,
         host,
+        secrets,
         ...
       }:
       let
         enabled = name: builtins.elem name (lib.flatten ociSecrets);
         containers.secretDir = "/run/secrets/container-env";
-        inherit (host) secretsFile;
         anyEnabled = lib.any (enabled: enabled) [
           (enabled "caddy")
           (enabled "forgejo")
@@ -33,33 +33,33 @@
         config = {
           assertions = [
             {
-              assertion = !anyEnabled || secretsFile != null;
+              assertion = !anyEnabled || host.secretsFile != null;
               message = "Host ${host.name} enables OCI secret-backed containers but does not set host.secretsFile.";
             }
           ];
 
-          sops.secrets = lib.mkIf (secretsFile != null) (
+          sops.secrets = lib.mkIf (host.secretsFile != null) (
             lib.mkMerge [
               (lib.mkIf postgresCredentialsNeeded {
-                "postgres/user".sopsFile = secretsFile;
-                "postgres/password".sopsFile = secretsFile;
+                "postgres/user" = secrets.host host "postgres/user";
+                "postgres/password" = secrets.host host "postgres/password";
               })
               (lib.mkIf (enabled "caddy") {
-                "cloudflare/api_token".sopsFile = secretsFile;
+                "cloudflare/api_token" = secrets.common "cloudflare/api_token";
               })
               (lib.mkIf (enabled "gluetun") {
-                "wireguard/private_key".sopsFile = secretsFile;
+                "wireguard/private_key" = secrets.host host "wireguard/private_key";
               })
               (lib.mkIf (enabled "redis") {
-                "redis/password".sopsFile = secretsFile;
+                "redis/password" = secrets.host host "redis/password";
               })
               (lib.mkIf (enabled "vaultwarden") {
-                "vaultwarden/admin_token".sopsFile = secretsFile;
+                "vaultwarden/admin_token" = secrets.host host "vaultwarden/admin_token";
               })
             ]
           );
 
-          sops.templates = lib.mkIf (secretsFile != null) (
+          sops.templates = lib.mkIf (host.secretsFile != null) (
             lib.mkMerge [
               (lib.mkIf (enabled "postgres") {
                 "postgres.env" = {

@@ -1,6 +1,9 @@
 keys:
   - &bhunter age1wndy09nymnnma4zwskqapdzuaj663yage5qyustpqryyk6ue9qjsmf7hl0
 creation_rules:
+  - path_regex: secrets/common\.yaml$
+    key_groups:
+      - age: [*bhunter]
   - path_regex: hosts/.*/secrets\.yaml$
     key_groups:
       - age: [*bhunter]

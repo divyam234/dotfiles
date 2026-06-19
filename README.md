@@ -100,8 +100,17 @@ Brave is the default browser. A managed policy under `/etc/brave/policies/manage
 2. Choose exactly one `role`.
 3. Add only directly requested `features`.
 4. Add only directly requested `services`.
-5. Add `domain` and `secretsFile` only when required by resolved services.
+5. Add `domain` and `secretsFile` only when required by host-local secrets or resolved services.
 6. Keep host-local files under `hosts/<name>/` hardware/networking focused.
+
+## Secrets
+
+SOPS files are selected through `lib.denful.secrets` helpers instead of inline `sopsFile` paths.
+
+- Shared secrets live in `secrets/common.yaml` and use `lib.denful.secrets.common`.
+- Host/service-local secrets live in `hosts/<name>/secrets.yaml` and use `lib.denful.secrets.host`.
+- The user password key is `users/<username>/password`, for example `users/bhunter/password`.
+- The install still copies only the age key to `/var/lib/sops-nix/key.txt`; encrypted YAML files remain in the dotfiles checkout.
 
 ## Adding a role
 

@@ -9,6 +9,7 @@
         host,
         lib,
         pkgs,
+        secrets,
         ...
       }:
       let
@@ -27,7 +28,6 @@
           preauthorized = true;
         }
         // (host.tailscale or { });
-        inherit (host) secretsFile;
         authSecretPath = config.sops.secrets.${cfg.authSecret}.path;
         boolString = value: if value then "true" else "false";
         joinComma = lib.concatStringsSep ",";
@@ -47,8 +47,8 @@
         config = lib.mkIf cfg.enable {
           assertions = [
             {
-              assertion = !cfg.autoconnect || secretsFile != null;
-              message = "Host ${host.name} enables Tailscale autoconnect but does not set host.secretsFile.";
+              assertion = !cfg.autoconnect || builtins.pathExists secrets.commonSopsFile;
+              message = "Host ${host.name} enables Tailscale autoconnect but ${toString secrets.commonSopsFile} does not exist.";
             }
           ];
 
@@ -64,8 +64,8 @@
             allowedUDPPorts = [ 41641 ];
           };
 
-          sops.secrets = lib.mkIf (cfg.autoconnect && secretsFile != null) {
-            ${cfg.authSecret}.sopsFile = secretsFile;
+          sops.secrets = lib.mkIf cfg.autoconnect {
+            ${cfg.authSecret} = secrets.common cfg.authSecret;
           };
 
           systemd.services.tailscale-autoconnect = lib.mkIf cfg.autoconnect {

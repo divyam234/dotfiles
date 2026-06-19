@@ -10,26 +10,22 @@
       {
         config,
         user,
-        host,
         lib,
+        secrets,
         ...
       }:
       let
-        inherit (host) secretsFile;
-        passwordSecret = "users/${user.userName}_password";
+        passwordSecret = "users/${user.userName}/password";
       in
       {
-        sops.secrets = lib.mkIf (secretsFile != null) {
-          ${passwordSecret} = {
-            sopsFile = secretsFile;
-            neededForUsers = true;
-          };
+        sops.secrets.${passwordSecret} = secrets.common passwordSecret // {
+          neededForUsers = true;
         };
 
         users.users.${user.userName} = {
           description = user.fullName or user.userName;
           openssh.authorizedKeys.keys = user.authorizedKeys;
-          hashedPasswordFile = lib.mkIf (secretsFile != null) config.sops.secrets.${passwordSecret}.path;
+          hashedPasswordFile = config.sops.secrets.${passwordSecret}.path;
         };
       };
   };
