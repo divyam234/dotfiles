@@ -1,5 +1,10 @@
-{ den, ... }:
+{ inputs, den, ... }:
 {
+  flake-file.inputs.nordvpn-nix = {
+    url = "github:Triforcey/nordvpn-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.desktop = {
     includes = [
       den.aspects.development
@@ -16,8 +21,14 @@
     nixos =
       { pkgs, user, ... }:
       {
+        imports = [ inputs.nordvpn-nix.nixosModules.nordvpn ];
+
         networking.networkmanager.enable = true;
         hardware.bluetooth.enable = true;
+        hardware.logitech.wireless = {
+          enable = true;
+          enableGraphical = true;
+        };
         security.polkit.enable = true;
         programs.dconf.enable = true;
 
@@ -35,6 +46,13 @@
             alsa.enable = true;
             alsa.support32Bit = true;
             jack.enable = true;
+          };
+
+          nordvpn = {
+            enable = true;
+            openFirewall = false;
+            users = [ user.userName ];
+            gui.enable = false;
           };
         };
 

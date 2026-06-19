@@ -604,6 +604,26 @@
         "type": "github"
       }
     },
+    "nordvpn-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781493218,
+        "narHash": "sha256-3enf99BmAmfaBYUTp0Gzw91sDO6UWZHmLGjh0iEvDyU=",
+        "owner": "Triforcey",
+        "repo": "nordvpn-nix",
+        "rev": "c0acb85d3f63bb76a92db78ed4f596718deae5ec",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Triforcey",
+        "repo": "nordvpn-nix",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts_3",
@@ -679,6 +699,7 @@
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
+        "nordvpn-nix": "nordvpn-nix",
         "nur": "nur",
         "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay",

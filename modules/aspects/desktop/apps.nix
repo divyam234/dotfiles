@@ -5,13 +5,23 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
+          baobab
+          dbeaver-bin
+          easyeffects
+          gnome-disk-utility
+          gparted
+          localsend
+          mission-center
           pavucontrol
           wl-clipboard
           brightnessctl
           playerctl
           mpv
           obsidian
+          solaar
+          spotify
           sublime4
+          telegram-desktop
           vesktop
         ];
       };

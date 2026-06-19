@@ -41,7 +41,15 @@
     homeManager =
       { pkgs, ... }:
       {
-        home.packages = [ pkgs.brave ];
+        programs.chromium = {
+          enable = true;
+          package = pkgs.brave;
+          commandLineArgs = [
+            "--ignore-gpu-blocklist"
+            "--enable-features=AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoDecodeLinuxGL"
+            "--disable-features=AutofillSavePaymentMethods"
+          ];
+        };
 
         xdg.mimeApps = {
           enable = true;
