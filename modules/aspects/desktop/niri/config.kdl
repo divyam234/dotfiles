@@ -1,4 +1,12 @@
-// Niri owns compositor policy. Noctalia owns the desktop shell.
+config-notification {
+    disable-failed
+}
+
+gestures {
+    hot-corners {
+        off
+    }
+}
 
 input {
     keyboard {
@@ -13,28 +21,10 @@ input {
     }
 }
 
-output "Lenovo Group Limited L22e-40 UMW1DC64" {
-    mode "1920x1080@74.973"
-    scale 1.25
-    position x=0 y=0
-}
-
-output "Chimei Innolux Corporation 0x15D6 Unknown" {
-    off
-    scale 1
-    position x=0 y=0
-}
-
-output "LG Electronics LG FULL HD 104NTGY0L167" {
-    mode "1920x1080@74.973"
-    scale 1.25
-    position x=1536 y=0
-}
-
 layout {
     background-color "transparent"
     gaps 12
-    center-focused-column "on-overflow"
+    center-focused-column "never"
 
     preset-column-widths {
         proportion 0.33333
@@ -59,10 +49,15 @@ layout {
         offset x=0 y=5
         color "#0007"
     }
+    struts {
+    }
 }
 
-// Noctalia v5 is started by Niri, not by a second systemd user service.
 spawn-at-startup "noctalia"
+
+environment {
+  XDG_CURRENT_DESKTOP "niri"
+}
 
 hotkey-overlay {
     skip-at-startup
@@ -70,6 +65,39 @@ hotkey-overlay {
 
 prefer-no-csd
 screenshot-path "~/Pictures/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+animations {
+    workspace-switch {
+        spring damping-ratio=0.80 stiffness=523 epsilon=0.0001
+    }
+    window-open {
+        duration-ms 150
+        curve "ease-out-expo"
+    }
+    window-close {
+        duration-ms 150
+        curve "ease-out-quad"
+    }
+    horizontal-view-movement {
+        spring damping-ratio=0.85 stiffness=423 epsilon=0.0001
+    }
+    window-movement {
+        spring damping-ratio=0.75 stiffness=323 epsilon=0.0001
+    }
+    window-resize {
+        spring damping-ratio=0.85 stiffness=423 epsilon=0.0001
+    }
+    config-notification-open-close {
+        spring damping-ratio=0.65 stiffness=923 epsilon=0.001
+    }
+    screenshot-ui-open {
+        duration-ms 200
+        curve "ease-out-quad"
+    }
+    overview-open-close {
+        spring damping-ratio=0.85 stiffness=800 epsilon=0.0001
+    }
+}
 
 window-rule {
     geometry-corner-radius 10
@@ -79,13 +107,55 @@ window-rule {
 window-rule {
     match app-id="dev.noctalia.Noctalia.Settings"
     open-floating true
-    default-column-width { fixed 1080; }
-    default-window-height { fixed 920; }
 }
 
 window-rule {
     match app-id=r#"brave-browser$"# title=r#"(?i)^picture.?in.?picture$"#
     open-floating true
+}
+
+window-rule {
+    match app-id=r#"^org\.gnome\."#
+    draw-border-with-background false
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    match app-id="Alacritty"
+    match app-id="zen"
+    match app-id="com.mitchellh.ghostty"
+    match app-id="kitty"
+    draw-border-with-background false
+}
+
+window-rule {
+    match app-id=r#"^gnome-calculator$"#
+    match app-id=r#"^galculator$"#
+    match app-id=r#"^blueman-manager$"#
+    match app-id=r#"^org\.gnome\.Nautilus$"#
+    match app-id=r#"^xdg-desktop-portal$"#
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"^gnome-control-center$"#
+    match app-id=r#"^pavucontrol$"#
+    match app-id=r#"^nm-connection-editor$"#
+    default-column-width { proportion 0.5; }
+    open-floating false
+}
+
+window-rule {
+    opacity 0.9
+    exclude app-id="vlc"
+}
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+    tiled-state true
+    draw-border-with-background false
 }
 
 // Keep Noctalia's stationary wallpaper visible behind every workspace and in
@@ -106,7 +176,7 @@ debug {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+Return hotkey-overlay-title="Open Ghostty" { spawn "ghostty"; }
+    Mod+T hotkey-overlay-title="Open Ghostty" { spawn "ghostty"; }
     Mod+B hotkey-overlay-title="Open Brave" { spawn "brave"; }
     Mod+E hotkey-overlay-title="Open Files" { spawn "nautilus" "--new-window"; }
     Mod+S hotkey-overlay-title="Open Text Editor" { spawn "gnome-text-editor"; }
@@ -129,7 +199,8 @@ binds {
     XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
     XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
 
-    Mod+O repeat=false { toggle-overview; }
+    Mod+D repeat=false { toggle-overview; }
+    Mod+Tab repeat=false { toggle-overview; }
     Mod+Q repeat=false { close-window; }
 
     Mod+Left { focus-column-left; }
@@ -137,9 +208,11 @@ binds {
     Mod+Up { focus-window-up; }
     Mod+Right { focus-column-right; }
     Mod+H { focus-column-left; }
-    Mod+J { focus-window-down; }
-    Mod+K { focus-window-up; }
+    Mod+J { focus-workspace-down; }
+    Mod+K { focus-workspace-up; }
     Mod+L { focus-column-right; }
+    Mod+U { focus-window-down; }
+    Mod+I { focus-window-up; }
 
     Mod+Ctrl+Left { move-column-left; }
     Mod+Ctrl+Down { move-window-down; }
@@ -218,4 +291,21 @@ binds {
     Mod+Shift+E { quit; }
     Ctrl+Alt+Delete { quit; }
     Mod+Shift+P { power-off-monitors; }
+}
+
+output "eDP-1" {
+    off
+    scale 1
+    position x=0 y=0
+}
+
+output "HDMI-A-1" {
+    mode "1920x1080@74.973"
+    scale 1.25
+    position x=0 y=0
+}
+output "HDMI-A-2" {
+    mode "1920x1080@74.973"
+    scale 1.25
+    position x=1536 y=0
 }

@@ -1,0 +1,21 @@
+system: "base16"
+name: "Nord Night"
+author: "arcticicestudio"
+variant: "dark"
+palette:
+  base00: "#0F1218" # near-black background
+  base01: "#161B22" # elevated background
+  base02: "#1E2530" # selection / panels
+  base03: "#353F4F" # comments / muted text
+  base04: "#B8C0CC" # secondary foreground
+  base05: "#D2DAE6" # default foreground
+  base06: "#E3EAF5" # bright foreground
+  base07: "#F0F4FA" # highest contrast foreground
+  base08: "#BF616A" # red
+  base09: "#D08770" # orange
+  base0A: "#EBCB8B" # yellow
+  base0B: "#A3BE8C" # green
+  base0C: "#88C0D0" # cyan
+  base0D: "#81A1C1" # blue
+  base0E: "#B48EAD" # purple
+  base0F: "#5E81AC" # dark blue accent
