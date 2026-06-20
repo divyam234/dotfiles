@@ -14,13 +14,12 @@
       ];
 
       facter.reportPath = ./facter.json;
-      fileSystems."/mnt/drive" = {
+      fileSystems."/run/media/bhunter/Drive" = {
         device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
         fsType = "ext4";
         options = [
           "nofail"
           "x-systemd.automount"
-          "x-systemd.idle-timeout=10min"
         ];
       };
       system.stateVersion = "26.05";

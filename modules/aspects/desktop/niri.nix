@@ -43,6 +43,8 @@
           };
         };
 
+        security.soteria.enable = true;
+
         environment.systemPackages = [ pkgs.xwayland-satellite ];
       };
 

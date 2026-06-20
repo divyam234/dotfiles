@@ -34,7 +34,7 @@
       stylix = {
         enable = true;
         polarity = "dark";
-        base16Scheme = ./nordic-night.yaml;
+        base16Scheme = ./nord-night.yaml;
         homeManagerIntegration = {
           autoImport = false;
           followSystem = false;
@@ -59,12 +59,19 @@
         stylix = {
           enable = true;
           polarity = "dark";
-          base16Scheme = ./nordic-night.yaml;
+          base16Scheme = ./nord-night.yaml;
           autoEnable = true;
           cursor = {
             name = "Bibata-Modern-Classic";
             package = pkgs.bibata-cursors;
             size = 24;
+          };
+
+          icons = {
+            enable = true;
+            package = pkgs.papirus-icon-theme;
+            dark = "Papirus-Dark";
+            light = "Papirus-Dark";
           };
 
           fonts = {

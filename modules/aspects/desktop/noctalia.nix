@@ -2,18 +2,10 @@
 {
   flake-file.inputs.noctalia = {
     url = "github:noctalia-dev/noctalia";
-    inputs.nixpkgs.follows = "nixpkgs";
+    #inputs.nixpkgs.follows = "nixpkgs";
   };
 
   den.aspects.noctalia = {
-    nixos = _: {
-      nix.settings = {
-        extra-substituters = [ "https://noctalia.cachix.org" ];
-        extra-trusted-public-keys = [
-          "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
-        ];
-      };
-    };
 
     homeManager =
       {
@@ -97,11 +89,7 @@
               custom_palette = lib.mkOverride 60 "stylix";
 
               templates = {
-                enable_builtin_templates = true;
-                builtin_ids = [
-                  "gtk"
-                  "qt"
-                ];
+                enable_builtin_templates = false;
               };
             };
 
