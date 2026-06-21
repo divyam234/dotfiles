@@ -12,7 +12,6 @@
       den.aspects.portals
       den.aspects.desktop-apps
       den.aspects.gnome-apps
-      den.aspects.kde-packages
       den.aspects.brave
       den.aspects.niri
       den.aspects.noctalia

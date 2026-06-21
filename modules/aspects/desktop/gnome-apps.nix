@@ -10,7 +10,6 @@
           pix
           evince
           file-roller
-          kdePackages.kate
           nwg-look
         ];
 
