@@ -11,7 +11,6 @@
           evince
           file-roller
           kdePackages.kate
-          local.sublime
           nwg-look
         ];
 
