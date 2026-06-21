@@ -16,6 +16,7 @@
   openssl_3_5,
   bzip2,
   sqlite,
+  python3,
 }:
 
 let
@@ -70,6 +71,7 @@ let
     nativeBuildInputs = [
       makeWrapper
       wrapGAppsHook3
+      python3
     ];
 
     buildPhase = ''
