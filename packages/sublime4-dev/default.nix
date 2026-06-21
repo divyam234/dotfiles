@@ -171,6 +171,7 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   meta = {
+    mainProgram = "sublime_text";
     description = "Sophisticated text editor for code, markup and prose (patched, no OpenSSL 1.1)";
     homepage = "https://www.sublimetext.com/";
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
