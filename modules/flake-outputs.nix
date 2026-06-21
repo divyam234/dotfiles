@@ -57,6 +57,7 @@ in
       };
 
       packages = {
+        sublime4-dev = pkgs.callPackage ../packages/sublime4-dev { };
         svc = pkgs.writeShellApplication {
           name = "svc";
           runtimeInputs = with pkgs; [
