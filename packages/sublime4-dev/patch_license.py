@@ -138,10 +138,26 @@ def patch_persistent_checks(data, version):
         offsets = sig_find_n(data, sig5, 2)
         # Resolve target BEFORE overwriting bytes
         target = resolve_call(data, offsets[0] + 12)
-        for off in offsets:
+        for i, off in enumerate(offsets):
             call_off = off + 12
-            data[call_off : call_off + 5] = b'\x90' * 5
-            results.append(("persistent_check", call_off, "NOP"))
+            if i == 0:
+                # First match: NOP the CALL (prevent one-shot validation)
+                data[call_off : call_off + 5] = b'\x90' * 5
+                results.append(("persistent_check_1", call_off, "NOP"))
+            else:
+                # Second match: patch function entry to SET valid flag and return
+                # Search backward for "push rbx; cmp byte [rdi+5], 1; jne"
+                entry_sig = "53 80 7f 05 01 75"
+                entry = None
+                for scan in range(call_off - 0x40, call_off):
+                    if data[scan:scan+6] == bytes.fromhex("53807f050175"):
+                        entry = scan
+                        break
+                if entry is None:
+                    raise ValueError("persistent_check_2 entry not found")
+                # push rbx; mov byte [rdi+5], 1; ret  (6 bytes)
+                data[entry : entry + 6] = bytes.fromhex("53c6470501c3")
+                results.append(("persistent_check_2", entry, "SET_FLAG"))
         results.append(("validation_sub_func_target", target, ""))
         return results
     except ValueError:
