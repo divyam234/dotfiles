@@ -5,7 +5,6 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
-          kdePackages.dolphin
           kdePackages.qtsvg
         ];
         stylix.targets.kde.enable = true;

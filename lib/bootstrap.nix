@@ -13,8 +13,11 @@ let
     inputs.nur.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
-    (final: _prev: {
+    (final: prev: {
       local = extendedLib.denful.importPackages final ../packages;
+    })
+    (final: prev: {
+      sublime4-dev = final.callPackage ../packages/sublime4-dev { };
     })
   ];
 in

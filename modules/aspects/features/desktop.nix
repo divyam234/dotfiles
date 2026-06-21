@@ -64,6 +64,7 @@
           "video"
           "input"
           "render"
+          "storage"
         ];
 
         environment = {

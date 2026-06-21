@@ -6,12 +6,12 @@
       {
         home.packages = with pkgs; [
           adw-gtk3
-          nautilus
-          loupe
+          nemo-with-extensions
+          pix
           evince
           file-roller
-          gnome-text-editor
-          gnome-calculator
+          kdePackages.kate
+          sublime4-dev
           nwg-look
         ];
 
@@ -21,31 +21,30 @@
             gtk-theme = "adw-gtk3";
           };
 
-          "org/gnome/nautilus/preferences" = {
-            default-folder-viewer = "list-view";
-            show-create-link = true;
-            show-delete-permanently = true;
-            show-image-thumbnails = "always";
-          };
-
           "org/gtk/settings/file-chooser" = {
             sort-directories-first = true;
+          };
+
+          "org/cinnamon/desktop/applications/terminal" = {
+            exec = "ghostty";
+            exec-arg = "--working-directory";
           };
         };
 
         xdg.mimeApps = {
           enable = true;
           defaultApplications = {
-            "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+            "inode/directory" = [ "nemo.desktop" ];
+            "application/x-gnome-saved-search" = [ "nemo.desktop" ];
             "application/pdf" = [ "org.gnome.Evince.desktop" ];
-            "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
-            "image/png" = [ "org.gnome.Loupe.desktop" ];
-            "image/webp" = [ "org.gnome.Loupe.desktop" ];
-            "image/gif" = [ "org.gnome.Loupe.desktop" ];
-            "application/json" = [ "org.gnome.TextEditor.desktop" ];
-            "application/x-shellscript" = [ "org.gnome.TextEditor.desktop" ];
-            "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
-            "text/plain" = [ "org.gnome.TextEditor.desktop" ];
+            "image/jpeg" = [ "pix.desktop" ];
+            "image/png" = [ "pix.desktop" ];
+            "image/webp" = [ "pix.desktop" ];
+            "image/gif" = [ "pix.desktop" ];
+            "application/json" = [ "sublime-text.desktop" ];
+            "application/x-shellscript" = [ "sublime-text.desktop" ];
+            "text/markdown" = [ "sublime-text.desktop" ];
+            "text/plain" = [ "sublime-text.desktop" ];
           };
         };
       };
