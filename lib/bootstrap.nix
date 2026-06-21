@@ -16,9 +16,6 @@ let
     (final: prev: {
       local = extendedLib.denful.importPackages final ../packages;
     })
-    (final: prev: {
-      sublime4-dev = final.callPackage ../packages/sublime4-dev { };
-    })
   ];
 in
 {

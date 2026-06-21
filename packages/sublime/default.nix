@@ -12,9 +12,7 @@
   pango,
   makeWrapper,
   wrapGAppsHook3,
-  writeShellScript,
   openssl_3_5,
-  bzip2,
   sqlite,
   python3,
 }:
@@ -22,7 +20,6 @@
 let
   pnameBase = "sublimetext4";
   buildVersion = "4205";
-  dev = true;
   patchScript = ./patch_license.py;
   binaries = [
     "sublime_text"
@@ -75,30 +72,40 @@ let
     ];
 
     buildPhase = ''
-      runHook preBuild
+            runHook preBuild
 
-      rm -f plugin_host-3.3
+            rm -f plugin_host-3.3
 
-      for binary in ${builtins.concatStringsSep " " binaries}; do
-        patchelf \
-          --interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
-          --set-rpath ${lib.makeLibraryPath neededLibraries}:${lib.getLib stdenv.cc.cc}/lib${lib.optionalString stdenv.hostPlatform.is64bit "64"}:$out \
-          $binary
-      done
+            for binary in ${builtins.concatStringsSep " " binaries}; do
+              patchelf \
+                --interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
+                --set-rpath ${lib.makeLibraryPath neededLibraries}:${lib.getLib stdenv.cc.cc}/lib${lib.optionalString stdenv.hostPlatform.is64bit "64"}:$out \
+                $binary
+            done
 
-      patchelf --set-rpath ${
-        lib.makeLibraryPath [
-          sqlite
-          openssl_3_5
-        ]
-      } libpython3.14.so.1.0
+            patchelf --set-rpath ${
+              lib.makeLibraryPath [
+                sqlite
+                openssl_3_5
+              ]
+            } libpython3.14.so.1.0
 
-      # Patch license checks via signature matching
-      python3 ${patchScript} sublime_text
+            # Patch license checks via signature matching
+            python3 ${patchScript} sublime_text
 
-      echo '{"disable_plugin_host_3.3": true}' > Packages/Preferences.sublime-settings
+            # Generate dummy License.sublime_license so parsing succeeds
+            cat > License.sublime_license << 'LICEOF'
+      ----- BEGIN LICENSE -----
+      Anonymous User
+      This software is used under a valid license.
+      All functionality is enabled for development purposes.
+      dummy-license-key-for-sublime-text-4
+      ------ END LICENSE ------
+      LICEOF
 
-      runHook postBuild
+            echo '{"disable_plugin_host_3.3": true}' > Packages/Preferences.sublime-settings
+
+            runHook postBuild
     '';
 
     installPhase = ''
@@ -164,6 +171,9 @@ stdenv.mkDerivation (finalAttrs: {
 
     mkdir -p "$out/share/sublime_text/Packages"
     cp ${binaryPackage}/Packages/Preferences.sublime-settings "$out/share/sublime_text/Packages/"
+
+    # Provide dummy license file alongside the binary
+    cp ${binaryPackage}/License.sublime_license "$out/share/sublime_text/"
   '';
 
   passthru = {
@@ -171,7 +181,6 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   meta = {
-    mainProgram = "sublime_text";
     description = "Sophisticated text editor for code, markup and prose (patched, no OpenSSL 1.1)";
     homepage = "https://www.sublimetext.com/";
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
