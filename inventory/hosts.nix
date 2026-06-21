@@ -8,7 +8,6 @@
     features = [
       "btrfs"
       "containers"
-      "gaming"
       "tailscale"
     ];
 
