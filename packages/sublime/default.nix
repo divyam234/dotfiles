@@ -14,13 +14,14 @@
   wrapGAppsHook3,
   openssl_3_5,
   sqlite,
+  curl,
   python3,
+  xxd,
 }:
 
 let
   pnameBase = "sublimetext4";
   buildVersion = "4205";
-  patchScript = ./patch_license.py;
   binaries = [
     "sublime_text"
     "plugin_host-3.14"
@@ -43,6 +44,7 @@ let
     gtk3
     cairo
     pango
+    curl
   ]
   ++ lib.optionals (lib.versionAtLeast buildVersion "4145") [
     sqlite
@@ -69,6 +71,7 @@ let
       makeWrapper
       wrapGAppsHook3
       python3
+      xxd
     ];
 
     buildPhase = ''
@@ -91,8 +94,16 @@ let
             } libpython3.14.so.1.0
 
             # Patch license checks via signature matching
-            python3 ${patchScript} sublime_text
-
+            # Disable license validation — file offsets, not VA (PIE: FO = VA - 0x1000)
+            # is_license_valid (VA 0x54fb32) is NOT patched — it calls validation_sub_func which returns 1 (ret1)
+            echo '0053cd7e: 90 90 90 90 90'    | xxd -r - sublime_text   # persistent_license_check_1 → NOP
+            echo '0053cdd4: 90 90 90 90 90'    | xxd -r - sublime_text   # persistent_license_check_2 → NOP
+            echo '0054ef8c: 48 31 c0 48 ff c0 c3' | xxd -r - sublime_text # thread_check_license → ret1
+            echo '0054d288: c3'                | xxd -r - sublime_text   # thread_notification → ret (1 byte, 4154 pattern)
+            echo '0054cdb9: 48 31 c0 c3'       | xxd -r - sublime_text   # crash_reporter → ret0
+            echo '0054d568: 48 31 c0 48 ff c0 c3' | xxd -r - sublime_text # validation_sub_func → ret
+            echo '{"disable_plugin_host_3.3": true}' > Packages/Preferences.sublime-setting
+            runHook postBuild
             # Generate dummy License.sublime_license so parsing succeeds
             cat > License.sublime_license << 'LICEOF'
       ----- BEGIN LICENSE -----

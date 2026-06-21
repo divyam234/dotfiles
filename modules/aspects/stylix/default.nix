@@ -4,6 +4,10 @@
     url = "github:nix-community/stylix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+  flake-file.inputs.tinted-schemes = {
+    url = "github:tinted-theming/schemes";
+    flake = false;
+  };
 
   den.aspects.stylix = {
     nixos = {
@@ -34,7 +38,7 @@
       stylix = {
         enable = true;
         polarity = "dark";
-        base16Scheme = ./nord-night.yaml;
+        base16Scheme = ./nord.yaml;
         homeManagerIntegration = {
           autoImport = false;
           followSystem = false;
@@ -59,7 +63,7 @@
         stylix = {
           enable = true;
           polarity = "dark";
-          base16Scheme = ./nord-night.yaml;
+          base16Scheme = ./nord.yaml;
           autoEnable = true;
           cursor = {
             name = "Bibata-Modern-Classic";

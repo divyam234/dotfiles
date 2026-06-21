@@ -59,5 +59,13 @@
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    tinted-schemes = {
+      url = "github:tinted-theming/schemes";
+      flake = false;
+    };
+    tinted-sublime-text = {
+      url = "github:tinted-theming/tinted-sublime-text";
+      flake = false;
+    };
   };
 }

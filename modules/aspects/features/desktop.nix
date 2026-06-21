@@ -18,6 +18,7 @@
       den.aspects.noctalia
       den.aspects.ghostty
       den.aspects.zed
+      den.aspects.sublime
     ];
 
     nixos =

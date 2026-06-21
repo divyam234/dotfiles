@@ -519,7 +519,9 @@
         "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
-        "stylix": "stylix"
+        "stylix": "stylix",
+        "tinted-schemes": "tinted-schemes_2",
+        "tinted-sublime-text": "tinted-sublime-text"
       }
     },
     "rust-overlay": {
@@ -654,6 +656,38 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "schemes",
+        "type": "github"
+      }
+    },
+    "tinted-schemes_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781968807,
+        "narHash": "sha256-yYO3Vw2M0y3TAUqt+9+Mj0zwP3XDTF5/PXcPhhFQ1ZM=",
+        "owner": "tinted-theming",
+        "repo": "schemes",
+        "rev": "2ccef2f4b22e3cab5a9292811f7133a07eeba4a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "schemes",
+        "type": "github"
+      }
+    },
+    "tinted-sublime-text": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782013869,
+        "narHash": "sha256-eVsSX7LzCl96HO0VqWGMNVJNkr2ywg47hELpeKa2U/8=",
+        "owner": "tinted-theming",
+        "repo": "tinted-sublime-text",
+        "rev": "1b8b5f3f0fa8df06300cd7f838b7407647b802ea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tinted-theming",
+        "repo": "tinted-sublime-text",
         "type": "github"
       }
     },
