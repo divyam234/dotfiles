@@ -48,7 +48,7 @@
                 "cloudflare/api_token" = secrets.common "cloudflare/api_token";
               })
               (lib.mkIf (enabled "gluetun") {
-                "wireguard/private_key" = secrets.host host "wireguard/private_key";
+                "nordvpn/private_key" = secrets.common "nordvpn/private_key";
               })
               (lib.mkIf (enabled "redis") {
                 "redis/password" = secrets.host host "redis/password";
@@ -80,12 +80,10 @@
                   content = ''
                     VPN_SERVICE_PROVIDER=nordvpn
                     VPN_TYPE=wireguard
-                    WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."wireguard/private_key"}
+                    WIREGUARD_PRIVATE_KEY=${config.sops.placeholder."nordvpn/private_key"}
                     SERVER_HOSTNAMES=nl885.nordvpn.com,nl886.nordvpn.com
                     HTTPPROXY=on
                     HTTPPROXY_LISTENING_ADDRESS=:3128
-                    SOCKS5=on
-                    SOCKS5_LISTENING_ADDRESS=:1081
                     FIREWALL_OUTBOUND_SUBNETS=100.64.0.0/10
                   '';
                 };

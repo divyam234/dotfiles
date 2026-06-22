@@ -18,6 +18,7 @@
           gotestsum
           gnumake
           just
+          lsof
           marksman
           nil
           nix-output-monitor
@@ -31,10 +32,12 @@
           shfmt
           sqlc
           statix
+          strace
           stylua
           taplo
           templ
           uv
+          valgrind
         ];
       };
   };
