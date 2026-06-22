@@ -63,6 +63,8 @@ let
       domain = host.domain or null;
       caddyEmail = host.caddyEmail or null;
       tailscale = host.tailscale or { };
+      greeter = host.greeter or { };
+      outputs = host.outputs or [ ];
       instantiate = mkInstantiate host.system;
       users.${host.user} = userWithClasses;
     };
