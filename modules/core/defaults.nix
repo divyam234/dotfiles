@@ -68,7 +68,7 @@ in
           den._.mutual-provider
           (
             { host, user, ... }:
-            {
+            lib.optionalAttrs ((host.homeManagerMode or "integrated") != "standalone") {
               nixos.home-manager = {
                 sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
                 useGlobalPkgs = false;
@@ -118,10 +118,12 @@ in
         den._.define-user
         den._.hostname
       ];
-      homeManager.home.stateVersion = "26.05";
+      homeManager = {
+        home.stateVersion = "26.05";
+        _module.args.secrets = dotBootstrap.extendedLib.denful.secrets;
+      };
       nixos = {
         imports = [
-          inputs.home-manager.nixosModules.home-manager
           inputs.sops-nix.nixosModules.sops
           inputs.disko.nixosModules.disko
           inputs.quadlet-nix.nixosModules.quadlet

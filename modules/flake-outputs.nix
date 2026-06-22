@@ -100,6 +100,7 @@ in
       // lib.optionalAttrs (system == "x86_64-linux") {
         laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;
         netcup-nixos-eval = self.nixosConfigurations.netcup.config.system.build.toplevel;
+        laptop-hm-eval = self.homeConfigurations."bhunter@laptop".activationPackage;
       };
     };
 }

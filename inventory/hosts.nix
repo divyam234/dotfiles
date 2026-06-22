@@ -4,6 +4,7 @@
     hostName = "laptop";
     user = "bhunter";
     role = "workstation";
+    homeManagerMode = "standalone";
 
     features = [
       "btrfs"

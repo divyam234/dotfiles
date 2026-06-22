@@ -13,6 +13,10 @@
           dysk
           eza
           fd
+          fastfetch
+          ffmpeg
+          file
+          gdb
           glow
           gomi
           grex
@@ -20,15 +24,18 @@
           gum
           hexyl
           hyperfine
+          imagemagick
           jnv
           jqp
           jq
+          lm_sensors
           moreutils
           ncdu
           nh
           nix-output-monitor
           nvd
           ouch
+          pciutils
           procs
           ripgrep
           sd
@@ -36,8 +43,11 @@
           tailspin
           tealdeer
           tokei
+          tree
           unzip
+          usbutils
           viddy
+          xxd
           yq-go
           zoxide
           zstd

@@ -14,9 +14,13 @@ check:
 eval h=host:
     nix eval .#nixosConfigurations.{{ h }}.config.system.build.toplevel.drvPath
 
+eval-hm u="bhunter@laptop":
+    nix eval .#homeConfigurations.{{ u }}.config.home.username
+
 eval-all:
     just eval laptop
     just eval netcup
+    just eval-hm
 
 show:
     nix flake show
@@ -45,8 +49,8 @@ switch h=host:
 boot h=host:
     nh os boot . -H {{ h }}
 
-home-standalone u="laptop":
-    nh home switch . -c bhunter@{{ u }}
+home u="bhunter@laptop":
+    nh home switch . -c {{ u }}
 
 svc +args:
     nix run .#svc -- {{ args }}
