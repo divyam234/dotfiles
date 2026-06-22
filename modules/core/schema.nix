@@ -45,35 +45,6 @@ in
           description = "ACME contact email. Defaults to admin@domain when unset.";
         };
 
-        primaryDisplay = lib.mkOption {
-          type = lib.types.submodule {
-            options = {
-              name = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = null;
-              };
-              width = lib.mkOption {
-                type = lib.types.nullOr lib.types.int;
-                default = null;
-              };
-              height = lib.mkOption {
-                type = lib.types.nullOr lib.types.int;
-                default = null;
-              };
-              refreshRate = lib.mkOption {
-                type = lib.types.nullOr lib.types.int;
-                default = null;
-              };
-              scale = lib.mkOption {
-                type = lib.types.nullOr lib.types.float;
-                default = null;
-              };
-            };
-          };
-          default = { };
-          description = "Typed primary monitor metadata used by desktop aspects.";
-        };
-
         tailscale = lib.mkOption {
           type = lib.types.submodule {
             options = {
