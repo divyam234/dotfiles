@@ -62,7 +62,6 @@ let
       homeManagerMode = host.homeManagerMode or "integrated";
       domain = host.domain or null;
       caddyEmail = host.caddyEmail or null;
-      primaryDisplay = host.primaryDisplay or { };
       tailscale = host.tailscale or { };
       instantiate = mkInstantiate host.system;
       users.${host.user} = userWithClasses;

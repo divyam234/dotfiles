@@ -15,13 +15,7 @@
     services = [ ];
 
     secretsFile = ../hosts/laptop/secrets.yaml;
-    primaryDisplay = {
-      name = null;
-      width = null;
-      height = null;
-      refreshRate = null;
-      scale = null;
-    };
+    tailscale.autoconnect = true;
   };
 
   netcup = {
