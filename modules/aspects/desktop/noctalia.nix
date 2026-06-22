@@ -2,7 +2,6 @@
 {
   flake-file.inputs.noctalia = {
     url = "github:noctalia-dev/noctalia";
-    #inputs.nixpkgs.follows = "nixpkgs";
   };
 
   den.aspects.noctalia = {
@@ -75,30 +74,50 @@
           enable = true;
           package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-          # Niri starts the shell. Do not create a second lifecycle owner.
           systemd.enable = false;
 
           customPalettes.stylix = palette;
 
-          # Keep the declarative layer small. GUI changes remain writable in
-          # ~/.local/state/noctalia/settings.toml and override these defaults.
           settings = {
-            theme = {
-              mode = lib.mkOverride 60 (if config.stylix.polarity == "light" then "light" else "dark");
-              source = lib.mkOverride 60 "custom";
-              custom_palette = lib.mkOverride 60 "stylix";
-
-              templates = {
-                enable_builtin_templates = false;
-              };
+            bar.default = {
+              background_opacity = 0.7;
+              capsule = true;
+              end = [
+                "media"
+                "tray"
+                "notifications"
+                "clipboard"
+                "network"
+                "bluetooth"
+                "volume"
+                "brightness"
+                "control-center"
+                "session"
+              ];
+              margin_ends = 20;
+              padding = 12;
+              scale = 1.1;
+              start = [
+                "launcher"
+                "workspaces"
+              ];
             };
 
-            dock.background_opacity = lib.mkOverride 60 config.stylix.opacity.desktop;
-            notification.background_opacity = lib.mkOverride 60 config.stylix.opacity.popups;
-            osd.background_opacity = lib.mkOverride 60 config.stylix.opacity.popups;
-            shell.font_family = lib.mkOverride 60 config.stylix.fonts.sansSerif.name;
-
-            wallpaper.default.path = lib.mkOverride 60 "${../../../theme/wallpaper.png}";
+            shell = {
+              polkit_agent = true;
+              animation.enabled = false;
+            };
+            theme = {
+              mode = "dark";
+              source = "custom";
+              custom_palette = "stylix";
+              templates = {
+                enable_builtin_templates = false;
+                enable_community_templates = false;
+              };
+            };
+            shell.font_family = config.stylix.fonts.sansSerif.name;
+            wallpaper.default.path = "${../../../theme/wallpaper.png}";
           };
         };
       };

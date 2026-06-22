@@ -58,6 +58,67 @@ in
           default = { };
           description = "Host-specific Tailscale settings.";
         };
+
+        greeter = lib.mkOption {
+          type = lib.types.submodule {
+            options.output.scale = lib.mkOption {
+              type = lib.types.nullOr lib.types.float;
+              default = 1.25;
+              description = "Noctalia Greeter output scale override.";
+            };
+          };
+          default = { };
+          description = "Host-specific greeter settings.";
+        };
+
+        outputs = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Output connector name (e.g. eDP-1, HDMI-A-1).";
+                };
+                mode = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  example = "1920x1080@74.973";
+                  description = "Display mode string.";
+                };
+                scale = lib.mkOption {
+                  type = lib.types.float;
+                  default = 1.0;
+                  description = "Output scale factor.";
+                };
+                position = lib.mkOption {
+                  type = lib.types.nullOr (
+                    lib.types.submodule {
+                      options = {
+                        x = lib.mkOption {
+                          type = lib.types.int;
+                          default = 0;
+                        };
+                        y = lib.mkOption {
+                          type = lib.types.int;
+                          default = 0;
+                        };
+                      };
+                    }
+                  );
+                  default = null;
+                  description = "Output position.";
+                };
+                off = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Whether this output is disabled.";
+                };
+              };
+            }
+          );
+          default = [ { name = "eDP-1"; } ];
+          description = "Monitor output configuration for niri.";
+        };
       };
     };
 }

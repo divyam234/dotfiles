@@ -16,17 +16,24 @@ let
     name: host:
     let
       resolved = resolveHost { inherit registry users host; };
+      withHost =
+        aspect:
+        aspect
+        // {
+          __scopeHandlers =
+            (aspect.__scopeHandlers or { }) // den.lib.aspects.fx.handlers.constantHandler { inherit host; };
+        };
     in
     {
       includes = [
-        den.aspects.${name}
+        (withHost den.aspects.${name})
       ]
       ++ baseAspects
       ++ map (
-        featureName: den.aspects.${registry.features.${featureName}.aspect}
+        featureName: withHost den.aspects.${registry.features.${featureName}.aspect}
       ) resolved.resolvedFeatures
       ++ map (
-        serviceName: den.aspects.${registry.services.${serviceName}.aspect}
+        serviceName: withHost den.aspects.${registry.services.${serviceName}.aspect}
       ) resolved.resolvedServices;
 
       homeManager =

@@ -56,7 +56,6 @@ in
             homeManager =
               { pkgs, ... }:
               {
-                _module.args.host = home.hostName or "unknown";
                 nix.package = pkgs.nix;
               };
           }
@@ -76,7 +75,7 @@ in
                 backupFileExtension = "hm-bak";
                 extraSpecialArgs = { inherit inputs; };
                 users.${user.userName} = {
-                  _module.args.host = host.hostName;
+                  _module.args.host = host;
                   nixpkgs = {
                     config.allowUnfree = true;
                     inherit (dotBootstrap) overlays;
