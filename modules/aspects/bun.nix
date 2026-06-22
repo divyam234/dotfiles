@@ -21,6 +21,11 @@
         syncScript = pkgs.writeShellScriptBin "bun-global-cli-sync" ''
           set -euo pipefail
 
+          if ! ${pkgs.curl}/bin/curl -fsSL --max-time 5 "https://registry.npmjs.org" >/dev/null 2>&1; then
+            echo "Network unavailable, skipping bun global CLI sync."
+            exit 0
+          fi
+
           export BUN_INSTALL="${config.home.homeDirectory}/.bun"
           export BUN_INSTALL_GLOBAL_DIR="${config.home.homeDirectory}/.bun/install/global"
           export BUN_INSTALL_BIN="${config.home.homeDirectory}/.bun/bin"
