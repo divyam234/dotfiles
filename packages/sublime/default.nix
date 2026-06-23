@@ -93,9 +93,6 @@ let
               ]
             } libpython3.14.so.1.0
 
-            # Patch license checks via signature matching
-            # Disable license validation — file offsets, not VA (PIE: FO = VA - 0x1000)
-            # is_license_valid (VA 0x54fb32) is NOT patched — it calls validation_sub_func which returns 1 (ret1)
             echo '0053cd7e: 90 90 90 90 90'    | xxd -r - sublime_text   # persistent_license_check_1 → NOP
             echo '0053cdd4: 90 90 90 90 90'    | xxd -r - sublime_text   # persistent_license_check_2 → NOP
             echo '0054ef8c: 48 31 c0 48 ff c0 c3' | xxd -r - sublime_text # thread_check_license → ret1

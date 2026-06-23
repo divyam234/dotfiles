@@ -1,6 +1,10 @@
 { inputs, den, ... }:
 {
   flake-file.inputs = {
+    burpsuite-pro = {
+      url = "gitlab:_VX3r/burpsuite-pro-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     den.url = "github:denful/den";
     import-tree.url = "github:vic/import-tree";

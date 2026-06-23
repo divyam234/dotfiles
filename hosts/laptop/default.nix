@@ -1,5 +1,6 @@
 { den, inputs, ... }:
 {
+  flake-file.inputs.cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
   flake-file.inputs.nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
   den.aspects.laptop = {

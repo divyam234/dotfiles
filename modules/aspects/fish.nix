@@ -1,13 +1,6 @@
 { den, ... }:
 {
   den.aspects.fish = {
-    # nixos =
-    #   { pkgs, ... }:
-    #   {
-    #     programs.fish.enable = true;
-    #     environment.shells = [ pkgs.fish ];
-    #   };
-
     homeManager =
       { pkgs, config, ... }:
       {

@@ -7,6 +7,6 @@
       timeout = 3;
     };
 
-    kernelPackages = pkgs.linuxPackages;
+    kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
   };
 }

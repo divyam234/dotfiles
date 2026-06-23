@@ -11,6 +11,11 @@
       ];
 
   inputs = {
+    burpsuite-pro = {
+      url = "gitlab:_VX3r/burpsuite-pro-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";

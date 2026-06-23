@@ -39,6 +39,7 @@
         enable = true;
         polarity = "dark";
         base16Scheme = ./nord.yaml;
+        targets.chromium.enable = false;
         homeManagerIntegration = {
           autoImport = false;
           followSystem = false;
