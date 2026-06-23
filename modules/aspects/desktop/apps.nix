@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           baobab
+          burpsuitepro
           dbeaver-bin
           easyeffects
           gnome-disk-utility
@@ -22,6 +23,7 @@
           spotify
           telegram-desktop
           vesktop
+          vlc
         ];
       };
   };

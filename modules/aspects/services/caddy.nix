@@ -34,7 +34,7 @@
           layer4Routes = lib.flatten caddyLayer4Routes;
         };
         routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
-        acmeEmail = if host.caddyEmail != null then host.caddyEmail else "admin@${host.domain}";
+        acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
       in
       {
         config = {

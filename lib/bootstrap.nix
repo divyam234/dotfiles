@@ -13,6 +13,14 @@ let
     inputs.nur.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
+    inputs.cachyos-kernel.overlays.pinned
+    (final: _prev: {
+      burpsuitepro =
+        inputs.burpsuite-pro.packages.${final.stdenv.hostPlatform.system}.burpsuitepro.override
+          {
+            jdk = final.jetbrains.jdk-21;
+          };
+    })
     (final: prev: {
       local = extendedLib.denful.importPackages final ../packages;
     })
