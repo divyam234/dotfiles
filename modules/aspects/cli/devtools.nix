@@ -6,7 +6,11 @@
       {
         home.packages = with pkgs; [
           air
+          autoconf
+          automake
+          bear
           bun
+          cmake
           deadnix
           delve
           gcc
@@ -18,13 +22,17 @@
           gotestsum
           gnumake
           just
+          libtool
           lsof
           marksman
+          meson
           nil
+          ninja
           nix-output-monitor
           nixd
           nixfmt
           nodejs_24
+          pkgconf
           pnpm
           python3
           rust-bin.stable.latest.default

@@ -12,6 +12,7 @@
         ./graphics.nix
         ./networking.nix
         ./disko.nix
+        ./msi-ec/kmod.nix
       ];
 
       facter.reportPath = ./facter.json;

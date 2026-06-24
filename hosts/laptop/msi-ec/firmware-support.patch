@@ -1,0 +1,40 @@
+diff --git a/Makefile b/Makefile
+index db61eb2..546e222 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,6 +4,7 @@ include $(_SRC)/Makefile.vars # AKMOD can be annoying so preventing his silent c
+ DKMS_ROOT_PATH  := /usr/src/msi_ec-$(VERSION)
+ 
+ KERNELRELEASE := $(shell uname -r)
++KERNELDIR ?= /lib/modules/$(KERNELRELEASE)/build
+ 
+ KMOD_DIR        := /lib/modules/$(KERNELRELEASE)/updates/drivers/platform/x86
+ 
+@@ -14,10 +15,13 @@ obj-m += $(MODNAME).o
+ all: modules
+ 
+ modules:
+-	@$(MAKE) -C /lib/modules/$(KERNELRELEASE)/build M=$(CURDIR) modules
++	@$(MAKE) -C $(KERNELDIR) M=$(CURDIR) modules
++
++modules_install:
++	@$(MAKE) -C $(KERNELDIR) M=$(CURDIR) modules_install
+ 
+ clean:
+-	@$(MAKE) -C /lib/modules/$(KERNELRELEASE)/build M=$(CURDIR) clean
++	@$(MAKE) -C $(KERNELDIR) M=$(CURDIR) clean
+ 
+ load:
+ 	insmod msi-ec.ko
+diff --git a/msi-ec.c b/msi-ec.c
+index fb0e4c2..7f271f1 100644
+--- a/msi-ec.c
++++ b/msi-ec.c
+@@ -811,6 +811,7 @@ static struct msi_ec_conf CONF_G1_9 __initdata = {
+ 
+ static const char *ALLOWED_FW_G1_10[] __initconst = {
+ 	"16P5EMS1.103", // GE63 Raider 8RE
++	"16P6EMS1.104", // GL63 8RC
+ 	"1782EMS1.109", // GT72 6QE Dominator Pro
+ 	NULL
+ };

@@ -12,6 +12,7 @@
           gnome-disk-utility
           gparted
           localsend
+          mcontrolcenter
           mission-center
           pavucontrol
           wl-clipboard
