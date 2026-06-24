@@ -25,6 +25,8 @@
           telegram-desktop
           vesktop
           vlc
+          obs-studio
+          cutter
         ];
       };
   };
