@@ -14,6 +14,7 @@
         ];
         programs.lazyvim = {
           enable = true;
+          ignoreBuildNotifications = true;
           extras = {
             lang = {
               nix.enable = true;

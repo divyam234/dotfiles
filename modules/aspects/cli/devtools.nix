@@ -46,6 +46,7 @@
           templ
           uv
           valgrind
+          radare2
         ];
       };
   };

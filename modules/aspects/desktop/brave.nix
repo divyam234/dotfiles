@@ -51,9 +51,8 @@
         DefaultBraveRemember1PStorageSetting = 2;
 
         # Sync/sign-in.
-        BrowserSignin = 0;
-        SigninInterceptionEnabled = false;
-        SyncDisabled = true;
+        BrowserSignin = 1;
+        SyncDisabled = false;
 
         # Password manager, passkeys, autofill, and import surfaces.
         AutofillAddressEnabled = false;
