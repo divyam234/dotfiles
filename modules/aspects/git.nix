@@ -46,6 +46,7 @@
             init.defaultBranch = "main";
             pull.ff = "only";
             push.autoSetupRemote = true;
+            tag.forceSignAnnotated = false;
             core = {
               editor = "nvim";
               pager = "delta";
