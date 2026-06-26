@@ -47,6 +47,7 @@
     services = [
       "adguard"
       "camofox"
+      "codeforge-mcp"
       "databasus"
       "forgejo"
       "gluetun"

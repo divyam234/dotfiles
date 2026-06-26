@@ -30,6 +30,19 @@
     stateful = true;
   };
 
+  codeforge-mcp = {
+    description = "CodeForge MCP coding workspace runtime";
+    kind = "application";
+    public = true;
+    stateful = true;
+    requires = {
+      features = [ "containers" ];
+      services = [ "caddy" ];
+      secrets = true;
+      domain = true;
+    };
+  };
+
   databasus = {
     description = "Databasus database UI";
     requires.features = [ "containers" ];

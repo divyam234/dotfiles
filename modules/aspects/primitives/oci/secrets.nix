@@ -17,6 +17,7 @@
         containers.secretDir = "/run/secrets/container-env";
         anyEnabled = lib.any (enabled: enabled) [
           (enabled "caddy")
+          (enabled "codeforge-mcp")
           (enabled "forgejo")
           (enabled "gluetun")
           (enabled "postgres")
@@ -55,6 +56,9 @@
               })
               (lib.mkIf (enabled "vaultwarden") {
                 "vaultwarden/admin_token" = secrets.host host "vaultwarden/admin_token";
+              })
+              (lib.mkIf (enabled "codeforge-mcp") {
+                "codeforge-mcp/api_key" = secrets.host host "codeforge-mcp/api_key";
               })
             ]
           );
@@ -140,6 +144,16 @@
                     DATABASE_URL=postgres://${config.sops.placeholder."postgres/user"}:${
                       config.sops.placeholder."postgres/password"
                     }@postgres/postgres?application_name=bitwarden&options=-c%20search_path%3Dbitwarden
+                  '';
+                };
+              })
+
+              (lib.mkIf (enabled "codeforge-mcp") {
+                "codeforge-mcp.env" = {
+                  path = "${containers.secretDir}/codeforge-mcp.env";
+                  mode = "0440";
+                  content = ''
+                    CODEFORGE_API_KEY=${config.sops.placeholder."codeforge-mcp/api_key"}
                   '';
                 };
               })
