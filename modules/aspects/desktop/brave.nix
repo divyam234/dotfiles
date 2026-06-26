@@ -48,7 +48,7 @@
         DefaultBraveFingerprintingV2Setting = 3;
         DefaultBraveHttpsUpgradeSetting = 2;
         DefaultBraveReferrersSetting = 2;
-        DefaultBraveRemember1PStorageSetting = 2;
+        DefaultBraveRemember1PStorageSetting = 1;
 
         # Sync/sign-in.
         BrowserSignin = 1;
