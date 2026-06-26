@@ -149,6 +149,13 @@
             "d /var/lib/noctalia-greeter 0750 greeter greeter -"
           ];
 
+          systemd.tmpfiles.settings."10-noctalia-greeter"."/var/lib/noctalia-greeter/greeter.toml".C = lib.mkForce {
+            argument = "${greeterToml}";
+            user = "greeter";
+            group = "greeter";
+            mode = "0644";
+          };
+
           system.activationScripts.noctaliaGreeterFiles.text = ''
             ${pkgs.coreutils}/bin/install -d -m 0750 -o greeter -g greeter /var/lib/noctalia-greeter
             ${pkgs.coreutils}/bin/install -m 0644 -o greeter -g greeter ${greeterAppearanceJson} /var/lib/noctalia-greeter/appearance.json
