@@ -5,6 +5,8 @@ let
   hosts = import ../../inventory/hosts.nix;
   inherit ((import ../../lib/registry/resolve.nix { inherit lib; })) resolveHost;
 
+  userNames = lib.unique (builtins.attrValues (builtins.mapAttrs (_: host: host.user) hosts));
+
   baseAspects = [
     den.aspects.common
     den.aspects.users
@@ -48,7 +50,22 @@ let
         };
     };
 
+  mkUserProvides =
+    userName:
+    lib.mapAttrs (
+      name: host:
+      let
+        hostAspect = mkHostAspect name host;
+      in
+      {
+        inherit (hostAspect) includes homeManager;
+      }
+    ) (lib.filterAttrs (_name: host: host.user == userName) hosts);
 in
 {
-  den.aspects = lib.mapAttrs mkHostAspect hosts;
+  den.aspects =
+    lib.mapAttrs mkHostAspect hosts
+    // lib.genAttrs userNames (userName: {
+      provides = mkUserProvides userName;
+    });
 }

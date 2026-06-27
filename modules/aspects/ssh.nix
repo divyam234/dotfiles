@@ -34,9 +34,7 @@ in
           };
         };
 
-        sops.secrets."ssh/id_ed25519" = {
-          sopsFile = ../../secrets/files/id_ed25519;
-          format = "binary";
+        sops.secrets."ssh/private_key" = {
           path = "${config.home.homeDirectory}/.ssh/id_ed25519";
           mode = "0600";
         };
