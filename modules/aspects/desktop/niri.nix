@@ -45,7 +45,7 @@
                   output.position
                 else if !off && width != null then
                   {
-                    x = state.x;
+                    inherit (state) x;
                     y = 0;
                   }
                 else
@@ -63,7 +63,6 @@
         } outputs).outputs;
       outputs = normalizeOutputs (o: o.scale or 1.0) rawOutputs;
       greeterOutputs = normalizeOutputs (_: greeterScale) rawOutputs;
-      activeOutputs = builtins.filter (o: !(o.off or false) && (o.position or null) != null) outputs;
       activeGreeterOutputs = builtins.filter (
         o: !(o.off or false) && (o.position or null) != null
       ) greeterOutputs;
@@ -149,12 +148,14 @@
             "d /var/lib/noctalia-greeter 0750 greeter greeter -"
           ];
 
-          systemd.tmpfiles.settings."10-noctalia-greeter"."/var/lib/noctalia-greeter/greeter.toml".C = lib.mkForce {
-            argument = "${greeterToml}";
-            user = "greeter";
-            group = "greeter";
-            mode = "0644";
-          };
+          systemd.tmpfiles.settings."10-noctalia-greeter"."/var/lib/noctalia-greeter/greeter.toml".C =
+            lib.mkForce
+              {
+                argument = "${greeterToml}";
+                user = "greeter";
+                group = "greeter";
+                mode = "0644";
+              };
 
           system.activationScripts.noctaliaGreeterFiles.text = ''
             ${pkgs.coreutils}/bin/install -d -m 0750 -o greeter -g greeter /var/lib/noctalia-greeter

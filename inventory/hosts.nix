@@ -3,14 +3,7 @@
     system = "x86_64-linux";
     hostName = "laptop";
     user = "bhunter";
-    role = "workstation";
     homeManagerMode = "standalone";
-
-    features = [
-      "btrfs"
-      "containers"
-      "tailscale"
-    ];
 
     services = [ ];
 
@@ -38,11 +31,6 @@
     system = "aarch64-linux";
     hostName = "netcup";
     user = "bhunter";
-    role = "server";
-
-    features = [
-      "tailscale"
-    ];
 
     services = [
       "adguard"

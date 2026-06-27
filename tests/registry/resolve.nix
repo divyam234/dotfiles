@@ -12,44 +12,11 @@ let
     };
   };
   baseRegistry = {
-    roles = {
-      workstation = {
-        features = [ "desktop" ];
-        supportedSystems = [ "x86_64-linux" ];
-      };
-      server = {
-        features = [
-          "firewall"
-          "security-server"
-        ];
-        supportedSystems = [
-          "x86_64-linux"
-          "aarch64-linux"
-        ];
-      };
-    };
-    features = normalize.features {
-      ai = { };
-      containers = { };
-      desktop.supportedSystems = [ "x86_64-linux" ];
-      firewall = { };
-      gaming = {
-        requires = [ "desktop" ];
-      };
-      security-server = { };
-      child = {
-        requires = [ "parent" ];
-      };
-      parent = { };
-      conflict-a.conflicts = [ "conflict-b" ];
-      conflict-b = { };
-      x86-only.supportedSystems = [ "x86_64-linux" ];
-    };
     services = normalize.services {
       caddy = {
         public = true;
         requires = {
-          features = [ "containers" ];
+          aspects = [ "oci-runtime" ];
           domain = true;
         };
       };
@@ -62,10 +29,10 @@ let
       };
       platform.requires.services = [ "database" ];
       database.requires = {
-        features = [ "containers" ];
+        aspects = [ "oci-runtime" ];
         secrets = true;
       };
-      cache.requires.features = [ "containers" ];
+      cache.requires.aspects = [ "oci-runtime" ];
       x86-service.supportedSystems = [ "x86_64-linux" ];
     };
   };
@@ -76,8 +43,6 @@ let
       system = "x86_64-linux";
       hostName = "test";
       user = "alice";
-      role = "server";
-      features = [ ];
       services = [ ];
       domain = "test.invalid";
       secretsFile = /dev/null;
@@ -111,42 +76,9 @@ let
     };
   };
 
-  featureCycleRegistry = baseRegistry // {
-    features = baseRegistry.features // {
-      fa = baseRegistry.features.ai // {
-        requires = [ "fb" ];
-      };
-      fb = baseRegistry.features.ai // {
-        requires = [ "fc" ];
-      };
-      fc = baseRegistry.features.ai // {
-        requires = [ "fa" ];
-      };
-    };
-  };
 in
 builtins.all (x: x) [
-  (eq "valid workstation resolution"
-    (resolve baseRegistry (host {
-      role = "workstation";
-    })).resolvedFeatures
-    [ "desktop" ]
-  )
-  (eq "valid server resolution" (resolve baseRegistry (host { })).role "server")
-  (expect "unknown role" (
-    fails (
-      resolve baseRegistry (host {
-        role = "missing";
-      })
-    )
-  ))
-  (expect "unknown feature" (
-    fails (
-      resolve baseRegistry (host {
-        features = [ "missing" ];
-      })
-    )
-  ))
+  (eq "empty service resolution" (resolve baseRegistry (host { })).resolvedAspects [ ])
   (expect "unknown service" (
     fails (
       resolve baseRegistry (host {
@@ -172,65 +104,10 @@ builtins.all (x: x) [
       "platform"
     ]
   )
-  (eq "direct feature dependency"
-    (resolve baseRegistry (host {
-      features = [ "gaming" ];
-    })).resolvedFeatures
-    [
-      "firewall"
-      "security-server"
-      "desktop"
-      "gaming"
-    ]
-  )
-  (eq "transitive feature dependency"
-    (resolve baseRegistry (host {
-      features = [ "child" ];
-    })).resolvedFeatures
-    [
-      "firewall"
-      "security-server"
-      "parent"
-      "child"
-    ]
-  )
   (expect "service dependency cycle" (
     fails (
       resolve serviceCycleRegistry (host {
         services = [ "a" ];
-      })
-    )
-  ))
-  (expect "feature dependency cycle" (
-    fails (
-      resolve featureCycleRegistry (host {
-        features = [ "fa" ];
-      })
-    )
-  ))
-  (expect "feature conflicts" (
-    fails (
-      resolve baseRegistry (host {
-        features = [
-          "conflict-a"
-          "conflict-b"
-        ];
-      })
-    )
-  ))
-  (expect "unsupported role/system" (
-    fails (
-      resolve baseRegistry (host {
-        role = "workstation";
-        system = "aarch64-linux";
-      })
-    )
-  ))
-  (expect "unsupported feature/system" (
-    fails (
-      resolve baseRegistry (host {
-        features = [ "x86-only" ];
-        system = "aarch64-linux";
       })
     )
   ))
@@ -271,11 +148,11 @@ builtins.all (x: x) [
         services = [ "app" ];
       })).resolvedServices
   ))
-  (expect "container service resolving containers feature" (
-    builtins.elem "containers"
+  (expect "container service resolving OCI runtime aspect" (
+    builtins.elem "oci-runtime"
       (resolve baseRegistry (host {
         services = [ "cache" ];
-      })).resolvedFeatures
+      })).resolvedAspects
   ))
   (eq "deterministic output"
     (resolve baseRegistry (host {

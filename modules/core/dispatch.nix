@@ -10,31 +10,32 @@ let
     den.aspects.users
     den.aspects.sops
     den.aspects.security-base
+    den.batteries.host-aspects
   ];
 
   mkHostAspect =
     name: host:
     let
+      scopedHost = host // {
+        inherit name;
+      };
       resolved = resolveHost { inherit registry users host; };
+      aspectFor = aspectName: withHost den.aspects.${aspectName};
       withHost =
         aspect:
         aspect
         // {
           __scopeHandlers =
-            (aspect.__scopeHandlers or { }) // den.lib.aspects.fx.handlers.constantHandler { inherit host; };
+            (aspect.__scopeHandlers or { })
+            // den.lib.aspects.fx.handlers.constantHandler { host = scopedHost; };
         };
     in
     {
       includes = [
-        (withHost den.aspects.${name})
+        (aspectFor name)
       ]
       ++ baseAspects
-      ++ map (
-        featureName: withHost den.aspects.${registry.features.${featureName}.aspect}
-      ) resolved.resolvedFeatures
-      ++ map (
-        serviceName: withHost den.aspects.${registry.services.${serviceName}.aspect}
-      ) resolved.resolvedServices;
+      ++ map aspectFor resolved.resolvedAspects;
 
       homeManager =
         { user, ... }:
@@ -47,9 +48,7 @@ let
         };
     };
 
-  mkUserProvides =
-    userName: lib.mapAttrs mkHostAspect (lib.filterAttrs (_name: host: host.user == userName) hosts);
 in
 {
-  den.aspects.bhunter.provides = mkUserProvides "bhunter";
+  den.aspects = lib.mapAttrs mkHostAspect hosts;
 }

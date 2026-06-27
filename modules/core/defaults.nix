@@ -49,7 +49,7 @@ in
 
     schema = {
       home.includes = [
-        den._.mutual-provider
+        den.batteries.mutual-provider
         (
           { home, ... }:
           {
@@ -64,7 +64,7 @@ in
 
       user = {
         includes = [
-          den._.mutual-provider
+          den.batteries.mutual-provider
           (
             { host, user, ... }:
             lib.optionalAttrs ((host.homeManagerMode or "integrated") != "standalone") {
@@ -114,8 +114,10 @@ in
 
     default = {
       includes = [
-        den._.define-user
-        den._.hostname
+        den.batteries.define-user
+        den.batteries.hostname
+        den.batteries.inputs'
+        den.batteries.self'
       ];
       homeManager = {
         home.stateVersion = "26.05";

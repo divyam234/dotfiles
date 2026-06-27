@@ -1,6 +1,11 @@
 { den, ... }:
 {
   den.aspects.netcup = {
+    includes = [
+      den.aspects.server
+      den.aspects.tailscale
+    ];
+
     nixos =
       { host, ... }:
       {
