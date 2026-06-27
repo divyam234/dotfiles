@@ -7,25 +7,26 @@
     ];
 
     nixos =
-      {
-        config,
-        user,
-        lib,
-        secrets,
-        ...
-      }:
+      { user, secrets, ... }:
       let
-        passwordSecret = "users/${user.userName}/password";
+        passwordSecret = secrets.users.${user.userName}.password;
       in
       {
-        sops.secrets.${passwordSecret} = secrets.common passwordSecret // {
-          neededForUsers = true;
-        };
+        sops.secrets = secrets.declare [
+          (
+            passwordSecret
+            // {
+              sops = passwordSecret.sops // {
+                neededForUsers = true;
+              };
+            }
+          )
+        ];
 
         users.users.${user.userName} = {
           description = user.fullName or user.userName;
           openssh.authorizedKeys.keys = user.authorizedKeys;
-          hashedPasswordFile = config.sops.secrets.${passwordSecret}.path;
+          hashedPasswordFile = passwordSecret.path;
         };
       };
   };

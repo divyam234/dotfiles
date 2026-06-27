@@ -29,8 +29,6 @@
         ...
       }:
       {
-        sops.secrets."nordvpn/token" = secrets.common "nordvpn/token";
-
         systemd.user.services.nordvpn-setup = {
           Unit = {
             Description = "One-time NordVPN setup: login, settings, and Tailscale whitelist";
@@ -43,7 +41,7 @@
             ExecStart = pkgs.writeShellScript "nordvpn-setup" ''
               set -uo pipefail
 
-              token_path="${config.sops.secrets."nordvpn/token".path}"
+              token_path="${secrets.nordvpn.token.path}"
 
               if ! nordvpn account >/dev/null 2>&1; then
                 if [ -n "$token_path" ] && [ -f "$token_path" ]; then

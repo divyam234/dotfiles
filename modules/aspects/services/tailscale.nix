@@ -23,12 +23,12 @@
           acceptRoutes = false;
           advertiseTags = [ "tag:nixos" ];
           acceptRisk = null;
-          authSecret = "tailscale/oauth_client_secret";
+          authSecret = secrets.tailscale.oauth_client_secret;
           ephemeral = false;
           preauthorized = true;
         }
         // (host.tailscale or { });
-        authSecretPath = config.sops.secrets.${cfg.authSecret}.path;
+        authSecretPath = cfg.authSecret.path;
         boolString = value: if value then "true" else "false";
         joinComma = lib.concatStringsSep ",";
         upArgs =
@@ -62,10 +62,6 @@
             checkReversePath = "loose";
             trustedInterfaces = [ "tailscale0" ];
             allowedUDPPorts = [ 41641 ];
-          };
-
-          sops.secrets = lib.mkIf cfg.autoconnect {
-            ${cfg.authSecret} = secrets.common cfg.authSecret;
           };
 
           systemd.services.tailscale-autoconnect = lib.mkIf cfg.autoconnect {

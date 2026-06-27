@@ -21,10 +21,8 @@
           gh
         ];
 
-        sops.secrets."github/token" = secrets.common "github/token";
-
         home.activation.ghToken = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            token_file="${config.sops.secrets."github/token".path}"
+            token_file="${secrets.github.token.path}"
             if [ -f "$token_file" ]; then
               token=$(cat "$token_file" | tr -d '[:space:]')
               mkdir -p "${config.xdg.configHome}/gh"

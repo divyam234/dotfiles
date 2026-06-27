@@ -4,7 +4,6 @@
     { user, host, ... }:
     {
       includes = [ den.aspects.oci-service ];
-      ociSecrets = [ "codeforge-mcp" ];
       containerDataDirs.codeforge-mcp = {
         user = user.userName;
         group = "users";
@@ -21,12 +20,21 @@
         {
           config,
           containers,
+          secrets,
           ...
         }:
         let
           quadlet = config.virtualisation.quadlet;
         in
         {
+          sops.templates."codeforge-mcp.env" = {
+            path = "${containers.secretDir}/codeforge-mcp.env";
+            mode = "0440";
+            content = ''
+              CODEFORGE_API_KEY=${secrets."codeforge-mcp".api_key}
+            '';
+          };
+
           virtualisation.quadlet.containers.codeforge-mcp = {
             autoStart = true;
             containerConfig = {

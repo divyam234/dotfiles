@@ -5,7 +5,7 @@
       includes = [
         den.aspects.oci-base
         den.aspects.container-network
-        den.aspects.container-secrets
+        den.aspects.sops
       ];
     };
 

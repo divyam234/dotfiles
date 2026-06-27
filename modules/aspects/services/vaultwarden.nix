@@ -2,7 +2,6 @@
 {
   den.aspects.vaultwarden = { user, host, ... }: {
     includes = [ den.aspects.oci-service ];
-    ociSecrets = [ "vaultwarden" ];
     containerDataDirs.vaultwarden = {
       user = user.userName;
       group = "users";
@@ -26,12 +25,23 @@
       {
         config,
         containers,
+        secrets,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
       in
       {
+        sops.templates."vaultwarden.env" = {
+          path = "${containers.secretDir}/vaultwarden.env";
+          mode = "0440";
+          content = ''
+            DOMAIN=https://vault.${host.domain}
+            ADMIN_TOKEN=${secrets.vaultwarden.admin_token}
+            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres/postgres?application_name=bitwarden&options=-c%20search_path%3Dbitwarden
+          '';
+        };
+
         virtualisation.quadlet.containers.vaultwarden = {
           autoStart = true;
           containerConfig = {

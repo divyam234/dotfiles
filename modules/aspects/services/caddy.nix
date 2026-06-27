@@ -2,7 +2,6 @@
 {
   den.aspects.caddy = { user, ... }: {
     includes = [ den.aspects.oci-service ];
-    ociSecrets = [ "caddy" ];
     containerDataDirs = {
       caddy = {
         user = user.userName;
@@ -22,6 +21,7 @@
         containers,
         lib,
         host,
+        secrets,
         ...
       }:
       let
@@ -40,6 +40,14 @@
         config = {
           environment.etc."caddy/Caddyfile".text = lib.denful.mkCaddyfile {
             inherit global routes;
+          };
+
+          sops.templates."caddy.env" = {
+            path = "${containers.secretDir}/caddy.env";
+            mode = "0440";
+            content = ''
+              CLOUDFLARE_API_TOKEN=${secrets.cloudflare.api_token}
+            '';
           };
 
           systemd.services.caddy.restartTriggers = [
