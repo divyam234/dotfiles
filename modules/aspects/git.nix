@@ -4,7 +4,13 @@
     includes = [ den.aspects.sops ];
 
     homeManager =
-      { config, lib, pkgs, secrets, ... }@args:
+      {
+        config,
+        lib,
+        pkgs,
+        secrets,
+        ...
+      }@args:
       let
         user = args.user or { };
       in
@@ -18,17 +24,17 @@
         sops.secrets."github/token" = secrets.common "github/token";
 
         home.activation.ghToken = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          token_file="${config.sops.secrets."github/token".path}"
-          if [ -f "$token_file" ]; then
-            token=$(cat "$token_file" | tr -d '[:space:]')
-            mkdir -p "${config.xdg.configHome}/gh"
-            cat > "${config.xdg.configHome}/gh/hosts.yml" <<EOF
-        github.com:
-            oauth_token: $token
-            git_protocol: ssh
-        EOF
-            chmod 600 "${config.xdg.configHome}/gh/hosts.yml"
-          fi
+            token_file="${config.sops.secrets."github/token".path}"
+            if [ -f "$token_file" ]; then
+              token=$(cat "$token_file" | tr -d '[:space:]')
+              mkdir -p "${config.xdg.configHome}/gh"
+              cat > "${config.xdg.configHome}/gh/hosts.yml" <<EOF
+          github.com:
+              oauth_token: $token
+              git_protocol: ssh
+          EOF
+              chmod 600 "${config.xdg.configHome}/gh/hosts.yml"
+            fi
         '';
         programs.git = {
           enable = true;

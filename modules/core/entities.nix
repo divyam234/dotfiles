@@ -54,8 +54,6 @@ let
     {
       inherit (host)
         hostName
-        role
-        features
         services
         secretsFile
         ;

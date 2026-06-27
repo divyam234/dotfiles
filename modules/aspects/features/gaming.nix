@@ -1,6 +1,8 @@
 { den, ... }:
 {
   den.aspects.gaming = {
+    includes = [ den.aspects.desktop ];
+
     nixos = _: {
       programs.steam.enable = true;
       programs.gamemode.enable = true;

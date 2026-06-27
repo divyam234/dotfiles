@@ -6,22 +6,11 @@ let
   ];
 
   defaultServiceRequirements = {
-    features = [ ];
+    aspects = [ ];
     services = [ ];
     secrets = false;
     domain = false;
   };
-
-  normalizeFeature =
-    name: value:
-    {
-      aspect = name;
-      description = name;
-      requires = [ ];
-      conflicts = [ ];
-      supportedSystems = supportedLinuxSystems;
-    }
-    // value;
 
   normalizeService =
     name: value:
@@ -40,8 +29,6 @@ let
     };
 in
 {
-  feature = normalizeFeature;
   service = normalizeService;
-  features = builtins.mapAttrs normalizeFeature;
   services = builtins.mapAttrs normalizeService;
 }

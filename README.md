@@ -5,26 +5,33 @@ Den-based NixOS dotfiles for a workstation and an ARM server.
 The architecture is intentionally linear:
 
 ```text
-inventory -> registry -> resolver/validator -> thin Den integration -> aspects
+inventory -> service registry/resolver -> thin Den integration -> aspects
 ```
 
-Hosts contain intent only. Aspects own implementation.
+Hosts contain facts and directly requested hosted services. Den aspects own host
+composition and implementation.
+
+The service registry is metadata, not another module layer. The resolver expands
+service dependencies, validates the result, and returns one ordered
+`resolvedAspects` list for service-required aspects. The Den dispatch layer stays
+intentionally dumb: it includes the resolved service aspects and does not inspect
+registry internals.
+Host-to-user Home Manager projection uses Den's `host-aspects` battery instead
+of a custom user `provides` tree.
 
 ## Terms
 
-- **Role**: one broad host purpose, such as `workstation` or `server`.
-- **Feature**: a selectable machine capability, such as `desktop`, `gaming`, `containers`, `tailscale`, `firewall`, or a security policy.
+- **Role aspect**: a Den aspect bundle, such as `workstation` or `server`.
+- **Aspect**: a Den composition unit, such as `desktop`, `btrfs`, `oci-runtime`, `tailscale`, `firewall`, or a security policy.
 - **Service**: a hosted application or infrastructure component, such as Forgejo, Caddy, PostgreSQL, PgDog, Redis, Vaultwarden, SiYuan, or AdGuard.
 - **Primitive**: a non-user-selectable implementation building block, such as `oci-base`, `container-network`, or `container-secrets`.
 
 ## Layout
 
 - `inventory/users.nix`: pure user data.
-- `inventory/hosts.nix`: pure host intent.
-- `registry/roles.nix`: roles and their default features.
-- `registry/features.nix`: feature metadata and feature dependencies.
-- `registry/services.nix`: service metadata and service dependencies.
-- `lib/registry/resolve.nix`: pure dependency resolver and validator.
+- `inventory/hosts.nix`: host facts and directly requested services.
+- `registry/services.nix`: service metadata, dependencies, and required aspects.
+- `lib/registry/resolve.nix`: pure dependency resolver, validator, and name-to-aspect mapper.
 - `modules/core/`: Den schema, entity creation, and dispatch.
 - `modules/aspects/`: implementation aspects.
 
@@ -97,11 +104,10 @@ Brave is the default browser. A managed policy under `/etc/brave/policies/manage
 ## Adding a host
 
 1. Add pure host data to `inventory/hosts.nix`.
-2. Choose exactly one `role`.
-3. Add only directly requested `features`.
-4. Add only directly requested `services`.
-5. Add `domain` and `secretsFile` only when required by host-local secrets or resolved services.
-6. Keep host-local files under `hosts/<name>/` hardware/networking focused.
+2. Add host composition as Den `includes` in `hosts/<name>/default.nix`.
+3. Add only directly requested `services` to inventory.
+4. Add `domain` and `secretsFile` only when required by host-local secrets or resolved services.
+5. Keep host-local files under `hosts/<name>/` hardware/networking focused.
 
 ## Secrets
 
@@ -112,18 +118,11 @@ SOPS files are selected through `lib.denful.secrets` helpers instead of inline `
 - The user password key is `users/<username>/password`, for example `users/bhunter/password`.
 - The install still copies only the age key to `/var/lib/sops-nix/key.txt`; encrypted YAML files remain in the dotfiles checkout.
 
-## Adding a role
+## Adding An Aspect Bundle
 
-1. Add one entry to `registry/roles.nix`.
-2. List default features for that role.
-3. List supported systems.
-4. Do not include implementation aspects in the role registry.
-
-## Adding a feature
-
-1. Add one implementation aspect under `modules/aspects/`.
-2. Add one entry to `registry/features.nix`.
-3. Set `requires`, `conflicts`, or `supportedSystems` only when needed.
+Add a Den aspect under `modules/aspects/` and compose it with `includes`. Do not
+add registries, schema enums, dispatch cases, aliases, or forwarding modules for
+ordinary aspect composition.
 
 ## Adding a service
 
@@ -148,6 +147,12 @@ forgejo.requires.services = [ "caddy" "pgdog" ];
 
 Service modules may keep runtime ordering such as Quadlet `After` and `Requires`, but they must not include other application or infrastructure service aspects.
 
+When a service needs a non-service runtime aspect, add it as service metadata:
+
+```nix
+forgejo.requires.aspects = [ "oci-runtime" ];
+```
+
 ## Inspecting resolved plans
 
 ```bash
@@ -155,7 +160,7 @@ nix eval --json .#resolvedHosts.laptop
 nix eval --json .#resolvedHosts.netcup
 ```
 
-The output shows requested features/services and resolved transitive dependencies.
+The output shows requested services, resolved transitive services, and service-required aspects.
 
 ## Validation
 

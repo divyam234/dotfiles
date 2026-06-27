@@ -1,8 +1,6 @@
 { lib, den, ... }:
 let
   registry = import ../../registry;
-  roleNames = builtins.attrNames registry.roles;
-  featureNames = builtins.attrNames registry.features;
   serviceRegistryNames = builtins.attrNames registry.services;
 in
 {
@@ -10,17 +8,6 @@ in
     { lib, ... }:
     {
       options = {
-        role = lib.mkOption {
-          type = lib.types.enum roleNames;
-          description = "Single broad host purpose.";
-        };
-
-        features = lib.mkOption {
-          type = lib.types.listOf (lib.types.enum featureNames);
-          default = [ ];
-          description = "Directly requested host capabilities.";
-        };
-
         services = lib.mkOption {
           type = lib.types.listOf (lib.types.enum serviceRegistryNames);
           default = [ ];

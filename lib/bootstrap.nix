@@ -21,7 +21,7 @@ let
             jdk = final.jetbrains.jdk-21;
           };
     })
-    (final: prev: {
+    (final: _prev: {
       local = extendedLib.denful.importPackages final ../packages;
     })
   ];

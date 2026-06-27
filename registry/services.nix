@@ -3,7 +3,7 @@
     description = "AdGuard CLI service exposed through Gluetun";
     kind = "networking";
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [
         "caddy"
         "gluetun"
@@ -18,7 +18,7 @@
     public = true;
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       secrets = true;
       domain = true;
     };
@@ -26,7 +26,7 @@
 
   camofox = {
     description = "Camofox browser automation service";
-    requires.features = [ "containers" ];
+    requires.aspects = [ "oci-runtime" ];
     stateful = true;
   };
 
@@ -36,7 +36,7 @@
     public = true;
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [ "caddy" ];
       secrets = true;
       domain = true;
@@ -45,7 +45,7 @@
 
   databasus = {
     description = "Databasus database UI";
-    requires.features = [ "containers" ];
+    requires.aspects = [ "oci-runtime" ];
     stateful = true;
   };
 
@@ -55,7 +55,7 @@
     public = true;
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [
         "caddy"
         "pgdog"
@@ -70,7 +70,7 @@
     kind = "networking";
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       secrets = true;
     };
   };
@@ -78,7 +78,7 @@
   hermes = {
     description = "Hermes agent gateway";
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [ "camofox" ];
     };
   };
@@ -87,7 +87,7 @@
     description = "OpenChamber web application and OpenCode service";
     public = true;
     requires = {
-      features = [ "ai" ];
+      aspects = [ "ai" ];
       services = [ "caddy" ];
       domain = true;
     };
@@ -97,7 +97,7 @@
     description = "PostgreSQL connection pooler";
     kind = "platform";
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [ "postgres" ];
     };
   };
@@ -107,7 +107,7 @@
     kind = "database";
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       secrets = true;
     };
   };
@@ -117,7 +117,7 @@
     kind = "cache";
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       secrets = true;
     };
   };
@@ -127,7 +127,7 @@
     kind = "backup";
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       secrets = true;
     };
   };
@@ -137,7 +137,7 @@
     public = true;
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [ "caddy" ];
       domain = true;
     };
@@ -148,7 +148,7 @@
     public = true;
     stateful = true;
     requires = {
-      features = [ "containers" ];
+      aspects = [ "oci-runtime" ];
       services = [
         "caddy"
         "postgres"

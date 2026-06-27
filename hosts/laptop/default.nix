@@ -4,6 +4,13 @@
   flake-file.inputs.nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
   den.aspects.laptop = {
+    includes = [
+      den.aspects.workstation
+      den.aspects.btrfs
+      den.aspects.oci-runtime
+      den.aspects.tailscale
+    ];
+
     nixos = _: {
       imports = [
         inputs.nixos-facter-modules.nixosModules.facter

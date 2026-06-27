@@ -50,7 +50,7 @@ let
     sqlite
   ];
 
-  binaryPackage = stdenv.mkDerivation (finalAttrs: {
+  binaryPackage = stdenv.mkDerivation (_finalAttrs: {
     pname = "${pnameBase}-bin";
     version = buildVersion;
 
@@ -146,7 +146,7 @@ let
     };
   });
 in
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (_finalAttrs: {
   pname = pnameBase;
   version = buildVersion;
 

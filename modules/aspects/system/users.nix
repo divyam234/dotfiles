@@ -2,8 +2,8 @@
 {
   den.aspects.users = {
     includes = [
-      den._.primary-user
-      (den._.user-shell "fish")
+      den.batteries.primary-user
+      (den.batteries.user-shell "fish")
     ];
 
     nixos =
