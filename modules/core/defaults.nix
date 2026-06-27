@@ -63,6 +63,7 @@ in
 
       user = {
         includes = [
+          den.aspects.users
           den.batteries.mutual-provider
           (
             { host, user, ... }:

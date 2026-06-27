@@ -9,7 +9,6 @@ let
 
   baseAspects = [
     den.aspects.common
-    den.aspects.users
     den.aspects.sops
     den.aspects.security-base
     den.batteries.host-aspects
@@ -39,33 +38,42 @@ let
       ++ baseAspects
       ++ map aspectFor resolved.resolvedAspects;
 
-      homeManager =
-        { user, ... }:
-        {
-          home = {
-            username = user.userName;
-            homeDirectory = "/home/${user.userName}";
-            stateVersion = "26.05";
+      provides.to-users = {
+        homeManager =
+          { user, ... }:
+          {
+            home = {
+              username = user.userName;
+              homeDirectory = "/home/${user.userName}";
+              stateVersion = "26.05";
+            };
           };
-        };
+      };
     };
 
-  mkUserProvides =
+  mkStandaloneUserProvides =
     userName:
-    lib.mapAttrs (
-      name: host:
-      let
-        hostAspect = mkHostAspect name host;
-      in
-      {
-        inherit (hostAspect) includes homeManager;
-      }
-    ) (lib.filterAttrs (_name: host: host.user == userName) hosts);
+    lib.mapAttrs
+      (
+        name: host:
+        let
+          hostAspect = mkHostAspect name host;
+        in
+        {
+          inherit (hostAspect) includes;
+        }
+      )
+      (
+        lib.filterAttrs (
+          _name: host: host.user == userName && (host.homeManagerMode or "integrated") == "standalone"
+        ) hosts
+      );
+
 in
 {
   den.aspects =
     lib.mapAttrs mkHostAspect hosts
     // lib.genAttrs userNames (userName: {
-      provides = mkUserProvides userName;
+      provides = mkStandaloneUserProvides userName;
     });
 }
