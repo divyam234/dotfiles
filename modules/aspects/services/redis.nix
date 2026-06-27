@@ -2,18 +2,30 @@
 {
   den.aspects.redis = _: {
     includes = [ den.aspects.oci-service ];
-    ociSecrets = [ "redis" ];
     containerDataDirs.redis = {
       user = "1001";
       group = "0";
     };
 
     nixos =
-      { config, containers, ... }:
+      {
+        config,
+        containers,
+        secrets,
+        ...
+      }:
       let
         quadlet = config.virtualisation.quadlet;
       in
       {
+        sops.templates."redis.env" = {
+          path = "${containers.secretDir}/redis.env";
+          mode = "0440";
+          content = ''
+            REDIS_PASSWORD=${secrets.redis.password}
+          '';
+        };
+
         virtualisation.quadlet.containers.redis = {
           autoStart = true;
           containerConfig = {

@@ -2,18 +2,32 @@
 {
   den.aspects.postgres = _: {
     includes = [ den.aspects.oci-service ];
-    ociSecrets = [ "postgres" ];
     containerDataDirs.postgres = {
       user = "999";
       group = "999";
     };
 
     nixos =
-      { config, containers, ... }:
+      {
+        config,
+        containers,
+        secrets,
+        ...
+      }:
       let
         quadlet = config.virtualisation.quadlet;
       in
       {
+        sops.templates."postgres.env" = {
+          path = "${containers.secretDir}/postgres.env";
+          mode = "0440";
+          content = ''
+            POSTGRES_USER=${secrets.postgres.user}
+            POSTGRES_PASSWORD=${secrets.postgres.password}
+            POSTGRES_DB=postgres
+          '';
+        };
+
         virtualisation.quadlet.containers.postgres = {
           autoStart = true;
           containerConfig = {

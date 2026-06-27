@@ -16,12 +16,6 @@
         postgresDumpDir = "/var/backup/postgres";
       in
       {
-        sops.secrets = {
-          "restic/password" = secrets.host host "restic/password";
-          "restic/repository" = secrets.host host "restic/repository";
-          "restic/rclone_conf" = secrets.host host "restic/rclone_conf";
-        };
-
         services.restic.backups.${backupName} = {
           initialize = true;
           paths = [
@@ -31,9 +25,9 @@
           exclude = [
             "${containers.dataRoot}/hermes"
           ];
-          passwordFile = config.sops.secrets."restic/password".path;
-          repositoryFile = config.sops.secrets."restic/repository".path;
-          rcloneConfigFile = config.sops.secrets."restic/rclone_conf".path;
+          passwordFile = secrets.restic.password.path;
+          repositoryFile = secrets.restic.repository.path;
+          rcloneConfigFile = secrets.restic.rclone_conf.path;
           backupPrepareCommand = ''
             set -Eeuo pipefail
 

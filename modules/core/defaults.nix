@@ -44,7 +44,6 @@ in
       caddyLayer4Routes.description = "Caddy layer4 route snippets emitted by service aspects.";
       caddyRoutes.description = "Caddy virtual host routes emitted by service aspects.";
       containerDataDirs.description = "Persistent container data directories emitted by service aspects.";
-      ociSecrets.description = "OCI secret environment files requested by service aspects.";
     };
 
     schema = {
@@ -119,26 +118,47 @@ in
         den.batteries.inputs'
         den.batteries.self'
       ];
-      homeManager = {
-        home.stateVersion = "26.05";
-        _module.args.secrets = dotBootstrap.extendedLib.denful.secrets;
-      };
-      nixos = {
-        imports = [
-          inputs.sops-nix.nixosModules.sops
-          inputs.disko.nixosModules.disko
-          inputs.quadlet-nix.nixosModules.quadlet
-        ];
+      homeManager =
+        {
+          config,
+          ...
+        }@args:
+        let
+          host = args.host or null;
+          secrets = dotBootstrap.extendedLib.denful.secrets.for { inherit config host; };
+        in
+        {
+          home.stateVersion = "26.05";
+          _module.args.secrets = secrets;
+          sops.age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+          sops.secrets = secrets.declare secrets.all;
+        };
+      nixos =
+        {
+          config,
+          host ? null,
+          ...
+        }:
+        let
+          secrets = dotBootstrap.extendedLib.denful.secrets.for { inherit config host; };
+        in
+        {
+          imports = [
+            inputs.sops-nix.nixosModules.sops
+            inputs.disko.nixosModules.disko
+            inputs.quadlet-nix.nixosModules.quadlet
+          ];
 
-        config = {
-          _module.args.lib = dotBootstrap.extendedLib;
-          _module.args.secrets = dotBootstrap.extendedLib.denful.secrets;
-          nixpkgs = {
-            config.allowUnfree = true;
-            inherit (dotBootstrap) overlays;
+          config = {
+            _module.args.lib = dotBootstrap.extendedLib;
+            _module.args.secrets = secrets;
+            sops.secrets = secrets.declare secrets.all;
+            nixpkgs = {
+              config.allowUnfree = true;
+              inherit (dotBootstrap) overlays;
+            };
           };
         };
-      };
     };
   };
 }
