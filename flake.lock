@@ -420,11 +420,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782544015,
-        "narHash": "sha256-Xipbu2afdgaI7lrnuH50uVfEN8vcASN5tJu4O94ap3w=",
+        "lastModified": 1782582494,
+        "narHash": "sha256-EQZMt6YDiPXa9JQsYeov/CPpk2QpYa5aPZjkkiYmUww=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "ad2aea03bc235e742a1206142f79cca4ae0b8718",
+        "rev": "231e7726ae8d06d886a3bd507d0e61a95989d3d3",
         "type": "github"
       },
       "original": {
@@ -578,26 +578,6 @@
         "type": "github"
       }
     },
-    "nordvpn-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1781493218,
-        "narHash": "sha256-3enf99BmAmfaBYUTp0Gzw91sDO6UWZHmLGjh0iEvDyU=",
-        "owner": "Triforcey",
-        "repo": "nordvpn-nix",
-        "rev": "c0acb85d3f63bb76a92db78ed4f596718deae5ec",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Triforcey",
-        "repo": "nordvpn-nix",
-        "type": "github"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts_3",
@@ -673,7 +653,6 @@
         "nixpkgs": "nixpkgs_3",
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
-        "nordvpn-nix": "nordvpn-nix",
         "nur": "nur",
         "quadlet-nix": "quadlet-nix",
         "rust-overlay": "rust-overlay",

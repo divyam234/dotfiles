@@ -1,34 +1,68 @@
-{ inputs, den, ... }:
+{ den, ... }:
 {
-  flake-file.inputs.nordvpn-nix = {
-    url = "github:Triforcey/nordvpn-nix";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   den.aspects.nordvpn = {
     includes = [ den.aspects.sops ];
 
     nixos =
-      { user, ... }:
+      { pkgs, user, ... }:
       {
-        imports = [ inputs.nordvpn-nix.nixosModules.nordvpn ];
-        services.nordvpn = {
-          enable = true;
-          openFirewall = false;
-          users = [ user.userName ];
-          gui.enable = false;
+        users = {
+          groups.nordvpn = { };
+          users.${user.userName}.extraGroups = [ "nordvpn" ];
+        };
+
+        networking.firewall = {
+          checkReversePath = false;
+          allowedUDPPorts = [ 1194 ];
+          allowedTCPPorts = [ 443 ];
+        };
+
+        systemd = {
+          sockets.nordvpnd = {
+            description = "NordVPN Daemon Socket";
+            wantedBy = [ "sockets.target" ];
+            bindsTo = [ "nordvpnd.service" ];
+
+            socketConfig = {
+              ListenStream = "/run/nordvpn/nordvpnd.sock";
+              SocketGroup = "nordvpn";
+              SocketMode = "0660";
+              DirectoryMode = "0750";
+              RemoveOnStop = true;
+            };
+          };
+
+          services.nordvpnd = {
+            description = "NordVPN Daemon";
+            wantedBy = [ "multi-user.target" ];
+            requires = [ "nordvpnd.socket" ];
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+
+            serviceConfig = {
+              ExecStart = "${pkgs.nordvpn}/bin/nordvpnd";
+              NonBlocking = true;
+              KillMode = "process";
+              Restart = "always";
+              RestartSec = 5;
+              RuntimeDirectory = "nordvpn";
+              RuntimeDirectoryMode = "0750";
+              RuntimeDirectoryPreserve = true;
+              Group = "nordvpn";
+            };
+          };
         };
       };
 
     homeManager =
       {
-        config,
         pkgs,
-        lib,
         secrets,
         ...
       }:
       {
+        home.packages = [ pkgs.nordvpn ];
+
         systemd.user.services.nordvpn-setup = {
           Unit = {
             Description = "One-time NordVPN setup: login, settings, and Tailscale whitelist";
@@ -41,12 +75,14 @@
             ExecStart = pkgs.writeShellScript "nordvpn-setup" ''
               set -uo pipefail
 
+              nordvpn="${pkgs.nordvpn}/bin/nordvpn"
+              grep="${pkgs.gnugrep}/bin/grep"
               token_path="${secrets.nordvpn.token.path}"
 
-              if ! nordvpn account >/dev/null 2>&1; then
+              if ! "$nordvpn" account >/dev/null 2>&1; then
                 if [ -n "$token_path" ] && [ -f "$token_path" ]; then
                   echo "Logging in to NordVPN..."
-                  nordvpn login --token "$(${pkgs.coreutils}/bin/tr -d '[:space:]' < "$token_path")"
+                  "$nordvpn" login --token "$(${pkgs.coreutils}/bin/tr -d '[:space:]' < "$token_path")"
                 else
                   echo "No NordVPN token found, skipping login."
                 fi
@@ -54,17 +90,17 @@
                 echo "Already logged in to NordVPN."
               fi
 
-              if nordvpn settings 2>/dev/null | grep -q "LAN Discovery: enabled"; then
+              if "$nordvpn" settings 2>/dev/null | "$grep" -q "LAN Discovery: enabled"; then
                 echo "NordVPN settings already applied, skipping."
                 exit 0
               fi
 
-              nordvpn set analytics off || true
+              "$nordvpn" set analytics off || true
 
-              nordvpn allowlist add subnet 100.64.0.0/10 || true
-              nordvpn allowlist add port 41641 || true
+              "$nordvpn" allowlist add subnet 100.64.0.0/10 || true
+              "$nordvpn" allowlist add port 41641 || true
 
-              nordvpn set lan-discovery on
+              "$nordvpn" set lan-discovery on
             '';
           };
           Install = {
