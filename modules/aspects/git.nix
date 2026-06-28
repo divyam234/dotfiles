@@ -9,7 +9,6 @@
         lib,
         pkgs,
         secrets,
-        user,
         ...
       }:
       {
@@ -36,7 +35,7 @@
           enable = true;
           lfs.enable = true;
           signing = {
-            key = user.signingKey;
+            key = "~/.ssh/id_ed25519.pub";
             format = "ssh";
             signByDefault = true;
           };

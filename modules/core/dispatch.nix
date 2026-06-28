@@ -19,19 +19,15 @@ let
       scopedHost = host // {
         inherit name;
       };
-      scopedUser = users.${host.user};
       resolved = resolveHost { inherit registry users host; };
-      aspectFor = aspectName: withScope den.aspects.${aspectName};
-      withScope =
+      aspectFor = aspectName: withHost den.aspects.${aspectName};
+      withHost =
         aspect:
         aspect
         // {
           __scopeHandlers =
             (aspect.__scopeHandlers or { })
-            // den.lib.aspects.fx.handlers.constantHandler {
-              host = scopedHost;
-              user = scopedUser;
-            };
+            // den.lib.aspects.fx.handlers.constantHandler { host = scopedHost; };
         };
     in
     {
@@ -39,13 +35,13 @@ let
         (aspectFor name)
       ]
       ++ map aspectFor baseAspectNames
-      ++ [ den.batteries.host-aspects ]
       ++ map aspectFor resolved.resolvedAspects;
 
       provides.to-users = {
         homeManager =
           { user, ... }:
           {
+            _module.args.user = user;
             home = {
               username = user.userName;
               homeDirectory = "/home/${user.userName}";
@@ -78,6 +74,10 @@ in
   den.aspects =
     lib.mapAttrs mkHostAspect hosts
     // lib.genAttrs userNames (userName: {
+      includes = [
+        den.batteries.host-aspects
+        den.aspects.user-signing
+      ];
       provides = mkStandaloneUserProvides userName;
     });
 }

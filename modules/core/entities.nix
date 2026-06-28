@@ -45,11 +45,7 @@ let
     _name: host:
     let
       hmMode = host.homeManagerMode or "integrated";
-      userWithClasses =
-        users.${host.user}
-        // lib.optionalAttrs (hmMode == "standalone") {
-          classes = [ ];
-        };
+      user = users.${host.user};
     in
     {
       inherit (host)
@@ -57,14 +53,18 @@ let
         services
         secretsFile
         ;
-      homeManagerMode = host.homeManagerMode or "integrated";
+      homeManagerMode = hmMode;
       domain = host.domain or null;
       caddyEmail = host.caddyEmail or null;
       tailscale = host.tailscale or { };
       greeter = host.greeter or { };
       outputs = host.outputs or [ ];
       instantiate = mkInstantiate host.system;
-      users.${host.user} = userWithClasses;
+      users.${host.user} =
+        user
+        // lib.optionalAttrs (hmMode == "standalone") {
+          classes = [ ];
+        };
     };
 
   mkSystemHosts =
@@ -79,6 +79,10 @@ in
   den.homes = {
     x86_64-linux."bhunter@laptop" = {
       instantiate = mkHomeInstantiate "x86_64-linux";
+      user = users.bhunter // {
+        name = "bhunter";
+        classes = [ "homeManager" ];
+      };
     };
   };
 }

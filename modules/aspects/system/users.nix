@@ -30,4 +30,13 @@
         };
       };
   };
+
+  den.aspects.user-signing = {
+    homeManager =
+      { user, ... }:
+      {
+        home.file.".ssh/id_ed25519.pub".text = user.signingPublicKey + "\n";
+        home.file.".ssh/allowed_signers".text = "* ${user.signingPublicKey}\n";
+      };
+  };
 }

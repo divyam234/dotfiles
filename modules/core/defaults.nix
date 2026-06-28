@@ -76,6 +76,7 @@ in
                 extraSpecialArgs = { inherit inputs; };
                 users.${user.userName} = {
                   _module.args.host = host;
+                  _module.args.user = user;
                   nixpkgs = {
                     config.allowUnfree = true;
                     inherit (dotBootstrap) overlays;

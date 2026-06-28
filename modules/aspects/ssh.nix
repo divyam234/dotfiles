@@ -2,11 +2,8 @@
 {
   den.aspects.ssh = {
     homeManager =
-      { config, user, ... }:
+      { config, ... }:
       {
-        home.file.".ssh/id_ed25519.pub".text = user.signingPublicKey + "\n";
-        home.file.".ssh/allowed_signers".text = "* ${user.signingPublicKey}\n";
-
         programs.ssh = {
           enable = true;
           enableDefaultConfig = false;

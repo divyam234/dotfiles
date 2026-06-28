@@ -12,7 +12,7 @@
         };
 
         networking.firewall = {
-          checkReversePath = false;
+          checkReversePath = "loose";
           allowedUDPPorts = [ 1194 ];
           allowedTCPPorts = [ 443 ];
         };
