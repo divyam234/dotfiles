@@ -1,14 +1,11 @@
 { den, ... }:
-let
-  bhunterPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICWt7MJWVbCBzlYidynsuu9kP5kB5/gcUBFO+K6ciyCC";
-in
 {
   den.aspects.ssh = {
     homeManager =
-      { config, ... }:
+      { config, user, ... }:
       {
-        home.file.".ssh/id_ed25519.pub".text = bhunterPublicKey + "\n";
-        home.file.".ssh/allowed_signers".text = "* ${bhunterPublicKey}\n";
+        home.file.".ssh/id_ed25519.pub".text = user.signingPublicKey + "\n";
+        home.file.".ssh/allowed_signers".text = "* ${user.signingPublicKey}\n";
 
         programs.ssh = {
           enable = true;
@@ -33,7 +30,6 @@ in
             };
           };
         };
-
         sops.secrets."ssh/private_key" = {
           path = "${config.home.homeDirectory}/.ssh/id_ed25519";
           mode = "0600";

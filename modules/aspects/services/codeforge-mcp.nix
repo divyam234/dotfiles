@@ -20,11 +20,32 @@
         {
           config,
           containers,
+          pkgs,
           secrets,
+          user,
           ...
         }:
         let
           quadlet = config.virtualisation.quadlet;
+          sshAuthSock = "/run/user/1000/gnupg/S.gpg-agent.ssh";
+          codeforgeGitConfig = pkgs.writeText "codeforge-gitconfig" ''
+            [user]
+              name = Divyam
+              email = 47589864+divyam234@users.noreply.github.com
+              signingKey = key::${user.signingPublicKey}
+            [init]
+              defaultBranch = main
+            [commit]
+              gpgSign = true
+            [pull]
+              ff = only
+            [push]
+              autoSetupRemote = true
+            [gpg]
+              format = ssh
+            [url "ssh://git@github.com/"]
+              insteadOf = https://github.com/
+          '';
         in
         {
           sops.templates."codeforge-mcp.env" = {
@@ -52,16 +73,17 @@
                 CODEFORGE_FOREGROUND_YIELD_MS = "10000";
                 CODEFORGE_MAX_CONCURRENT_PROCESSES = "8";
                 CODEFORGE_PROCESS_TIMEOUT_SECONDS = "1800";
+                SSH_AUTH_SOCK = "/ssh-agent";
               };
               volumes = [
                 "${containers.dataRoot}/codeforge-mcp/state:/state"
                 "/home/${user.userName}/repos/github:/workspace"
-                "/home/${user.userName}/.config/git:/home/dev/.config/git:ro"
-                "/home/${user.userName}/.ssh:/home/dev/.ssh:ro"
+                "${sshAuthSock}:/ssh-agent"
+                "${codeforgeGitConfig}:/home/dev/.gitconfig:ro"
                 "/home/${user.userName}/go/pkg/mod:/home/dev/go/pkg/mod"
                 "/home/${user.userName}/.cache/go-build:/home/dev/.cache/go-build"
                 "/home/${user.userName}/.cargo:/home/dev/.cargo"
-                "/home/${user.userName}/.bun:/home/dev./bun"
+                "/home/${user.userName}/.bun:/home/dev/.bun"
                 "/home/${user.userName}/.cache/uv:/home/dev/.cache/uv"
                 "/home/${user.userName}/.cache/pip:/home/dev/.cache/pip"
                 "/home/${user.userName}/.local/share/pnpm:/home/dev/.local/share/pnpm"
