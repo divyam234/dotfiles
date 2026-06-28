@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           aria2
+          hydra
           cloudflared
           croc
           curl
