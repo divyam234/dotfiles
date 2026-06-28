@@ -59,8 +59,10 @@
       };
 
     nixos =
-      { containers, ... }:
+      { containers, user, ... }:
       {
+        users.users.${user.userName}.linger = true;
+
         networking.firewall.interfaces."br-${containers.networkName}".allowedTCPPorts = [
           39173
         ];
