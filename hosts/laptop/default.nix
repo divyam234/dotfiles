@@ -5,6 +5,9 @@
 
   den.aspects.laptop = {
     includes = [
+      den.aspects.common
+      den.aspects.sops
+      den.aspects.security-base
       den.aspects.workstation
       den.aspects.btrfs
       den.aspects.oci-runtime

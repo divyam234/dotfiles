@@ -33,11 +33,7 @@ in
     };
   };
 
-  imports = [
-    ./schema.nix
-    ./entities.nix
-    ./dispatch.nix
-  ];
+  imports = [ ./schema.nix ];
 
   den = {
     quirks = {
@@ -65,26 +61,6 @@ in
         includes = [
           den.aspects.users
           den.batteries.mutual-provider
-          (
-            { host, user, ... }:
-            lib.optionalAttrs ((host.homeManagerMode or "integrated") != "standalone") {
-              nixos.home-manager = {
-                sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-                useGlobalPkgs = false;
-                useUserPackages = true;
-                backupFileExtension = "hm-bak";
-                extraSpecialArgs = { inherit inputs; };
-                users.${user.userName} = {
-                  _module.args.host = host;
-                  _module.args.user = user;
-                  nixpkgs = {
-                    config.allowUnfree = true;
-                    inherit (dotBootstrap) overlays;
-                  };
-                };
-              };
-            }
-          )
         ];
 
         config.classes = lib.mkDefault [ "homeManager" ];
@@ -163,9 +139,10 @@ in
           ];
 
           config = {
-            _module.args.lib = dotBootstrap.extendedLib;
-            _module.args.secrets = secrets;
-            _module.args.containers = containers;
+            _module.args = {
+              lib = dotBootstrap.extendedLib;
+              inherit secrets containers;
+            };
             sops.secrets = secrets.declare secrets.all;
             nixpkgs = {
               config.allowUnfree = true;

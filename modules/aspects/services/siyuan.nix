@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.siyuan = { user, host, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.siyuan = {
       user = user.userName;
       group = "users";

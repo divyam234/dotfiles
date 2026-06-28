@@ -3,7 +3,6 @@
   den.aspects.codeforge-mcp =
     { user, host, ... }:
     {
-      includes = [ den.aspects.oci-service ];
       containerDataDirs.codeforge-mcp = {
         user = user.userName;
         group = "users";

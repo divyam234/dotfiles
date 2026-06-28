@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.hermes = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.hermes = {
       user = user.userName;
       group = "users";

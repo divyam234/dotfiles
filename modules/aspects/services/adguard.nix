@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.adguard = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     caddyLayer4Routes = [
       ''
         @s5 socks5

@@ -1,17 +1,12 @@
 { lib, den, ... }:
-let
-  registry = import ../../registry;
-  serviceRegistryNames = builtins.attrNames registry.services;
-in
 {
   den.schema.host =
     { lib, ... }:
     {
       options = {
-        services = lib.mkOption {
-          type = lib.types.listOf (lib.types.enum serviceRegistryNames);
-          default = [ ];
-          description = "Directly requested hosted services.";
+        user = lib.mkOption {
+          type = lib.types.str;
+          description = "Primary user name associated with this host.";
         };
 
         secretsFile = lib.mkOption {

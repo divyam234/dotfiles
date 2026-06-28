@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.caddy = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs = {
       caddy = {
         user = user.userName;
@@ -26,6 +25,12 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        routeNames = lib.concatMap builtins.attrNames caddyRoutes;
+        duplicateRouteNames = lib.filter (
+          name: builtins.length (lib.filter (candidate: candidate == name) routeNames) > 1
+        ) (lib.unique routeNames);
+        routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
+        acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
         global = {
           email = acmeEmail;
           admin = "off";
@@ -33,11 +38,16 @@
           extraGlobalConfig = [ ];
           layer4Routes = lib.flatten caddyLayer4Routes;
         };
-        routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
-        acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
       in
       {
         config = {
+          assertions = [
+            {
+              assertion = duplicateRouteNames == [ ];
+              message = "Duplicate Caddy route quirk names: ${lib.concatStringsSep ", " duplicateRouteNames}";
+            }
+          ];
+
           environment.etc."caddy/Caddyfile".text = lib.denful.mkCaddyfile {
             inherit global routes;
           };
@@ -72,7 +82,7 @@
                 "${containers.dataRoot}/caddy:/data"
                 "${containers.dataRoot}/caddy-config:/config"
               ];
-              healthCmd = "caddy version >/dev/null || exit 1";
+              healthCmd = "caddy version > /dev/null || exit 1";
               autoUpdate = "registry";
             };
             serviceConfig = {

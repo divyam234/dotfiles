@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.camofox = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.camofox = {
       user = user.userName;
       group = "users";

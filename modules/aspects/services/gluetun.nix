@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.gluetun = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.gluetun = {
       user = user.userName;
       group = "users";

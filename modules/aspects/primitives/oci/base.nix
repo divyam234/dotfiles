@@ -59,6 +59,10 @@
           ...
         }:
         let
+          dataDirNames = lib.concatMap builtins.attrNames containerDataDirs;
+          duplicateDataDirNames = lib.filter (
+            name: builtins.length (lib.filter (candidate: candidate == name) dataDirNames) > 1
+          ) (lib.unique dataDirNames);
           rawDataDirs = lib.foldl' lib.recursiveUpdate { } containerDataDirs;
           xdgDataDir = "/home/${user.userName}/.local";
           xdgStateDir = "${xdgDataDir}/state";
@@ -144,6 +148,10 @@
 
           config = {
             assertions = [
+              {
+                assertion = duplicateDataDirNames == [ ];
+                message = "Duplicate containerDataDirs quirk names: ${lib.concatStringsSep ", " duplicateDataDirNames}";
+              }
               {
                 assertion = missingDataDirs == [ ];
                 message = "Container dataRoot bind mounts are missing containerDataDirs quirk entries: ${lib.concatStringsSep ", " missingDataDirs}";

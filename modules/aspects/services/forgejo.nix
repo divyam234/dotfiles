@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.forgejo = { user, host, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.forgejo = {
       user = user.userName;
       group = "users";

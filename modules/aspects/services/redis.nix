@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.redis = _: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.redis = {
       user = "1001";
       group = "0";

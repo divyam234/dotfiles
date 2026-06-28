@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.databasus = { user, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.databasus = {
       user = user.userName;
       group = "users";

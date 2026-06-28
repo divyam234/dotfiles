@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.vaultwarden = { user, host, ... }: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.vaultwarden = {
       user = user.userName;
       group = "users";

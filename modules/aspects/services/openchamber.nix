@@ -1,7 +1,6 @@
 { den, ... }:
 {
-  den.aspects.openchamber = { host, ... }: {
-    includes = [ ];
+  den.aspects.openchamber = { host, user, ... }: {
     caddyRoutes = {
       openchamber = {
         host = "ai.${host.domain}";
@@ -59,7 +58,7 @@
       };
 
     nixos =
-      { containers, user, ... }:
+      { containers, ... }:
       {
         users.users.${user.userName}.linger = true;
 

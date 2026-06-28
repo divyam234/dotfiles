@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.postgres = _: {
-    includes = [ den.aspects.oci-service ];
     containerDataDirs.postgres = {
       user = "999";
       group = "999";

@@ -3,58 +3,81 @@
 ## Architecture
 
 ```
-inventory -> registry -> resolver/validator -> Den integration -> aspects
+Den entity modules -> same-named host aspects -> feature/service includes -> class modules
+                                                   -> quirks -> single consumers
 ```
 
-- `inventory/hosts.nix` — intent only: facts + directly requested services.
-- `inventory/users.nix` — pure user data.
-- `registry/default.nix` imports `services.nix` through `normalize.nix` (fills defaults).
-- `lib/registry/resolve.nix` — pure transitive dep resolver + validator (secrets, domain, caddy checks).
-- `modules/core/dispatch.nix` — calls resolver, maps resolved aspects into Den `includes`.
-  Injects `host` into each aspect via `constantHandler`.
+- `modules/entities/defaults.nix` — shared NixOS and standalone Home Manager constructors.
+- `modules/entities/hosts/*.nix` — direct `den.hosts` declarations.
+- `modules/entities/homes/*.nix` — direct standalone `den.homes` declarations.
+- `modules/entities/users/*.nix` — user data and user-owned provision.
+- `hosts/<name>/default.nix` — same-named host aspect and host-specific modules.
+- `modules/aspects/` — reusable roles, features, primitives, Home Manager integration, and services.
+
+There is no inventory conversion layer. Home Manager relationships are structural:
+
+- `netcup` includes `den.aspects.integrated-home-manager` and its `bhunter` user has the `homeManager` class.
+- `laptop` has a classless system user and an explicit standalone `den.home` named `bhunter@laptop`.
+
+Do not add `homeManagerMode`, string routing, generic host scans, or another entity constructor layer.
+
+Service and feature composition uses direct Den aspect `includes`. Shared platform aspects are
+selected once by the host aspect because repeated Den includes are compositional, not deduplicated.
+Do not add a string registry, dependency resolver, dispatcher, aliases, or internal scope-handler mutation.
 
 ## Adding a service
 
-1. Module under `modules/aspects/services/`. Must include `den.aspects.oci-service`.
-2. Entry in `registry/services.nix` with `requires.services` (deps) and `requires.aspects`.
-3. Add name to host's `services` list in `inventory/hosts.nix`.
+1. Add a module under `modules/aspects/services/`.
+2. Keep the service aspect focused on its own modules and quirk payloads.
+3. Add required shared platform aspects such as `oci-service`, `requires-domain`, or `requires-secrets`
+   once in the intended host aspect.
+4. Add the service aspect to that host aspect, normally `den.aspects.netcup`.
+5. Keep runtime dependencies such as Quadlet `After` and `Requires` in the service module.
 
-No schema enums, dispatcher cases, aliases, or forwarding modules for service composition.
-Service runtime deps (Quadlet `After`/`Requires`) stay in the service module; logical deps
-go in `registry/services.nix`.
+## Adding an entity
+
+1. Add the direct declaration under `modules/entities/hosts`, `modules/entities/homes`, or `modules/entities/users`.
+2. Reuse `entityLib.mkNixos` or `entityLib.mkHome` from `modules/entities/defaults.nix`.
+3. Express integrated versus standalone Home Manager through aspects/classes and entity placement, not a mode field.
+4. Keep machine implementation in the same-named aspect under `hosts/<name>/default.nix`.
 
 ## Key quirk surfaces
 
-- `caddyRoutes` — service aspects emit Caddy virtual host routes (merged by caddy aspect).
-- `caddyLayer4Routes` — layer4 route snippets.
-- `containerDataDirs` — persistent container data directories (created by `oci-base`).
+- `caddyRoutes` — service aspects emit named virtual-host routes; Caddy renders them once.
+- `caddyLayer4Routes` — service aspects emit layer4 route snippets; Caddy renders them once.
+- `containerDataDirs` — services emit named persistent-directory declarations; `oci-base` creates them once.
+
+Top-level route and directory names must be unique. Consumers assert on duplicates instead
+of silently overwriting declarations.
 
 ## Secrets
 
-`lib.denful.secrets` helpers instead of inline `sopsFile`. Shared: `secrets/common.yaml`.
-Host-local: `hosts/<name>/secrets.yaml`. Age key at `/var/lib/sops-nix/key.txt`.
+Use `lib.denful.secrets` helpers instead of inline `sopsFile`. Shared secrets are in
+`secrets/common.yaml`; host-local secrets are in `hosts/<name>/secrets.yaml`. The system
+Age key is `/var/lib/sops-nix/key.txt`.
 
 ## Hosts
 
-- **laptop** — x86_64, standalone HM (not NixOS). CachyOS LTS kernel. Intel UHD 630 + NVIDIA GTX 1050 (legacy 580, PRIME offload).
-- **netcup** — aarch64, NixOS. Runs all 16 services.
+- **laptop** — x86_64, standalone Home Manager, plus a NixOS configuration for evaluation/building. CachyOS LTS kernel, Intel UHD 630, NVIDIA GTX 1050.
+- **netcup** — aarch64 NixOS server with integrated Home Manager and the hosted service stack.
 
 Both use `tailscale.autoconnect`.
 
 ## Conventions
 
-- `flake.nix` is auto-generated (`nix run .#write-flake`). Do not edit directly.
-- Caddy must stay OCI container at `ghcr.io/tgdrive/caddy`.
-- No KDE/Plasma, no GNOME Shell. Niri + Noctalia v5 + GNOME apps only.
-- Do not reintroduce DMS, `compose.nix`, aliases, forwarding modules, or duplicate registration.
-- Home PC: plain Btrfs, no encryption.
+- `flake.nix` is generated by `flake-file`; regenerate with `nix run .#write-flake` rather than editing it directly.
+- Caddy remains the OCI image `ghcr.io/tgdrive/caddy`.
+- No KDE/Plasma or GNOME Shell. Desktop composition is Niri + Noctalia v5 + selected GNOME apps.
+- Do not access or mutate Den internals such as `__scopeHandlers`.
+- Do not reintroduce DMS, `compose.nix`, forwarding modules, service registries, inventory dispatch, or duplicate registration.
+- Home PC storage remains plain Btrfs without encryption.
 
 ## Commands
 
 ```bash
 just fmt                 # nix fmt
 just check               # nix flake check --show-trace
-just eval-all            # eval all host configs
+just eval-all            # evaluate all host/home configurations
 just build netcup        # nh os build
 just test netcup         # nh os test
 just home bhunter@laptop # nh home switch

@@ -1,7 +1,6 @@
 { den, ... }:
 {
   den.aspects.pgdog = {
-    includes = [ den.aspects.oci-service ];
     nixos =
       {
         config,
