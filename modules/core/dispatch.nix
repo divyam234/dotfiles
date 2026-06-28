@@ -7,11 +7,10 @@ let
 
   userNames = lib.unique (builtins.attrValues (builtins.mapAttrs (_: host: host.user) hosts));
 
-  baseAspects = [
-    den.aspects.common
-    den.aspects.sops
-    den.aspects.security-base
-    den.batteries.host-aspects
+  baseAspectNames = [
+    "common"
+    "sops"
+    "security-base"
   ];
 
   mkHostAspect =
@@ -35,7 +34,8 @@ let
       includes = [
         (aspectFor name)
       ]
-      ++ baseAspects
+      ++ map aspectFor baseAspectNames
+      ++ [ den.batteries.host-aspects ]
       ++ map aspectFor resolved.resolvedAspects;
 
       provides.to-users = {

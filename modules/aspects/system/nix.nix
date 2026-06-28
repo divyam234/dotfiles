@@ -3,9 +3,8 @@
   den.aspects.nix = {
     nixos =
       {
+        host,
         inputs,
-        lib,
-        user,
         ...
       }:
       {
@@ -23,9 +22,8 @@
               "flakes"
             ];
             trusted-users = [
-              "root"
               "@wheel"
-              user.userName
+              host.user
             ];
             auto-optimise-store = true;
             warn-dirty = false;
