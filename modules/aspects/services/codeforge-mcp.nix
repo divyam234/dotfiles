@@ -56,18 +56,16 @@
               volumes = [
                 "${containers.dataRoot}/codeforge-mcp/state:/state"
                 "/home/${user.userName}/repos/github:/workspace"
-                "/home/${user.userName}/.config/git/config:/home/dev/.gitconfig:ro"
+                "/home/${user.userName}/.config/git:/home/dev/.config/git:ro"
                 "/home/${user.userName}/.ssh:/home/dev/.ssh:ro"
                 "/home/${user.userName}/go/pkg/mod:/home/dev/go/pkg/mod"
                 "/home/${user.userName}/.cache/go-build:/home/dev/.cache/go-build"
                 "/home/${user.userName}/.cargo:/home/dev/.cargo"
-                "/home/${user.userName}/.cache/bun:/home/dev/.cache/bun"
+                "/home/${user.userName}/.bun:/home/dev./bun"
                 "/home/${user.userName}/.cache/uv:/home/dev/.cache/uv"
                 "/home/${user.userName}/.cache/pip:/home/dev/.cache/pip"
-                "/home/${user.userName}/.cache/npm:/home/dev/.cache/npm"
                 "/home/${user.userName}/.local/share/pnpm:/home/dev/.local/share/pnpm"
               ];
-              healthCmd = "pgrep -x codeforge-mcp";
               autoUpdate = "registry";
             };
             serviceConfig = {
