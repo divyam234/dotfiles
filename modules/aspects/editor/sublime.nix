@@ -35,7 +35,7 @@
         };
       in
       {
-        home.packages = [ pkgs.local.sublime ];
+        home.packages = [ pkgs.sublime ];
 
         xdg.configFile = {
           # The generated Tinted theme refers to resources through paths such
