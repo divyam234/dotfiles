@@ -26,7 +26,7 @@
         }:
         let
           quadlet = config.virtualisation.quadlet;
-          sshAuthSock = "/run/user/1000/gnupg/S.gpg-agent.ssh";
+          sshAuthSock = "/run/user/${toString user.uid}/gnupg/S.gpg-agent.ssh";
           codeforgeGitConfig = pkgs.writeText "codeforge-gitconfig" ''
             [user]
               name = Divyam

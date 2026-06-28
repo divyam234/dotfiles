@@ -6,6 +6,7 @@
 }:
 let
   dotBootstrap = import ../../lib/bootstrap.nix { inherit inputs lib; };
+  packagePolicy = import ../../lib/package-policy.nix { inherit inputs lib; };
 in
 {
   flake-file.inputs = {
@@ -90,6 +91,10 @@ in
             default = "";
             description = "SSH public key material used for Git commit signing.";
           };
+          uid = lib.mkOption {
+            type = lib.types.ints.positive;
+            description = "Stable numeric UID used by system and runtime paths.";
+          };
         };
       };
     };
@@ -144,10 +149,7 @@ in
               inherit secrets containers;
             };
             sops.secrets = secrets.declare secrets.all;
-            nixpkgs = {
-              config.allowUnfree = true;
-              inherit (dotBootstrap) overlays;
-            };
+            nixpkgs = packagePolicy;
           };
         };
     };

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  dotBootstrap = import ../../../lib/bootstrap.nix { inherit inputs lib; };
+  packagePolicy = import ../../../lib/package-policy.nix { inherit inputs lib; };
 in
 {
   den.aspects.integrated-home-manager =
@@ -20,10 +20,7 @@ in
         users.${user.userName} = {
           _module.args.host = host;
           _module.args.user = user;
-          nixpkgs = {
-            config.allowUnfree = true;
-            inherit (dotBootstrap) overlays;
-          };
+          nixpkgs = packagePolicy;
         };
       };
     };

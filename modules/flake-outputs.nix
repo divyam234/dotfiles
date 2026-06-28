@@ -11,40 +11,13 @@
       netcup = self.nixosConfigurations.netcup.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
-      expectedContainers = [
-        "adguard-cli"
-        "caddy"
-        "camofox-browser"
-        "codeforge-mcp"
-        "databasus"
-        "forgejo"
-        "gluetun"
-        "hermes"
-        "pgdog"
-        "postgres"
-        "redis"
-        "siyuan"
-        "vaultwarden"
-      ];
-      containerNames = builtins.attrNames netcup.virtualisation.quadlet.containers;
-      missingContainers = lib.filter (name: !(builtins.elem name containerNames)) expectedContainers;
-      expectedTemplates = [
-        "caddy.env"
-        "codeforge-mcp.env"
-        "forgejo.env"
-        "gluetun.env"
-        "postgres.env"
-        "redis.env"
-        "vaultwarden.env"
-      ];
-      templateNames = builtins.attrNames netcup.sops.templates;
-      missingTemplates = lib.filter (name: !(builtins.elem name templateNames)) expectedTemplates;
-      caddyfile = netcup.environment.etc."caddy/Caddyfile".text;
-      netcupHome = netcup.home-manager.users.bhunter;
-      openchamberService = netcupHome.systemd.user.services.openchamber;
-      opencodeService = netcupHome.systemd.user.services.opencode;
-      brSvcFirewall = netcup.networking.firewall.interfaces."br-svc";
-      codeforgeVolumes = netcup.virtualisation.quadlet.containers.codeforge-mcp.containerConfig.volumes;
+      contracts = {
+        containers = import ../lib/checks/containers.nix { inherit lib netcup; };
+        laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
+        netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
+        openchamber = import ../lib/checks/openchamber.nix { inherit lib netcup; };
+        secrets = import ../lib/checks/secrets.nix { inherit home laptop netcup; };
+      };
     in
     {
       formatter = pkgs.writeShellApplication {
@@ -127,25 +100,7 @@
         '';
 
         composition-contract =
-          assert missingContainers == [ ];
-          assert missingTemplates == [ ];
-          assert netcup.networking.domain == "bhunter.tech";
-          assert builtins.hasAttr "bhunter" netcup.home-manager.users;
-          assert builtins.hasAttr "netcup" netcup.services.restic.backups;
-          assert builtins.hasAttr "svc" netcup.virtualisation.quadlet.networks;
-          assert netcup.users.users.bhunter.linger == true;
-          assert builtins.elem 39173 brSvcFirewall.allowedTCPPorts;
-          assert builtins.elem 53 brSvcFirewall.allowedUDPPorts;
-          assert builtins.hasAttr "openchamber" netcupHome.systemd.user.services;
-          assert builtins.hasAttr "opencode" netcupHome.systemd.user.services;
-          assert lib.hasInfix "--port 39173" (lib.concatStringsSep " " openchamberService.Service.ExecStart);
-          assert lib.hasInfix "--port 4095" (lib.concatStringsSep " " opencodeService.Service.ExecStart);
-          assert builtins.elem "/home/bhunter/repos/github:/workspace" codeforgeVolumes;
-          assert laptop.programs.noctalia-greeter.greeter-args == "--session niri --user bhunter";
-          assert lib.hasInfix "ai.bhunter.tech" caddyfile;
-          assert lib.hasInfix "git.bhunter.tech" caddyfile;
-          assert lib.hasInfix "vault.bhunter.tech" caddyfile;
-          assert home.home.username == "bhunter";
+          assert lib.all (contract: contract) (builtins.attrValues contracts);
           pkgs.runCommand "dotfiles-composition-contract" { } ''
             touch $out
           '';

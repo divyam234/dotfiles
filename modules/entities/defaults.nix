@@ -5,6 +5,7 @@
 }:
 let
   dotBootstrap = import ../../lib/bootstrap.nix { inherit inputs lib; };
+  packagePolicy = import ../../lib/package-policy.nix { inherit inputs lib; };
 
   mkNixos =
     system:
@@ -25,8 +26,7 @@ let
       hmExtendedLib = dotBootstrap.extendedLib.extend (_self: _super: { hm = hmLib; });
       pkgs = import inputs.nixpkgs {
         inherit system;
-        inherit (dotBootstrap) overlays;
-        config.allowUnfree = true;
+        inherit (packagePolicy) config overlays;
       };
     in
     inputs.home-manager.lib.homeManagerConfiguration {

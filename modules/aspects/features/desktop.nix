@@ -47,7 +47,6 @@
         };
 
         users.users.${user.userName}.extraGroups = [
-          "networkmanager"
           "audio"
           "video"
           "input"

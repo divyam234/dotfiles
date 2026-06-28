@@ -24,6 +24,7 @@
         ];
 
         users.users.${user.userName} = {
+          uid = user.uid;
           description = user.fullName or user.userName;
           openssh.authorizedKeys.keys = user.authorizedKeys;
           hashedPasswordFile = passwordSecret.path;

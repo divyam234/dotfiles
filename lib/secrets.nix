@@ -3,51 +3,77 @@ let
   root = ../.;
   commonSopsFile = root + /secrets/common.yaml;
 
-  splitLines = text: lib.splitString "\n" text;
-  indentLevel = spaces: builtins.stringLength (builtins.replaceStrings [ "    " ] [ "x" ] spaces);
-  isSecret = value: builtins.isAttrs value && (value.__secret or false);
+  commonPaths = [
+    [
+      "users"
+      "bhunter"
+      "password"
+    ]
+    [
+      "cloudflare"
+      "api_token"
+    ]
+    [
+      "tailscale"
+      "oauth_client_secret"
+    ]
+    [
+      "nordvpn"
+      "private_key"
+    ]
+    [
+      "nordvpn"
+      "token"
+    ]
+    [
+      "github"
+      "token"
+    ]
+    [
+      "ssh"
+      "private_key"
+    ]
+  ];
 
-  scanSopsYaml =
-    file:
-    if !(builtins.pathExists file) then
-      [ ]
-    else
-      let
-        step =
-          state: line:
-          let
-            match = builtins.match "^( *)([A-Za-z0-9_-]+):(.*)$" line;
-          in
-          if match == null || state.skip then
-            state
-          else
-            let
-              spaces = builtins.elemAt match 0;
-              key = builtins.elemAt match 1;
-              rest = builtins.elemAt match 2;
-              level = indentLevel spaces;
-              parent = lib.take level state.stack;
-              path = parent ++ [ key ];
-            in
-            if level == 0 && key == "sops" then
-              state // { skip = true; }
-            else if lib.hasInfix "ENC[" rest then
-              {
-                inherit (state) skip;
-                stack = parent;
-                paths = state.paths ++ [ path ];
-              }
-            else
-              {
-                inherit (state) paths skip;
-                stack = path;
-              };
-      in
-      (builtins.foldl' step {
-        stack = [ ];
-        paths = [ ];
-        skip = false;
-      } (splitLines (builtins.readFile file))).paths;
+  hostPaths = {
+    laptop = [ ];
+    netcup = [
+      [
+        "postgres"
+        "user"
+      ]
+      [
+        "postgres"
+        "password"
+      ]
+      [
+        "redis"
+        "password"
+      ]
+      [
+        "vaultwarden"
+        "admin_token"
+      ]
+      [
+        "codeforge-mcp"
+        "api_key"
+      ]
+      [
+        "restic"
+        "password"
+      ]
+      [
+        "restic"
+        "repository"
+      ]
+      [
+        "restic"
+        "rclone_conf"
+      ]
+    ];
+  };
+
+  isSecret = value: builtins.isAttrs value && (value.__secret or false);
 
   mkSecret =
     {
@@ -115,27 +141,36 @@ let
       host ? null,
     }:
     let
+      hostName = if host != null then host.name else null;
       hostSopsFile = if host != null then host.secretsFile or null else null;
+      selectedHostPaths =
+        if hostName == null then
+          [ ]
+        else if builtins.hasAttr hostName hostPaths then
+          hostPaths.${hostName}
+        else
+          throw "No explicit secret contract defined for host ${hostName}.";
       commonTree = treeFromPaths {
         inherit config;
         source = "common";
         sopsFile = commonSopsFile;
-        paths = scanSopsYaml commonSopsFile;
+        paths = commonPaths;
       };
       hostTree =
-        if hostSopsFile != null then
+        if selectedHostPaths == [ ] then
+          { }
+        else if hostSopsFile == null then
+          throw "Host ${hostName} declares host secrets but has no secretsFile."
+        else
           treeFromPaths {
             inherit config;
             source = "host";
             sopsFile = hostSopsFile;
-            paths = scanSopsYaml hostSopsFile;
-          }
-        else
-          { };
+            paths = selectedHostPaths;
+          };
       mergedTree = lib.recursiveUpdate commonTree hostTree;
       helpers = {
-        inherit commonSopsFile collectLeaves;
-        inherit hostSopsFile;
+        inherit commonSopsFile collectLeaves hostSopsFile;
         common = commonTree;
         host = hostTree;
         all = collectLeaves mergedTree;

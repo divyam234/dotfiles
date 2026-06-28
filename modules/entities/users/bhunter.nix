@@ -2,6 +2,7 @@
 let
   bhunter = rec {
     userName = "bhunter";
+    uid = 1000;
     fullName = "Bhunter";
     email = "bhunter@localhost";
     signingKey = "~/.ssh/id_ed25519.pub";
