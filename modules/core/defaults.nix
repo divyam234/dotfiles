@@ -108,6 +108,11 @@ in
             default = "~/.ssh/id_ed25519.pub";
             description = "SSH public key path used for Git commit signing.";
           };
+          signingPublicKey = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = "SSH public key material used for Git commit signing.";
+          };
         };
       };
     };

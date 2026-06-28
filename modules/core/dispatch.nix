@@ -19,15 +19,19 @@ let
       scopedHost = host // {
         inherit name;
       };
+      scopedUser = users.${host.user};
       resolved = resolveHost { inherit registry users host; };
-      aspectFor = aspectName: withHost den.aspects.${aspectName};
-      withHost =
+      aspectFor = aspectName: withScope den.aspects.${aspectName};
+      withScope =
         aspect:
         aspect
         // {
           __scopeHandlers =
             (aspect.__scopeHandlers or { })
-            // den.lib.aspects.fx.handlers.constantHandler { host = scopedHost; };
+            // den.lib.aspects.fx.handlers.constantHandler {
+              host = scopedHost;
+              user = scopedUser;
+            };
         };
     in
     {
