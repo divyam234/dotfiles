@@ -56,7 +56,8 @@
               volumes = [
                 "${containers.dataRoot}/codeforge-mcp/state:/state"
                 "/home/${user.userName}/repos/github:/workspace"
-                "/home/${user.userName}/.gitconfig:/home/dev/.gitconfig:ro"
+                "/home/${user.userName}/.config/git/config:/home/dev/.gitconfig:ro"
+                "/home/${user.userName}/.ssh:/home/dev/.ssh:ro"
                 "/home/${user.userName}/go/pkg/mod:/home/dev/go/pkg/mod"
                 "/home/${user.userName}/.cache/go-build:/home/dev/.cache/go-build"
                 "/home/${user.userName}/.cargo:/home/dev/.cargo"
