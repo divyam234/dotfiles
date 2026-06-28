@@ -39,10 +39,6 @@
             "image/png" = [ "pix.desktop" ];
             "image/webp" = [ "pix.desktop" ];
             "image/gif" = [ "pix.desktop" ];
-            "application/json" = [ "sublime-text.desktop" ];
-            "application/x-shellscript" = [ "sublime-text.desktop" ];
-            "text/markdown" = [ "sublime-text.desktop" ];
-            "text/plain" = [ "sublime-text.desktop" ];
           };
         };
       };

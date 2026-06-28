@@ -72,7 +72,9 @@
 
         programs.noctalia = {
           enable = true;
-          package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [ ./noctalia-dedupe-tray-items.patch ];
+          });
 
           systemd.enable = false;
 

@@ -33,9 +33,24 @@
           templateRepo = tintedSublime;
           target = "base16-sublime-theme";
         };
+
+        sublimeTextMimeTypes = [
+          "text/plain"
+          "application/x-zerosize"
+        ];
       in
       {
         home.packages = [ pkgs.sublime ];
+
+        xdg.mimeApps = {
+          enable = true;
+          defaultApplications = builtins.listToAttrs (
+            map (mime: {
+              name = mime;
+              value = [ "sublime_text.desktop" ];
+            }) sublimeTextMimeTypes
+          );
+        };
 
         xdg.configFile = {
           # The generated Tinted theme refers to resources through paths such
