@@ -6,8 +6,8 @@
       {
         home.packages = with pkgs; [
           baobab
+          beekeeper-studio
           burpsuitepro
-          dbeaver-bin
           easyeffects
           gnome-disk-utility
           gparted
