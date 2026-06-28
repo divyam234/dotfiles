@@ -138,9 +138,15 @@ in
         {
           config,
           host ? null,
+          user,
           ...
         }:
         let
+          containers = {
+            dataRoot = "/home/${user.userName}/.local/state/container-services";
+            networkName = "svc";
+            secretDir = "/run/secrets/container-env";
+          };
           secrets = dotBootstrap.extendedLib.denful.secrets.for { inherit config host; };
         in
         {
@@ -153,6 +159,7 @@ in
           config = {
             _module.args.lib = dotBootstrap.extendedLib;
             _module.args.secrets = secrets;
+            _module.args.containers = containers;
             sops.secrets = secrets.declare secrets.all;
             nixpkgs = {
               config.allowUnfree = true;

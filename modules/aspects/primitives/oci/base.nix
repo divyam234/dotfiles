@@ -54,13 +54,13 @@
           user,
           lib,
           config,
+          containers,
           containerDataDirs,
           ...
         }:
         let
           rawDataDirs = lib.foldl' lib.recursiveUpdate { } containerDataDirs;
-          homeDir = "/home/${user.userName}";
-          xdgDataDir = "${homeDir}/.local";
+          xdgDataDir = "/home/${user.userName}/.local";
           xdgStateDir = "${xdgDataDir}/state";
           normalizeDataDir =
             dir:
@@ -71,7 +71,7 @@
             }
             // dir;
           cfg = {
-            dataRoot = "${xdgStateDir}/container-services";
+            inherit (containers) dataRoot networkName secretDir;
             dataDirs = lib.mapAttrs (_name: normalizeDataDir) rawDataDirs;
             owners = {
               home = {
@@ -87,8 +87,6 @@
                 group = "0";
               };
             };
-            networkName = "svc";
-            secretDir = "/run/secrets/container-env";
             autoUpdate = {
               enable = false;
               calendar = "daily";
@@ -145,8 +143,6 @@
           };
 
           config = {
-            _module.args.containers = cfg;
-
             assertions = [
               {
                 assertion = missingDataDirs == [ ];
