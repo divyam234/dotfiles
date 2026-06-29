@@ -1,10 +1,15 @@
 {
   bhunterUser,
+  den,
   entityLib,
   ...
 }:
 {
   den.homes.x86_64-linux."bhunter@laptop" = {
+    aspect.includes = [
+      den.aspects.bhunter
+      den.aspects.niri
+    ];
     instantiate = entityLib.mkHome "x86_64-linux";
     user = bhunterUser // {
       name = "bhunter";
