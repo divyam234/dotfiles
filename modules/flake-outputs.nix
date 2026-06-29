@@ -1,5 +1,6 @@
 {
   self,
+  inputs,
   lib,
   ...
 }:
@@ -7,6 +8,15 @@
   perSystem =
     { pkgs, system, ... }:
     let
+      rustPkgs = import inputs.nixpkgs {
+        inherit system;
+        overlays = [ inputs.rust-overlay.overlays.default ];
+      };
+      rustToolchain = rustPkgs.rust-bin.stable.latest.default;
+      rustPlatform = rustPkgs.makeRustPlatform {
+        cargo = rustToolchain;
+        rustc = rustToolchain;
+      };
       netcup = self.nixosConfigurations.netcup.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
@@ -39,7 +49,7 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           age
-          cargo
+          rustToolchain
           deadnix
           disko
           git
@@ -50,13 +60,12 @@
           nil
           nix-output-monitor
           nixfmt
-          rustc
           sops
           statix
         ];
       };
 
-      packages.svc = pkgs.rustPlatform.buildRustPackage {
+      packages.svc = rustPlatform.buildRustPackage {
         pname = "svc";
         version = "0.1.0";
         src = lib.cleanSourceWith {
