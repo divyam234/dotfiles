@@ -17,8 +17,6 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        boot.kernelModules = [ "tun" ];
-
         sops.templates."gluetun.env" = {
           path = "${containers.secretDir}/gluetun.env";
           mode = "0440";
