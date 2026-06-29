@@ -26,7 +26,9 @@
         }:
         let
           quadlet = config.virtualisation.quadlet;
-          sshAuthSock = "/run/user/${toString user.uid}/gnupg/S.gpg-agent.ssh";
+          hostRuntimeDir = "/run/user/${toString user.uid}";
+          podmanSocket = "${hostRuntimeDir}/podman/podman.sock";
+          sshAuthSock = "${hostRuntimeDir}/gnupg/S.gpg-agent.ssh";
           codeforgeGitConfig = pkgs.writeText "codeforge-gitconfig" ''
             [user]
               name = Divyam
@@ -72,11 +74,13 @@
                 CODEFORGE_FOREGROUND_YIELD_MS = "10000";
                 CODEFORGE_MAX_CONCURRENT_PROCESSES = "8";
                 CODEFORGE_PROCESS_TIMEOUT_SECONDS = "1800";
+                DOCKER_HOST = "unix://${podmanSocket}";
                 SSH_AUTH_SOCK = "/ssh-agent";
               };
               volumes = [
                 "${containers.dataRoot}/codeforge-mcp/state:/state"
                 "/home/${user.userName}/repos/github:/workspace"
+                "${podmanSocket}:${podmanSocket}"
                 "${sshAuthSock}:/ssh-agent"
                 "${codeforgeGitConfig}:/home/dev/.gitconfig:ro"
                 "/home/${user.userName}/go/pkg/mod:/home/dev/go/pkg/mod"

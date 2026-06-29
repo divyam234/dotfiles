@@ -33,7 +33,11 @@ Mutating commands elevate automatically. On NixOS, `svc` prefers
 Dashboard keys:
 
 ```text
-Up/Down or j/k  select service
+Tab / Shift-Tab move focus between services and logs
+Up/Down or j/k  select service or scroll focused logs
+PageUp/PageDown scroll logs by a page
+Home/End        jump to top/bottom of logs
+Mouse wheel     move selection or scroll focused logs
 s               start
 x               stop
 r               restart

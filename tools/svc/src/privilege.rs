@@ -1,4 +1,8 @@
-use std::{path::Path, process::Command};
+use std::{
+    io::{self, Write},
+    path::Path,
+    process::Command,
+};
 
 use anyhow::{Context, Result, bail};
 
@@ -34,6 +38,8 @@ pub fn warm_credentials() -> Result<()> {
     let Some(sudo) = launcher(euid, Path::new(NIXOS_SUDO_WRAPPER).is_file()) else {
         return Ok(());
     };
+    eprintln!("svc: authenticating with sudo before opening the dashboard…");
+    io::stderr().flush().context("flush sudo prompt notice")?;
     let status = Command::new(sudo)
         .arg("-v")
         .status()
