@@ -1,10 +1,6 @@
 { den, ... }:
 {
   den.aspects.forgejo = { user, host, ... }: {
-    containerDataDirs.forgejo = {
-      user = user.userName;
-      group = "users";
-    };
     caddyRoutes = {
       forgejo = {
         host = "git.${host.domain}";
@@ -22,6 +18,7 @@
       {
         config,
         containers,
+        pkgs,
         secrets,
         ...
       }:
@@ -67,6 +64,7 @@
             Requires = [ quadlet.containers.pgdog.ref ];
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/forgejo";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

@@ -8,6 +8,7 @@ let
     "databasus"
     "forgejo"
     "gluetun"
+    "gproxy"
     "hermes"
     "pgdog"
     "postgres"

@@ -1,10 +1,6 @@
 { den, ... }:
 {
   den.aspects.siyuan = { user, host, ... }: {
-    containerDataDirs.siyuan = {
-      user = user.userName;
-      group = "users";
-    };
     caddyRoutes = {
       siyuan = {
         host = "notes.${host.domain}";
@@ -16,6 +12,7 @@
       {
         config,
         containers,
+        pkgs,
         ...
       }:
       let
@@ -39,6 +36,7 @@
             autoUpdate = "registry";
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/siyuan";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

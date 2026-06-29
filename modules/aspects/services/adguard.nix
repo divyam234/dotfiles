@@ -9,13 +9,14 @@
         }
       ''
     ];
-    containerDataDirs."adguard-cli" = {
-      user = user.userName;
-      group = "users";
-    };
-
     nixos =
-      { config, containers, ... }:
+      {
+        config,
+        containers,
+        pkgs,
+        user,
+        ...
+      }:
       let
         quadlet = config.virtualisation.quadlet;
       in
@@ -39,6 +40,7 @@
             Requires = [ quadlet.containers.gluetun.ref ];
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/adguard-cli";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

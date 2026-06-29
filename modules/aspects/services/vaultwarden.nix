@@ -1,10 +1,6 @@
 { den, ... }:
 {
   den.aspects.vaultwarden = { user, host, ... }: {
-    containerDataDirs.vaultwarden = {
-      user = user.userName;
-      group = "users";
-    };
     caddyRoutes = {
       vaultwarden = {
         host = "vault.${host.domain}";
@@ -24,6 +20,7 @@
       {
         config,
         containers,
+        pkgs,
         secrets,
         ...
       }:
@@ -50,7 +47,6 @@
             networkAliases = [ "vaultwarden" ];
             environmentFiles = [ "${containers.secretDir}/vaultwarden.env" ];
             volumes = [ "${containers.dataRoot}/vaultwarden:/data" ];
-            healthCmd = "wget --spider -q http://127.0.0.1/alive || exit 1";
             autoUpdate = "registry";
           };
           unitConfig = {
@@ -58,6 +54,7 @@
             Requires = [ quadlet.containers.postgres.ref ];
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/vaultwarden";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

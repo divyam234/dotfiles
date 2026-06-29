@@ -1,13 +1,13 @@
 { den, ... }:
 {
   den.aspects.camofox = { user, ... }: {
-    containerDataDirs.camofox = {
-      user = user.userName;
-      group = "users";
-    };
-
     nixos =
-      { config, containers, ... }:
+      {
+        config,
+        containers,
+        pkgs,
+        ...
+      }:
       let
         quadlet = config.virtualisation.quadlet;
       in
@@ -32,6 +32,7 @@
             autoUpdate = "registry";
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/camofox";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

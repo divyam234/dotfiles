@@ -49,90 +49,14 @@
       includes = [ den.aspects.oci-runtime ];
 
       nixos =
-        {
-          pkgs,
-          user,
-          lib,
-          config,
-          containers,
-          containerDataDirs,
-          ...
-        }:
+        { lib, pkgs, ... }:
         let
-          dataDirNames = lib.concatMap builtins.attrNames containerDataDirs;
-          duplicateDataDirNames = lib.filter (
-            name: builtins.length (lib.filter (candidate: candidate == name) dataDirNames) > 1
-          ) (lib.unique dataDirNames);
-          rawDataDirs = lib.foldl' lib.recursiveUpdate { } containerDataDirs;
-          xdgDataDir = "/home/${user.userName}/.local";
-          xdgStateDir = "${xdgDataDir}/state";
-          normalizeDataDir =
-            dir:
-            {
-              user = user.userName;
-              group = "users";
-              mode = "0750";
-            }
-            // dir;
           cfg = {
-            inherit (containers) dataRoot networkName secretDir;
-            dataDirs = lib.mapAttrs (_name: normalizeDataDir) rawDataDirs;
-            owners = {
-              home = {
-                user = user.userName;
-                group = "users";
-              };
-              postgres = {
-                user = "999";
-                group = "999";
-              };
-              bitnami = {
-                user = "1001";
-                group = "0";
-              };
-            };
             autoUpdate = {
               enable = false;
               calendar = "daily";
             };
           };
-          pathPrefixes =
-            path:
-            let
-              parts = lib.filter (part: part != "") (lib.splitString "/" path);
-              go =
-                prefix: rest:
-                if rest == [ ] then
-                  [ ]
-                else
-                  let
-                    next = "${prefix}/${builtins.head rest}";
-                  in
-                  [ next ] ++ go next (builtins.tail rest);
-            in
-            go "" parts;
-          dataDirUsers = lib.unique (
-            lib.filter (dirUser: dirUser != user.userName) (
-              lib.mapAttrsToList (_name: dir: dir.user) cfg.dataDirs
-            )
-          );
-          dataRootPrefix = "${cfg.dataRoot}/";
-          mountedDataDirs = lib.unique (
-            lib.concatLists (
-              lib.mapAttrsToList (
-                _name: container:
-                let
-                  volumes = container.containerConfig.volumes or [ ];
-                  hostPaths = map (volume: builtins.elemAt (lib.splitString ":" volume) 0) volumes;
-                  dataRootHostPaths = lib.filter (lib.hasPrefix dataRootPrefix) hostPaths;
-                in
-                map (
-                  hostPath: builtins.elemAt (lib.splitString "/" (lib.removePrefix dataRootPrefix hostPath)) 0
-                ) dataRootHostPaths
-              ) config.virtualisation.quadlet.containers
-            )
-          );
-          missingDataDirs = lib.filter (name: !(builtins.hasAttr name cfg.dataDirs)) mountedDataDirs;
         in
         {
           options.virtualisation.quadlet.containers = lib.mkOption {
@@ -147,42 +71,7 @@
           };
 
           config = {
-            assertions = [
-              {
-                assertion = duplicateDataDirNames == [ ];
-                message = "Duplicate containerDataDirs quirk names: ${lib.concatStringsSep ", " duplicateDataDirNames}";
-              }
-              {
-                assertion = missingDataDirs == [ ];
-                message = "Container dataRoot bind mounts are missing containerDataDirs quirk entries: ${lib.concatStringsSep ", " missingDataDirs}";
-              }
-            ];
-
-            system.activationScripts.createContainerDataDirs = lib.concatStringsSep "\n" (
-              [
-                "${pkgs.coreutils}/bin/install -d -m 0700 -o ${user.userName} -g users ${xdgDataDir}"
-                "${pkgs.coreutils}/bin/install -d -m 0700 -o ${user.userName} -g users ${xdgStateDir}"
-                "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${cfg.dataRoot}"
-              ]
-              ++ lib.mapAttrsToList (
-                name: dir:
-                "${pkgs.coreutils}/bin/install -d -m ${dir.mode} -o ${dir.user} -g ${dir.group} ${cfg.dataRoot}/${name}"
-              ) cfg.dataDirs
-            );
-
             systemd = {
-              tmpfiles.rules = [
-                "d ${xdgDataDir} 0700 ${user.userName} users -"
-                "d ${xdgStateDir} 0700 ${user.userName} users -"
-                "d ${cfg.dataRoot} 0750 ${user.userName} users -"
-              ]
-              ++ lib.concatMap (
-                dirUser: map (path: "a+ ${path} - - - - u:${dirUser}:--x") (pathPrefixes cfg.dataRoot)
-              ) dataDirUsers
-              ++ lib.mapAttrsToList (
-                name: dir: "d ${cfg.dataRoot}/${name} ${dir.mode} ${dir.user} ${dir.group} -"
-              ) cfg.dataDirs;
-
               services.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
                 description = "Podman auto-update containers";
                 serviceConfig = {

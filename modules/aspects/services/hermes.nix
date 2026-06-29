@@ -1,34 +1,17 @@
 { den, ... }:
 {
   den.aspects.hermes = { user, ... }: {
-    containerDataDirs.hermes = {
-      user = user.userName;
-      group = "users";
-    };
-
     nixos =
       {
         config,
         containers,
+        pkgs,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
       in
       {
-        # Seed hermes config on first boot
-        system.activationScripts.seedHermesConfig = ''
-          if [ ! -f ${containers.dataRoot}/hermes/config.yaml ]; then
-            mkdir -p ${containers.dataRoot}/hermes
-            cat > ${containers.dataRoot}/hermes/config.yaml << 'EOF'
-          browser:
-            camofox:
-              managed_persistence: true
-          EOF
-            chmod 644 ${containers.dataRoot}/hermes/config.yaml
-          fi
-        '';
-
         virtualisation.quadlet.containers.hermes = {
           autoStart = false;
           containerConfig = {
@@ -57,6 +40,18 @@
             Requires = [ quadlet.containers.camofox-browser.ref ];
           };
           serviceConfig = {
+            ExecStartPre = pkgs.writeShellScript "hermes-pre-start" ''
+              ${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/hermes
+              if [ ! -f ${containers.dataRoot}/hermes/config.yaml ]; then
+                cat > ${containers.dataRoot}/hermes/config.yaml << 'EOF'
+              browser:
+                camofox:
+                  managed_persistence: true
+              EOF
+                ${pkgs.coreutils}/bin/chown ${user.userName}:users ${containers.dataRoot}/hermes/config.yaml
+                ${pkgs.coreutils}/bin/chmod 644 ${containers.dataRoot}/hermes/config.yaml
+              fi
+            '';
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

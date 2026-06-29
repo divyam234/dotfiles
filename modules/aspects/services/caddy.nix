@@ -1,17 +1,6 @@
 { den, ... }:
 {
   den.aspects.caddy = { user, ... }: {
-    containerDataDirs = {
-      caddy = {
-        user = user.userName;
-        group = "users";
-      };
-      "caddy-config" = {
-        user = user.userName;
-        group = "users";
-      };
-    };
-
     nixos =
       {
         config,
@@ -20,6 +9,7 @@
         containers,
         lib,
         host,
+        pkgs,
         secrets,
         ...
       }:
@@ -86,6 +76,7 @@
               autoUpdate = "registry";
             };
             serviceConfig = {
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;

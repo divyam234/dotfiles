@@ -40,7 +40,8 @@ in
     quirks = {
       caddyLayer4Routes.description = "Caddy layer4 route snippets emitted by service aspects.";
       caddyRoutes.description = "Caddy virtual host routes emitted by service aspects.";
-      containerDataDirs.description = "Persistent container data directories emitted by service aspects.";
+      postgresDatabases.description = "PostgreSQL databases to create for service aspects.";
+      postgresSchemas.description = "PostgreSQL schemas to create in the shared database for service aspects.";
     };
 
     schema = {

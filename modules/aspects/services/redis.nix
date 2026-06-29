@@ -1,15 +1,11 @@
 { den, ... }:
 {
   den.aspects.redis = _: {
-    containerDataDirs.redis = {
-      user = "1001";
-      group = "0";
-    };
-
     nixos =
       {
         config,
         containers,
+        pkgs,
         secrets,
         ...
       }:
@@ -38,6 +34,7 @@
             autoUpdate = "registry";
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 1001 -g 0 ${containers.dataRoot}/redis";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

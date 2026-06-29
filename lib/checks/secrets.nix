@@ -15,6 +15,8 @@ let
   ];
   expectedNetcup = expectedCommon ++ [
     "codeforge-mcp/api_key"
+    "gproxy/admin_password"
+    "gproxy/master_key"
     "postgres/password"
     "postgres/user"
     "redis/password"
@@ -29,6 +31,7 @@ let
     "codeforge-mcp.env"
     "forgejo.env"
     "gluetun.env"
+    "gproxy.env"
     "postgres.env"
     "redis.env"
     "vaultwarden.env"

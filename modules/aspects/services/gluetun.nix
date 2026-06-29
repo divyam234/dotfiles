@@ -1,15 +1,11 @@
 { den, ... }:
 {
   den.aspects.gluetun = { user, ... }: {
-    containerDataDirs.gluetun = {
-      user = user.userName;
-      group = "users";
-    };
-
     nixos =
       {
         config,
         containers,
+        pkgs,
         secrets,
         ...
       }:
@@ -53,6 +49,7 @@
             autoUpdate = "registry";
           };
           serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gluetun";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;

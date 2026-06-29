@@ -70,6 +70,14 @@ let
         "restic"
         "rclone_conf"
       ]
+      [
+        "gproxy"
+        "admin_password"
+      ]
+      [
+        "gproxy"
+        "master_key"
+      ]
     ];
   };
 

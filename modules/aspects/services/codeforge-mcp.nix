@@ -3,10 +3,6 @@
   den.aspects.codeforge-mcp =
     { user, host, ... }:
     {
-      containerDataDirs.codeforge-mcp = {
-        user = user.userName;
-        group = "users";
-      };
       caddyRoutes = {
         codeforge-mcp = {
           host = "codeforge.${host.domain}";
@@ -94,6 +90,7 @@
               autoUpdate = "registry";
             };
             serviceConfig = {
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/codeforge-mcp/state";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;
