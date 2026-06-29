@@ -7,7 +7,6 @@
   perSystem =
     { pkgs, system, ... }:
     let
-      svcFish = pkgs.writeText "svc.fish" (builtins.readFile ../scripts/svc);
       netcup = self.nixosConfigurations.netcup.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
@@ -40,6 +39,7 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           age
+          cargo
           deadnix
           disko
           git
@@ -50,21 +50,34 @@
           nil
           nix-output-monitor
           nixfmt
+          rustc
           sops
           statix
         ];
       };
 
-      packages.svc = pkgs.writeShellApplication {
-        name = "svc";
-        runtimeInputs = with pkgs; [
-          coreutils
-          fish
-          podman
-          systemd
-        ];
-        text = ''
-          exec fish ${svcFish} "$@"
+      packages.svc = pkgs.rustPlatform.buildRustPackage {
+        pname = "svc";
+        version = "0.1.0";
+        src = lib.cleanSourceWith {
+          src = ../tools/svc;
+          filter = path: _type: baseNameOf path != "target";
+        };
+
+        cargoLock.lockFile = ../tools/svc/Cargo.lock;
+
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postInstall = ''
+          wrapProgram $out/bin/svc \
+            --prefix PATH : ${
+              lib.makeBinPath (
+                with pkgs;
+                [
+                  podman
+                  systemd
+                ]
+              )
+            }
         '';
       };
 
