@@ -52,7 +52,7 @@
       {
         imports = [
           inputs.stylix.homeModules.stylix
-          ./openchamber/openchamber-stylix-exact.nix
+          ./openchamber.nix
         ];
 
         fonts.fontconfig.enable = true;
