@@ -117,7 +117,7 @@
         SideSearchEnabled = false;
 
         # Site permission defaults. Content setting value 2 generally means block.
-        BlockThirdPartyCookies = true;
+
         DefaultClipboardSetting = 2;
         DefaultFileSystemReadGuardSetting = 2;
         DefaultFileSystemWriteGuardSetting = 2;
@@ -149,6 +149,9 @@
         programs.chromium = {
           enable = true;
           package = pkgs.brave;
+          commandLineArgs = [
+            "--password-store=gnome-libsecret"
+          ];
         };
 
         xdg.mimeApps = {

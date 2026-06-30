@@ -55,6 +55,7 @@
         ];
 
         environment = {
+          systemPackages = [ pkgs.libsecret ];
           sessionVariables = {
             GDK_BACKEND = "wayland,x11";
             NIXOS_OZONE_WL = "1";
