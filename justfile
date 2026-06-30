@@ -17,11 +17,6 @@ eval h=host:
 eval-hm u="bhunter@laptop":
     nix eval .#homeConfigurations.{{ u }}.config.home.username
 
-eval-all:
-    just eval laptop
-    just eval netcup
-    just eval-hm
-
 show:
     nix flake show
 

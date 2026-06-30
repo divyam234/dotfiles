@@ -50,7 +50,10 @@
     homeManager =
       { pkgs, ... }:
       {
-        imports = [ inputs.stylix.homeModules.stylix ];
+        imports = [
+          inputs.stylix.homeModules.stylix
+          ./openchamber/openchamber-stylix-exact.nix
+        ];
 
         fonts.fontconfig.enable = true;
 
