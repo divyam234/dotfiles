@@ -14,6 +14,7 @@
       den.aspects.zed
       den.aspects.sublime
       den.aspects.nordvpn
+      den.aspects.spicetify
     ];
 
     nixos =

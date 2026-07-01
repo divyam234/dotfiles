@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           air
+          ast-grep
           autoconf
           automake
           bear

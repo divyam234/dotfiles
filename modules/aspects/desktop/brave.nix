@@ -149,9 +149,6 @@
         programs.chromium = {
           enable = true;
           package = pkgs.brave;
-          commandLineArgs = [
-            "--password-store=gnome-libsecret"
-          ];
         };
 
         xdg.mimeApps = {

@@ -20,7 +20,6 @@
           playerctl
           mpv
           obsidian
-          spotify
           telegram-desktop
           vesktop
           vlc
