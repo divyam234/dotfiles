@@ -65,31 +65,6 @@
         ];
       };
 
-      packages.svc = rustPlatform.buildRustPackage {
-        pname = "svc";
-        version = "0.1.0";
-        src = lib.cleanSourceWith {
-          src = ../tools/svc;
-          filter = path: _type: baseNameOf path != "target";
-        };
-
-        cargoLock.lockFile = ../tools/svc/Cargo.lock;
-
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-        postInstall = ''
-          wrapProgram $out/bin/svc \
-            --prefix PATH : ${
-              lib.makeBinPath (
-                with pkgs;
-                [
-                  podman
-                  systemd
-                ]
-              )
-            }
-        '';
-      };
-
       checks = {
         formatter = pkgs.runCommand "dotfiles-format-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
           cp -r ${../.} source

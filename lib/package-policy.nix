@@ -4,5 +4,8 @@ let
 in
 {
   config.allowUnfree = true;
+  config.permittedInsecurePackages = [
+    "pnpm-10.29.2"
+  ];
   inherit (dotBootstrap) overlays;
 }

@@ -22,7 +22,18 @@ let
           };
     })
     (final: _prev: {
-      local = extendedLib.denful.importPackages final ../packages;
+      local =
+        let
+          rustToolchain = final.rust-bin.stable.latest.default;
+          rustPlatform = final.makeRustPlatform {
+            cargo = rustToolchain;
+            rustc = rustToolchain;
+          };
+        in
+        extendedLib.denful.importPackages final ../packages
+        // {
+          svc = final.callPackage ../packages/svc { inherit rustPlatform; };
+        };
     })
   ];
 in
