@@ -2,84 +2,80 @@
 
 ## Architecture
 
+```text
+entity -> same-named host aspect -> reusable aspects -> NixOS/Home Manager modules
+                                      -> quirks -> single consumers
 ```
-Den entity modules -> same-named host aspects -> feature/service includes -> class modules
-                                                   -> quirks -> single consumers
-```
 
-- `modules/entities/defaults.nix` — shared NixOS and standalone Home Manager constructors.
-- `modules/entities/hosts/*.nix` — direct `den.hosts` declarations.
-- `modules/entities/homes/*.nix` — direct standalone `den.homes` declarations.
-- `modules/entities/users/*.nix` — user data and user-owned provision.
-- `hosts/<name>/default.nix` — same-named host aspect and host-specific modules.
-- `modules/aspects/` — reusable roles, features, primitives, Home Manager integration, and services.
+- `modules/entities/` contains direct host, home, and user declarations.
+- `hosts/<name>/default.nix` defines the matching host aspect and imports host-specific files.
+- `modules/aspects/` contains reusable roles, features, services, and application configuration.
+- `modules/core/` contains the Den schema and shared defaults.
+- `lib/checks/` contains evaluation-time composition checks.
 
-There is no inventory conversion layer. Home Manager relationships are structural:
+Home Manager relationships are structural:
 
-- `netcup` includes `den.aspects.integrated-home-manager` and its `bhunter` user has the `homeManager` class.
-- `laptop` has a classless system user and an explicit standalone `den.home` named `bhunter@laptop`.
+- `netcup` uses `integrated-home-manager`; user `bhunter` has the `homeManager` class.
+- `laptop` has a classless system user and a standalone home named `bhunter@laptop`.
 
-Do not add `homeManagerMode`, string routing, generic host scans, or another entity constructor layer.
+Do not add inventory conversion, mode flags, string routing, registries, dispatchers, dependency resolvers, or Den internal mutation.
 
-Service and feature composition uses direct Den aspect `includes`. Shared platform aspects are
-selected once by the host aspect because repeated Den includes are compositional, not deduplicated.
-Do not add a string registry, dependency resolver, dispatcher, aliases, or internal scope-handler mutation.
+## Change map
 
-## Adding a service
+- Host declaration: `modules/entities/hosts/`
+- Host implementation: `hosts/<name>/`
+- Standalone home: `modules/entities/homes/`
+- User data: `modules/entities/users/`
+- Reusable behavior: `modules/aspects/`
+- Host options and defaults: `modules/core/`
+- Composition checks: `lib/checks/` and `modules/flake-outputs.nix`
 
-1. Add a module under `modules/aspects/services/`.
-2. Keep the service aspect focused on its own modules and quirk payloads.
-3. Add required shared platform aspects such as `oci-service`, `requires-domain`, or `requires-secrets`
-   once in the intended host aspect.
-4. Add the service aspect to that host aspect, normally `den.aspects.netcup`.
-5. Keep runtime dependencies such as Quadlet `After` and `Requires` in the service module.
+Use `entityLib.mkNixos` and `entityLib.mkHome` from `modules/entities/defaults.nix`.
 
-## Adding an entity
+## Services
 
-1. Add the direct declaration under `modules/entities/hosts`, `modules/entities/homes`, or `modules/entities/users`.
-2. Reuse `entityLib.mkNixos` or `entityLib.mkHome` from `modules/entities/defaults.nix`.
-3. Express integrated versus standalone Home Manager through aspects/classes and entity placement, not a mode field.
-4. Keep machine implementation in the same-named aspect under `hosts/<name>/default.nix`.
+1. Add the service under `modules/aspects/services/`.
+2. Keep the aspect limited to its modules and quirk payloads.
+3. Select shared platform aspects once in the host aspect.
+4. Keep Quadlet and systemd runtime dependencies in the service module.
 
-## Key quirk surfaces
+Den `includes` are compositional, not identity-deduplicated. Do not repeat `oci-service`, `requires-domain`, or `requires-secrets` through every leaf service.
 
-- `caddyRoutes` — service aspects emit named virtual-host routes; Caddy renders them once.
-- `caddyLayer4Routes` — service aspects emit layer4 route snippets; Caddy renders them once.
-- `containerDataDirs` — services emit named persistent-directory declarations; `oci-base` creates them once.
+## Quirks and secrets
 
-Top-level route and directory names must be unique. Consumers assert on duplicates instead
-of silently overwriting declarations.
+Shared quirk surfaces are `caddyRoutes`, `caddyLayer4Routes`, `containerDataDirs`, `postgresDatabases`, and `postgresSchemas`. Top-level names must be unique; consumers must fail on duplicates.
 
-## Secrets
+Use the provided `secrets` argument and the helpers from `lib.denful.secrets`.
 
-Use `lib.denful.secrets` helpers instead of inline `sopsFile`. Shared secrets are in
-`secrets/common.yaml`; host-local secrets are in `hosts/<name>/secrets.yaml`. The system
-Age key is `/var/lib/sops-nix/key.txt`.
+- Secret contract: `lib/secrets.nix`
+- Shared secrets: `secrets/common.yaml`
+- Host secrets: `hosts/<name>/secrets.yaml`
+- NixOS Age key: `/var/lib/sops-nix/key.txt`
+- Home Manager Age key: `~/.config/sops/age/keys.txt`
 
-## Hosts
+Do not set `sopsFile` directly in feature or service modules.
 
-- **laptop** — x86_64, standalone Home Manager, plus a NixOS configuration for evaluation/building. CachyOS LTS kernel, Intel UHD 630, NVIDIA GTX 1050.
-- **netcup** — aarch64 NixOS server with integrated Home Manager and the hosted service stack.
+## Invariants
 
-Both use `tailscale.autoconnect`.
-
-## Conventions
-
-- `flake.nix` is generated by `flake-file`; regenerate with `nix run .#write-flake` rather than editing it directly.
-- Caddy remains the OCI image `ghcr.io/tgdrive/caddy`.
-- No KDE/Plasma or GNOME Shell. Desktop composition is Niri + Noctalia v5 + selected GNOME apps.
-- Do not access or mutate Den internals such as `__scopeHandlers`.
-- Do not reintroduce DMS, `compose.nix`, forwarding modules, service registries, inventory dispatch, or duplicate registration.
-- Home PC storage remains plain Btrfs without encryption.
+- `flake.nix` is generated; run `just write-flake` instead of editing it.
+- Do not access Den internals such as `__scopeHandlers`.
+- Do not add inventory, registry, forwarding, or duplicate-registration layers.
+- Caddy remains the `ghcr.io/tgdrive/caddy` OCI image.
+- Desktop composition is Niri, Noctalia v5, and selected GNOME apps; no Plasma or GNOME Shell.
+- Laptop storage remains plain Btrfs without encryption.
+- Preserve existing uncommitted changes.
 
 ## Commands
 
 ```bash
-just fmt                 # nix fmt
-just check               # nix flake check --show-trace
-just eval-all            # evaluate all host/home configurations
-just build netcup        # nh os build
-just test netcup         # nh os test
-just home bhunter@laptop # nh home switch
-just svc-status          # nix run .#svc -- stack status
+just fmt                     # format tracked Nix files
+just check                   # nix flake check --show-trace
+just eval laptop             # evaluate a NixOS host
+just eval-hm                 # evaluate bhunter@laptop
+just build netcup            # build without activating
+just test netcup             # activate until reboot
+just switch netcup           # build and activate
+just home                    # switch bhunter@laptop
+just svc-status              # service stack status
+cargo test --manifest-path packages/svc/Cargo.toml
 ```

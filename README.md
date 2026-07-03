@@ -1,37 +1,59 @@
 # Dotfiles
 
-Two hosts: **laptop** (x86_64, standalone Home Manager) and **netcup** (aarch64 NixOS with integrated Home Manager).
+NixOS and Home Manager configuration for two machines, built with flakes, flake-parts, and Den.
+
+## Hosts
+
+| Host | Platform | Configuration |
+| --- | --- | --- |
+| `laptop` | `x86_64-linux` | NixOS with standalone Home Manager (`bhunter@laptop`) |
+| `netcup` | `aarch64-linux` | NixOS server with integrated Home Manager |
+
+## Structure
 
 ```text
-Den entity modules -> same-named host aspects -> feature/service includes -> class modules
-                                                   -> quirks -> single consumers
+entity -> host aspect -> reusable aspects -> NixOS/Home Manager modules
 ```
 
-Hosts, users, and standalone homes are declared directly under `modules/entities/`. There is no
-inventory conversion layer and no Home Manager mode flag. The relationship is structural:
+- `modules/entities/` — host, home, and user declarations
+- `hosts/` — hardware and host-specific configuration
+- `modules/aspects/` — reusable roles, features, services, and application configuration
+- `modules/core/` — Den schema and shared defaults
+- `lib/` — helpers and evaluation checks
+- `packages/svc/` — CLI and TUI for the Quadlet service stack
 
-- `netcup` includes the integrated Home Manager aspect and owns user `bhunter` with the `homeManager` class.
-- `laptop` owns a classless system user, while `bhunter@laptop` is declared as a standalone `den.home`.
+Host composition uses direct Den `includes`. Cross-aspect data is passed through quirks and checked for duplicate names during evaluation.
 
-Each host has a same-named aspect that selects its roles, features, shared platform aspects, and
-services through direct `includes`. Shared platform aspects are selected once per host because
-repeated Den includes are compositional, not identity-deduplicated. Quadlet and systemd runtime
-ordering stays in the service modules.
+`flake.nix` is generated. Change `flake-file` declarations in the modules, then run:
 
-Cross-aspect data uses Den quirks:
+```bash
+just write-flake
+```
 
-- `caddyRoutes` and `caddyLayer4Routes` are rendered once by the Caddy aspect.
-- `containerDataDirs` is consumed once by the OCI base aspect.
-- Duplicate route and directory names fail evaluation instead of being silently overwritten.
+## Commands
 
-Repository layout:
+```bash
+just fmt                     # format tracked Nix files
+just check                   # run all flake checks
+just eval laptop             # evaluate a NixOS host
+just eval-hm                 # evaluate bhunter@laptop
+just build netcup            # build without activating
+just test netcup             # activate until reboot
+just switch netcup           # build and activate
+just home                    # switch bhunter@laptop Home Manager
+just svc-status              # show hosted service status
+cargo test --manifest-path packages/svc/Cargo.toml
+```
 
-- `modules/entities/` — direct host, home, and user declarations plus shared constructors
-- `hosts/` — host-specific hardware/configuration files and same-named Den host aspects
-- `modules/core/` — Den schema, defaults, quirks, and class defaults
-- `modules/aspects/` — roles, features, primitives, Home Manager integration, and services
-- `lib/` — shared Nix helpers
+The default NixOS host is `netcup`; the default Home Manager configuration is `bhunter@laptop`.
 
-There is no service registry, dependency resolver, dispatcher, inventory layer, or mode-based Home
-Manager routing. Adding a service means creating its aspect and selecting it, plus any required
-shared platform aspects, from a host aspect.
+## Secrets
+
+Secrets use SOPS and Age.
+
+- Shared secrets: `secrets/common.yaml`
+- Host secrets: `hosts/<name>/secrets.yaml`
+- NixOS Age key: `/var/lib/sops-nix/key.txt`
+- Home Manager Age key: `~/.config/sops/age/keys.txt`
+
+Secret declarations are centralized in `lib/secrets.nix`. Service and feature modules consume the provided `secrets` argument instead of setting `sopsFile` directly.

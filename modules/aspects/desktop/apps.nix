@@ -9,6 +9,7 @@
           beekeeper-studio
           burpsuitepro
           easyeffects
+          foliate
           gnome-disk-utility
           gparted
           localsend

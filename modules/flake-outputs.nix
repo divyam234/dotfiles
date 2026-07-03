@@ -13,10 +13,6 @@
         overlays = [ inputs.rust-overlay.overlays.default ];
       };
       rustToolchain = rustPkgs.rust-bin.stable.latest.default;
-      rustPlatform = rustPkgs.makeRustPlatform {
-        cargo = rustToolchain;
-        rustc = rustToolchain;
-      };
       netcup = self.nixosConfigurations.netcup.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
