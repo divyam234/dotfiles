@@ -6,6 +6,7 @@
 let
   expectedCommon = [
     "cloudflare/api_token"
+    "codeforge/token"
     "github/token"
     "nordvpn/private_key"
     "nordvpn/token"
@@ -14,7 +15,6 @@ let
     "users/bhunter/password"
   ];
   expectedNetcup = expectedCommon ++ [
-    "codeforge-mcp/api_key"
     "gproxy/admin_password"
     "gproxy/master_key"
     "postgres/password"
@@ -28,7 +28,6 @@ let
   netcupHome = netcup.home-manager.users.bhunter;
   expectedTemplates = [
     "caddy.env"
-    "codeforge-mcp.env"
     "forgejo.env"
     "gluetun.env"
     "gproxy.env"

@@ -30,6 +30,10 @@ let
       "token"
     ]
     [
+      "codeforge"
+      "token"
+    ]
+    [
       "ssh"
       "private_key"
     ]
@@ -53,10 +57,6 @@ let
       [
         "vaultwarden"
         "admin_token"
-      ]
-      [
-        "codeforge-mcp"
-        "api_key"
       ]
       [
         "restic"

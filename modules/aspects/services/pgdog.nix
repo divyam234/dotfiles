@@ -29,12 +29,9 @@
             }
           ];
         };
+        pgdogConfigFile = toml.generate "pgdog.toml" pgdogConfig;
       in
       {
-        environment.etc."pgdog/pgdog.toml".text = builtins.readFile (
-          toml.generate "pgdog.toml" pgdogConfig
-        );
-
         virtualisation.quadlet.containers.pgdog = {
           autoStart = true;
           containerConfig = {
@@ -42,7 +39,7 @@
             image = "ghcr.io/pgdogdev/pgdog";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "pgdog" ];
-            volumes = [ "/etc/pgdog/pgdog.toml:/pgdog/pgdog.toml:ro" ];
+            volumes = [ "${pgdogConfigFile}:/pgdog/pgdog.toml:ro" ];
             autoUpdate = "registry";
           };
           unitConfig = {

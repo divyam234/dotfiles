@@ -19,7 +19,7 @@
       den.aspects.adguard
       den.aspects.caddy
       den.aspects.camofox
-      den.aspects.codeforge-mcp
+      den.aspects.codeforge
       den.aspects.databasus
       den.aspects.forgejo
       den.aspects.gluetun
