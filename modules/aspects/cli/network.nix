@@ -8,7 +8,6 @@
           aria2
           hydra
           cloudflared
-          croc
           curl
           curlie
           doggo

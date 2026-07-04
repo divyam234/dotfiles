@@ -33,7 +33,7 @@
           nixd
           nixfmt
           nodejs_24
-          pkgconf
+          pkg-config
           pnpm
           python3
           rust-bin.stable.latest.default
