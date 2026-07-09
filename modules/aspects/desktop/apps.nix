@@ -7,7 +7,6 @@
         home.packages = with pkgs; [
           baobab
           beekeeper-studio
-          burpsuitepro
           easyeffects
           foliate
           gnome-disk-utility
@@ -22,9 +21,11 @@
           mpv
           obsidian
           telegram-desktop
+          uget
           vesktop
           vlc
           obs-studio
+          spotify-player
           cutter
         ];
       };
