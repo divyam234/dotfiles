@@ -73,12 +73,4 @@
           ];
         };
     };
-
-  den.aspects.codeforge-cli = {
-    homeManager =
-      { pkgs, ... }:
-      {
-        home.packages = [ pkgs.codeforge ];
-      };
-  };
 }

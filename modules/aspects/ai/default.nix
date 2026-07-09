@@ -201,6 +201,8 @@
 
         stylix.targets.opencode.enable = true;
 
+        home.packages = [ pkgs.codeforge ];
+
         programs.bunGlobalCli = {
           enable = true;
           packages = lib.mkAfter [

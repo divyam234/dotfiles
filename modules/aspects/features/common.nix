@@ -8,7 +8,6 @@
       den.aspects.git
       den.aspects.ssh
       den.aspects.starship
-      den.aspects.codeforge-cli
     ];
   };
 }
