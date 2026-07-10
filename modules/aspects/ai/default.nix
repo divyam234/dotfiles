@@ -44,8 +44,9 @@
           };
 
         models = {
-          openaiStrong = "openai/gpt-5.5";
-          openaiFast = "openai/gpt-5.4-mini";
+          openaiStrong = "openai/gpt-5.6-sol";
+          openaiMedium = "openai/gpt-5.6-terra";
+          openaiFast = "openai/gpt-5.6-luna";
           opencodeFree = "opencode/deepseek-v4-flash-free";
         };
 
@@ -90,12 +91,12 @@
         };
 
         omoSlimConfig = {
-          preset = "opencode";
-
+          preset = "openai";
           presets = {
             openai = {
               orchestrator = mkAgent {
-                model = models.openaiStrong;
+                model = models.openaiMedium;
+                variant = "medium";
                 skills = [ "*" ];
                 mcps = [
                   "*"
@@ -131,7 +132,7 @@
 
               fixer = mkAgent {
                 model = models.openaiFast;
-                variant = "low";
+                variant = "medium";
               };
             };
 
@@ -172,7 +173,6 @@
               designer = mkAgent {
                 model = models.opencodeFree;
                 variant = "medium";
-                skills = [ "agent-browser" ];
               };
 
               fixer = mkAgent {

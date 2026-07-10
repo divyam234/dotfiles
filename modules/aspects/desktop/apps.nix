@@ -27,6 +27,7 @@
           obs-studio
           spotify-player
           cutter
+          androidenv.androidPkgs.platform-tools
         ];
       };
   };
