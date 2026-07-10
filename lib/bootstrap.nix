@@ -10,7 +10,6 @@ let
   );
 
   overlays = [
-    inputs.nur.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
     inputs.cachyos-kernel.overlays.pinned
