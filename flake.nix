@@ -42,7 +42,6 @@
       url = "github:noctalia-dev/noctalia-greeter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nur.url = "github:nix-community/NUR";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
