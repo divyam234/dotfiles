@@ -14,31 +14,33 @@
       den.aspects.tailscale
     ];
 
-    nixos = _: {
-      imports = [
-        inputs.nixos-facter-modules.nixosModules.facter
-        ./graphics.nix
-        ./networking.nix
-        ./disko.nix
-        ./msi-ec/kmod.nix
-      ];
-      boot.loader = {
-        systemd-boot.enable = true;
-        efi.canTouchEfiVariables = true;
-        timeout = 3;
-      };
-      # kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
-      facter.reportPath = ./facter.json;
-      fileSystems."/mnt/drive" = {
-        device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
-        fsType = "ext4";
-        options = [
-          "nofail"
-          "x-systemd.automount"
-          "x-gvfs-show"
+    nixos =
+      { pkgs, ... }:
+      {
+        imports = [
+          inputs.nixos-facter-modules.nixosModules.facter
+          ./graphics.nix
+          ./networking.nix
+          ./disko.nix
+          ./msi-ec/kmod.nix
         ];
+        boot.loader = {
+          systemd-boot.enable = true;
+          efi.canTouchEfiVariables = true;
+          timeout = 3;
+        };
+        boot.kernelPackages = pkgs.linuxPackages_latest;
+        facter.reportPath = ./facter.json;
+        fileSystems."/mnt/drive" = {
+          device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
+          fsType = "ext4";
+          options = [
+            "nofail"
+            "x-systemd.automount"
+            "x-gvfs-show"
+          ];
+        };
+        system.stateVersion = "26.05";
       };
-      system.stateVersion = "26.05";
-    };
   };
 }

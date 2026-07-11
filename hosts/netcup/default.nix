@@ -9,8 +9,6 @@
       den.aspects.tailscale
       den.aspects.integrated-home-manager
 
-      # Shared platform aspects are selected once. Den includes are compositional,
-      # so repeating them through every leaf service duplicates quirk producers.
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.requires-secrets
@@ -35,7 +33,7 @@
     ];
 
     nixos =
-      { host, ... }:
+      { pkgs, ... }:
       {
         imports = [
           ./hardware-configuration.nix
@@ -43,9 +41,8 @@
           ./disko.nix
           ./networking.nix
         ];
-
+        boot.kernelPackages = pkgs.linuxPackages_latest;
         services.qemuGuest.enable = true;
-        networking.domain = host.domain;
         system.stateVersion = "26.05";
       };
   };

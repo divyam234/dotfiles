@@ -13,20 +13,23 @@
       den.aspects.oci-service
     ];
 
-    nixos = _: {
-      imports = [
-        inputs.nixos-facter-modules.nixosModules.facter
-        ./disko.nix
-        ./networking.nix
-      ];
-      boot.loader = {
-        systemd-boot.enable = true;
-        efi.canTouchEfiVariables = true;
-        timeout = 3;
+    nixos =
+      { pkgs, ... }:
+      {
+        imports = [
+          inputs.nixos-facter-modules.nixosModules.facter
+          ./disko.nix
+          ./networking.nix
+        ];
+        boot.loader = {
+          systemd-boot.enable = true;
+          efi.canTouchEfiVariables = true;
+          timeout = 3;
+        };
+        hardware.graphics.enable = true;
+        boot.kernelPackages = pkgs.linuxPackages_latest;
+        facter.reportPath = ./facter.json;
+        system.stateVersion = "26.05";
       };
-      hardware.graphics.enable = true;
-      facter.reportPath = ./facter.json;
-      system.stateVersion = "26.05";
-    };
   };
 }
