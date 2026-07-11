@@ -40,6 +40,7 @@ let
   ];
 
   hostPaths = {
+    homelab = [ ];
     laptop = [ ];
     netcup = [
       [

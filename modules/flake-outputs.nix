@@ -99,6 +99,7 @@
           '';
       }
       // lib.optionalAttrs (system == "x86_64-linux") {
+        homelab-nixos-eval = self.nixosConfigurations.homelab.config.system.build.toplevel;
         laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;
         laptop-hm-eval = self.homeConfigurations."bhunter@laptop".activationPackage;
       }

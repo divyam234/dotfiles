@@ -40,6 +40,7 @@
         imports = [
           ./hardware-configuration.nix
           ./boot.nix
+          ./disko.nix
           ./networking.nix
         ];
 

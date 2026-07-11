@@ -17,14 +17,17 @@
     nixos = _: {
       imports = [
         inputs.nixos-facter-modules.nixosModules.facter
-        ./hardware-configuration.nix
-        ./boot.nix
         ./graphics.nix
         ./networking.nix
         ./disko.nix
         ./msi-ec/kmod.nix
       ];
-
+      boot.loader = {
+        systemd-boot.enable = true;
+        efi.canTouchEfiVariables = true;
+        timeout = 3;
+      };
+      # kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
       facter.reportPath = ./facter.json;
       fileSystems."/mnt/drive" = {
         device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
