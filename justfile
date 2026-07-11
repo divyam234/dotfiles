@@ -51,5 +51,11 @@ home u="bhunter@laptop":
 disko h="homelab":
     sudo nix {{ nix_install_options }} run github:nix-community/disko -- --mode disko ./hosts/{{ h }}/disko.nix
 
+install-sops-key key:
+    sudo install -d -m 0700 /mnt/var/lib/sops-nix
+    sudo install -d -m 0700 -o 1000 -g 100 /mnt/home/bhunter/.config/sops/age
+    sudo install -m 0600 "{{ key }}" /mnt/var/lib/sops-nix/key.txt
+    sudo install -m 0600 -o 1000 -g 100 "{{ key }}" /mnt/home/bhunter/.config/sops/age/keys.txt
+
 install h="homelab":
     sudo nixos-install --flake .#{{ h }} {{ nix_install_options }}
