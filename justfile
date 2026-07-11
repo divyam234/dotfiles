@@ -1,7 +1,6 @@
 set dotenv-load
 
-host := "netcup"
-nix_install_options := '--option experimental-features "nix-command flakes" --option extra-substituters "https://nix-community.cachix.org https://numtide.cachix.org" --option extra-trusted-public-keys "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="'
+host := "laptop"
 
 fmt:
     nix fmt
@@ -30,7 +29,7 @@ clean:
 update:
     nix flake update
 
-commit-locked:
+update-commit:
     nix flake update --commit-lock-file
 
 build h=host:
@@ -48,14 +47,14 @@ boot h=host:
 home u="bhunter@laptop":
     nh home switch . -c {{ u }}
 
-disko h="homelab":
-    sudo nix {{ nix_install_options }} run github:nix-community/disko -- --mode disko ./hosts/{{ h }}/disko.nix
+iso h=host:
+    nix build .#{{ h }}-installer-iso
 
-install-sops-key key:
-    sudo install -d -m 0700 /mnt/var/lib/sops-nix
-    sudo install -d -m 0700 -o 1000 -g 100 /mnt/home/bhunter/.config/sops/age
-    sudo install -m 0600 "{{ key }}" /mnt/var/lib/sops-nix/key.txt
-    sudo install -m 0600 -o 1000 -g 100 "{{ key }}" /mnt/home/bhunter/.config/sops/age/keys.txt
-
-install h="homelab":
-    sudo nixos-install --flake .#{{ h }} {{ nix_install_options }}
+flash-iso device h=host:
+    test -b "{{ device }}"
+    test "$(lsblk -dn -o TYPE "{{ device }}")" = disk
+    printf 'This will erase {{ device }}. Type ERASE to continue: '
+    read confirmation
+    test "$confirmation" = ERASE
+    lsblk -nrpo MOUNTPOINTS "{{ device }}" | while IFS= read -r mountpoint; do test -z "$mountpoint" || sudo umount "$mountpoint"; done
+    iso="$(nix build --print-out-paths .#{{ h }}-installer-iso)/iso/{{ h }}-installer.iso"; test -f "$iso"; sudo dd if="$iso" of="{{ device }}" bs=4M conv=fsync oflag=direct status=progress; sync

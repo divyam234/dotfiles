@@ -48,6 +48,7 @@
           uv
           valgrind
           radare2
+          qemu
         ];
       };
   };

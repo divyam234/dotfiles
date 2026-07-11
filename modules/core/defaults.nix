@@ -118,7 +118,7 @@ in
         {
           home.stateVersion = "26.05";
           _module.args.secrets = secrets;
-          sops.age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+          sops.age.keyFile = "/var/lib/sops-nix/key.txt";
           sops.secrets = secrets.declare secrets.all;
         };
       nixos =

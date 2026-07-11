@@ -13,6 +13,101 @@
         overlays = [ inputs.rust-overlay.overlays.default ];
       };
       rustToolchain = rustPkgs.rust-bin.stable.latest.default;
+      mkInstallerIso =
+        {
+          name,
+          diskoConfig,
+        }:
+        let
+          targetSystem = self.nixosConfigurations.${name}.config.system.build.toplevel;
+          installer = inputs.nixpkgs.lib.nixosSystem {
+            system = "x86_64-linux";
+            modules = [
+              (
+                {
+                  lib,
+                  modulesPath,
+                  pkgs,
+                  ...
+                }:
+                let
+                  disko = inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.default;
+                  installSystem = pkgs.writeShellApplication {
+                    name = "install-system";
+                    runtimeInputs = [
+                      disko
+                      pkgs.coreutils
+                      pkgs.nixos-install-tools
+                      pkgs.util-linux
+                    ];
+                    text = ''
+                      usage() {
+                        echo "Usage: install-system (--key-device /dev/sdX1 | --key-file /path/to/age-key.txt)" >&2
+                        exit 1
+                      }
+
+                      if [ "$EUID" -ne 0 ]; then
+                        echo "Run: sudo install-system --key-device /dev/sdX1" >&2
+                        exit 1
+                      fi
+
+                      keyFile=""
+                      mountDir=""
+                      cleanup() {
+                        if [ -n "$mountDir" ]; then
+                          umount "$mountDir" 2>/dev/null || true
+                          rmdir "$mountDir"
+                        fi
+                      }
+                      trap cleanup EXIT
+
+                      case "$1" in
+                        --key-device)
+                          [ "$#" -eq 2 ] || usage
+                          mountDir="$(mktemp -d)"
+                          mount -o ro "$2" "$mountDir"
+                          keyFile="$mountDir/age-key.txt"
+                          ;;
+                        --key-file)
+                          [ "$#" -eq 2 ] || usage
+                          keyFile="$2"
+                          ;;
+                        *) usage ;;
+                      esac
+
+                      [ -f "$keyFile" ] || {
+                        echo "No age-key.txt found at $keyFile" >&2
+                        exit 1
+                      }
+
+                      disko --mode disko /etc/installer/disko.nix
+
+                      install -d -m 0750 -o 0 -g 100 /mnt/var/lib/sops-nix
+                      install -m 0640 -o 0 -g 100 "$keyFile" /mnt/var/lib/sops-nix/key.txt
+
+                      nixos-install --system /etc/installer-system --no-root-passwd
+                    '';
+                  };
+                in
+                {
+                  imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
+
+                  environment.etc = {
+                    "installer/disko.nix".source = diskoConfig;
+                    "installer-system".source = targetSystem;
+                  };
+                  environment.systemPackages = [ installSystem ];
+                  image.baseName = lib.mkForce "${name}-installer";
+                  isoImage = {
+                    volumeID = "${lib.toUpper name}_INSTALLER";
+                    storeContents = [ targetSystem ];
+                  };
+                }
+              )
+            ];
+          };
+        in
+        installer.config.system.build.isoImage;
       netcup = self.nixosConfigurations.netcup.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
@@ -25,6 +120,17 @@
       };
     in
     {
+      packages = lib.optionalAttrs (system == "x86_64-linux") {
+        homelab-installer-iso = mkInstallerIso {
+          name = "homelab";
+          diskoConfig = ../hosts/homelab/disko.nix;
+        };
+        laptop-installer-iso = mkInstallerIso {
+          name = "laptop";
+          diskoConfig = ../hosts/laptop/disko.nix;
+        };
+      };
+
       formatter = pkgs.writeShellApplication {
         name = "dotfiles-fmt";
         runtimeInputs = with pkgs; [
