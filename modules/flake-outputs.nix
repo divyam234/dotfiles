@@ -8,11 +8,6 @@
   perSystem =
     { pkgs, system, ... }:
     let
-      rustPkgs = import inputs.nixpkgs {
-        inherit system;
-        overlays = [ inputs.rust-overlay.overlays.default ];
-      };
-      rustToolchain = rustPkgs.rust-bin.stable.latest.default;
       mkInstallerIso =
         {
           name,
@@ -151,7 +146,6 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           age
-          rustToolchain
           deadnix
           disko
           git
