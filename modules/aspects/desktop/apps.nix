@@ -21,8 +21,6 @@
           mpv
           obsidian
           telegram-desktop
-          uget
-          vesktop
           vlc
           obs-studio
           spotify
