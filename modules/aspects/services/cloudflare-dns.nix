@@ -72,10 +72,10 @@
           description = "Reconcile route DNS records with Cloudflare";
           after = [
             "network-online.target"
-            "sops-nix.service"
+            "sops-install-secrets.service"
           ]
           ++ lib.optional hasTailnetRoutes "tailscale-autoconnect.service";
-          requires = [ "sops-nix.service" ];
+          requires = [ "sops-install-secrets.service" ];
           wants = [
             "network-online.target"
           ]
