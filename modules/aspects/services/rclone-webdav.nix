@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.rclone-webdav = { host, ... }: {
+  den.aspects.rclone-webdav = { host, user, ... }: {
     caddyRoutes.rclone-webdav = {
       host = "media.${host.domain}";
       access = "tailnet";
