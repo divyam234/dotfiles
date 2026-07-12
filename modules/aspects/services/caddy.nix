@@ -63,11 +63,22 @@
             }
             {
               assertion =
-                publicRoutes == [ ]
-                || host.dns.publicTarget.source == "external"
-                || host.dns.publicTarget.ipv4 != null
-                || host.dns.publicTarget.ipv6 != null;
-              message = "Public Caddy routes require external address discovery or a static public address.";
+                publicRoutes == [ ] || host.dns.publicTarget.ipv4.enable || host.dns.publicTarget.ipv6.enable;
+              message = "Public Caddy routes require at least one enabled public DNS address family.";
+            }
+            {
+              assertion =
+                !host.dns.publicTarget.ipv4.enable
+                || host.dns.publicTarget.ipv4.source != "static"
+                || host.dns.publicTarget.ipv4.address != null;
+              message = "Static public IPv4 DNS requires host.dns.publicTarget.ipv4.address.";
+            }
+            {
+              assertion =
+                !host.dns.publicTarget.ipv6.enable
+                || host.dns.publicTarget.ipv6.source != "static"
+                || host.dns.publicTarget.ipv6.address != null;
+              message = "Static public IPv6 DNS requires host.dns.publicTarget.ipv6.address.";
             }
             {
               assertion = tailnetRoutes == [ ] || config.services.tailscale.enable;

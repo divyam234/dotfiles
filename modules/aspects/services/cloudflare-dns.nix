@@ -21,13 +21,13 @@
         publicTarget = host.dns.publicTarget;
         mkPublicRecords =
           route:
-          lib.optional (publicTarget.source == "external" || publicTarget.ipv4 != null) {
+          lib.optional publicTarget.ipv4.enable {
             name = route.host;
             proxied = route.proxied or false;
             type = "A";
             target = "public-ipv4";
           }
-          ++ lib.optional (publicTarget.ipv6 != null) {
+          ++ lib.optional publicTarget.ipv6.enable {
             name = route.host;
             proxied = route.proxied or false;
             type = "AAAA";
@@ -89,6 +89,7 @@
           path = [
             pkgs.curl
             pkgs.coreutils
+            pkgs.iproute2
             pkgs.jq
             pkgs.tailscale
           ];
@@ -114,18 +115,34 @@
             zone="$(jq -r '.zone' "$manifest")"
             owner="$(jq -r '.owner' "$manifest")"
             ttl="$(jq -r '.ttl' "$manifest")"
-            public_source="$(jq -r '.publicTarget.source' "$manifest")"
-            public_ipv4="$(jq -r '.publicTarget.ipv4 // empty' "$manifest")"
-            public_ipv6="$(jq -r '.publicTarget.ipv6 // empty' "$manifest")"
-            if [ "$public_source" = external ]; then
-              public_ipv4="$(curl -4 --fail --silent --show-error https://1.1.1.1/cdn-cgi/trace \
+            public_ipv4_source="$(jq -r '.publicTarget.ipv4.source' "$manifest")"
+            public_ipv6_source="$(jq -r '.publicTarget.ipv6.source' "$manifest")"
+            public_ipv4="$(jq -r '.publicTarget.ipv4.address // empty' "$manifest")"
+            public_ipv6="$(jq -r '.publicTarget.ipv6.address // empty' "$manifest")"
+
+            discover_address() {
+              local family="$1"
+              curl "-$family" --fail --location --silent --show-error https://one.one.one.one/cdn-cgi/trace \
                 | while IFS='=' read -r key value; do
                     if [ "$key" = ip ]; then
                       printf '%s' "$value"
                       break
                     fi
-                  done)"
-            fi
+                  done
+            }
+
+            local_address() {
+              local family="$1"
+              local destination
+              if [ "$family" = 4 ]; then
+                destination=1.1.1.1
+              else
+                destination=2606:4700:4700::1111
+              fi
+              ip -j "-$family" route get "$destination" \
+                | jq -er '.[0].prefsrc // .[0].src'
+            }
+
             zone_response="$(cloudflare --get --data-urlencode "name=$zone" --data-urlencode 'status=active' "$api/zones")"
             zone_id="$(jq -er '.result | if length == 1 then .[0].id else error("expected exactly one active zone") end' <<<"$zone_response")"
             tailscale_ipv4=""
@@ -137,8 +154,24 @@
               proxied="$(jq -r '.proxied' <<<"$record")"
 
               case "$target" in
-                public-ipv4) content="$public_ipv4" ;;
-                public-ipv6) content="$public_ipv6" ;;
+                public-ipv4)
+                  if [ -z "$public_ipv4" ]; then
+                    case "$public_ipv4_source" in
+                      local) public_ipv4="$(local_address 4)" ;;
+                      external) public_ipv4="$(discover_address 4)" ;;
+                    esac
+                  fi
+                  content="$public_ipv4"
+                  ;;
+                public-ipv6)
+                  if [ -z "$public_ipv6" ]; then
+                    case "$public_ipv6_source" in
+                      local) public_ipv6="$(local_address 6)" ;;
+                      external) public_ipv6="$(discover_address 6)" ;;
+                    esac
+                  fi
+                  content="$public_ipv6"
+                  ;;
                 tailscale-ipv4)
                   if [ -z "$tailscale_ipv4" ]; then
                     tailscale_ipv4="$(tailscale ip -4 | head -n1)"
@@ -200,11 +233,11 @@
           '';
         };
 
-        systemd.timers.cloudflare-dns-sync = {
+        systemd.timers.cloudflare-dns-sync = lib.mkIf (host.dns.refreshInterval != null) {
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "5m";
-            OnUnitActiveSec = "15m";
+            OnUnitActiveSec = host.dns.refreshInterval;
             Persistent = true;
           };
         };

@@ -104,14 +104,23 @@
         in
         installer.config.system.build.isoImage;
       netcup = self.nixosConfigurations.netcup.config;
+      homelab = self.nixosConfigurations.homelab.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
       contracts = {
         containers = import ../lib/checks/containers.nix { inherit lib netcup; };
+        homelab = import ../lib/checks/homelab.nix { inherit homelab lib; };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
         netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
         openchamber = import ../lib/checks/openchamber.nix { inherit lib netcup; };
-        secrets = import ../lib/checks/secrets.nix { inherit home laptop netcup; };
+        secrets = import ../lib/checks/secrets.nix {
+          inherit
+            home
+            homelab
+            laptop
+            netcup
+            ;
+        };
       };
     in
     {

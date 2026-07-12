@@ -9,7 +9,7 @@
     user = "bhunter";
     domain = "bhunter.tech";
     secretsFile = ../../../hosts/netcup/secrets.yaml;
-    dns.publicTarget.source = "external";
+    dns.publicTarget.ipv4.source = "local";
     tailscale.autoconnect = true;
 
     instantiate = entityLib.mkNixos "aarch64-linux";

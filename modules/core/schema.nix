@@ -29,35 +29,90 @@
 
         dns = lib.mkOption {
           type = lib.types.submodule {
-            options.publicTarget = lib.mkOption {
-              type = lib.types.submodule {
-                options = {
-                  source = lib.mkOption {
-                    type = lib.types.enum [
-                      "static"
-                      "external"
-                    ];
-                    default = "external";
-                    description = "Whether public DNS addresses are declared or discovered at runtime.";
+            options.publicTarget =
+              let
+                addressTarget =
+                  enabledByDefault:
+                  lib.types.submodule {
+                    options = {
+                      enable = lib.mkOption {
+                        type = lib.types.bool;
+                        default = enabledByDefault;
+                        description = "Whether to publish this address family.";
+                      };
+                      source = lib.mkOption {
+                        type = lib.types.enum [
+                          "static"
+                          "local"
+                          "external"
+                        ];
+                        default = "external";
+                        description = "Whether the address is declared or discovered at runtime.";
+                      };
+                      address = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Address used when source is static.";
+                      };
+                    };
                   };
-                  ipv4 = lib.mkOption {
-                    type = lib.types.nullOr lib.types.str;
-                    default = null;
-                    description = "Static public IPv4 address used by public DNS records.";
-                  };
-                  ipv6 = lib.mkOption {
-                    type = lib.types.nullOr lib.types.str;
-                    default = null;
-                    description = "Static public IPv6 address used by public DNS records.";
-                  };
+              in
+              {
+                ipv4 = lib.mkOption {
+                  type = addressTarget true;
+                  default = { };
+                  description = "Public IPv4 DNS target.";
+                };
+                ipv6 = lib.mkOption {
+                  type = addressTarget false;
+                  default = { };
+                  description = "Public IPv6 DNS target.";
                 };
               };
-              default = { };
-              description = "Address source for public service records.";
+
+            options.refreshInterval = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              example = "15m";
+              description = "Periodic DNS reconciliation interval, or null for boot and configuration changes only.";
             };
           };
           default = { };
           description = "Host-specific DNS publication settings.";
+        };
+
+        rcloneWebdav = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              remote = lib.mkOption {
+                type = lib.types.str;
+                default = "gpix:";
+                description = "Rclone remote served over WebDAV.";
+              };
+              port = lib.mkOption {
+                type = lib.types.port;
+                default = 9000;
+                description = "Host port used by the rclone WebDAV service.";
+              };
+              cacheDir = lib.mkOption {
+                type = lib.types.str;
+                default = "/var/cache/rclone-webdav";
+                description = "Host directory used for the rclone VFS cache.";
+              };
+              cacheMaxAge = lib.mkOption {
+                type = lib.types.str;
+                default = "720h";
+                description = "Maximum age of objects in the VFS cache.";
+              };
+              cacheMaxSize = lib.mkOption {
+                type = lib.types.str;
+                default = "100GiB";
+                description = "Maximum total size of the VFS cache.";
+              };
+            };
+          };
+          default = { };
+          description = "Host-specific rclone WebDAV settings.";
         };
 
         tailscale = lib.mkOption {

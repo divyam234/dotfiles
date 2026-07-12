@@ -11,6 +11,12 @@
       den.aspects.tailscale
       den.aspects.integrated-home-manager
       den.aspects.oci-service
+      den.aspects.requires-domain
+      den.aspects.requires-secrets
+
+      den.aspects.caddy
+      den.aspects.cloudflare-dns
+      den.aspects.rclone-webdav
     ];
 
     nixos =

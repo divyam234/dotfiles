@@ -1,5 +1,6 @@
 {
   home,
+  homelab,
   laptop,
   netcup,
 }:
@@ -25,6 +26,7 @@ let
     "restic/repository"
     "vaultwarden/admin_token"
   ];
+  expectedHomelab = expectedCommon ++ [ "rclone/postgres_url" ];
   netcupHome = netcup.home-manager.users.bhunter;
   expectedTemplates = [
     "caddy.env"
@@ -37,6 +39,7 @@ let
   ];
 in
 assert builtins.attrNames laptop.sops.secrets == builtins.sort builtins.lessThan expectedCommon;
+assert builtins.attrNames homelab.sops.secrets == builtins.sort builtins.lessThan expectedHomelab;
 assert builtins.attrNames netcup.sops.secrets == builtins.sort builtins.lessThan expectedNetcup;
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;

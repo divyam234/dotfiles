@@ -40,7 +40,12 @@ let
   ];
 
   hostPaths = {
-    homelab = [ ];
+    homelab = [
+      [
+        "rclone"
+        "postgres_url"
+      ]
+    ];
     laptop = [ ];
     netcup = [
       [
