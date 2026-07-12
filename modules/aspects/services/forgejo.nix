@@ -4,6 +4,7 @@
     caddyRoutes = {
       forgejo = {
         host = "git.${host.domain}";
+        access = "tailnet";
         upstreams = [ "forgejo:3000" ];
         cacheStatic = true;
         extraConfig = ''

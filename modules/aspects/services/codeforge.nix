@@ -6,8 +6,9 @@
       caddyRoutes = {
         codeforge = {
           host = "codeforge.${host.domain}";
+          access = "public";
+          proxied = true;
           upstreams = [ "host.containers.internal:18473" ];
-          tls = "internal";
         };
       };
 

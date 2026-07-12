@@ -4,6 +4,7 @@
     caddyRoutes = {
       siyuan = {
         host = "notes.${host.domain}";
+        access = "tailnet";
         upstreams = [ "siyuan:6806" ];
       };
     };

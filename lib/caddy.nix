@@ -52,11 +52,12 @@ rec {
         encode = true;
         cacheStatic = false;
         securityHeaders = true;
-        tls = "cloudflare";
+        access = null;
+        proxied = false;
         extraConfig = "";
       }
       // route;
-      tlsBlock = mkCaddyTls normalized.tls;
+      tlsBlock = mkCaddyTls (if normalized.proxied then "internal" else "cloudflare");
       cacheBlock = if normalized.cacheStatic then mkStaticCache else "";
       headersBlock = if normalized.securityHeaders then mkCaddySecurityHeaders else "";
       encodeBlock = if normalized.encode then "encode zstd gzip" else "";

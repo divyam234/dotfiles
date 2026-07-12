@@ -27,6 +27,39 @@
           description = "ACME contact email. Defaults to admin@domain when unset.";
         };
 
+        dns = lib.mkOption {
+          type = lib.types.submodule {
+            options.publicTarget = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  source = lib.mkOption {
+                    type = lib.types.enum [
+                      "static"
+                      "external"
+                    ];
+                    default = "external";
+                    description = "Whether public DNS addresses are declared or discovered at runtime.";
+                  };
+                  ipv4 = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Static public IPv4 address used by public DNS records.";
+                  };
+                  ipv6 = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Static public IPv6 address used by public DNS records.";
+                  };
+                };
+              };
+              default = { };
+              description = "Address source for public service records.";
+            };
+          };
+          default = { };
+          description = "Host-specific DNS publication settings.";
+        };
+
         tailscale = lib.mkOption {
           type = lib.types.submodule {
             options = {

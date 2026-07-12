@@ -16,6 +16,7 @@
 
       den.aspects.adguard
       den.aspects.caddy
+      den.aspects.cloudflare-dns
       den.aspects.camofox
       den.aspects.codeforge
       den.aspects.databasus

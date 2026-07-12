@@ -4,6 +4,7 @@
     caddyRoutes = {
       openchamber = {
         host = "ai.${host.domain}";
+        access = "tailnet";
         upstreams = [ "host.containers.internal:39173" ];
       };
     };

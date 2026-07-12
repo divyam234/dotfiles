@@ -20,6 +20,13 @@
           name: builtins.length (lib.filter (candidate: candidate == name) routeNames) > 1
         ) (lib.unique routeNames);
         routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
+        routeList = lib.mapAttrsToList (name: route: route // { inherit name; }) routes;
+        routeHosts = map (route: route.host) routeList;
+        duplicateRouteHosts = lib.filter (
+          name: builtins.length (lib.filter (candidate: candidate == name) routeHosts) > 1
+        ) (lib.unique routeHosts);
+        publicRoutes = lib.filter (route: (route.access or null) == "public") routeList;
+        tailnetRoutes = lib.filter (route: (route.access or null) == "tailnet") routeList;
         acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
         global = {
           email = acmeEmail;
@@ -35,6 +42,40 @@
             {
               assertion = duplicateRouteNames == [ ];
               message = "Duplicate Caddy route quirk names: ${lib.concatStringsSep ", " duplicateRouteNames}";
+            }
+            {
+              assertion = lib.all (route: builtins.hasAttr "access" route) routeList;
+              message = "Every Caddy route must declare access = public or tailnet.";
+            }
+            {
+              assertion = lib.all (
+                route:
+                builtins.elem (route.access or null) [
+                  "public"
+                  "tailnet"
+                ]
+              ) routeList;
+              message = "Caddy route access must be public or tailnet.";
+            }
+            {
+              assertion = duplicateRouteHosts == [ ];
+              message = "Duplicate Caddy route hosts: ${lib.concatStringsSep ", " duplicateRouteHosts}";
+            }
+            {
+              assertion =
+                publicRoutes == [ ]
+                || host.dns.publicTarget.source == "external"
+                || host.dns.publicTarget.ipv4 != null
+                || host.dns.publicTarget.ipv6 != null;
+              message = "Public Caddy routes require external address discovery or a static public address.";
+            }
+            {
+              assertion = tailnetRoutes == [ ] || config.services.tailscale.enable;
+              message = "Tailnet Caddy routes require the Tailscale service.";
+            }
+            {
+              assertion = lib.all (route: !(route.proxied or false)) tailnetRoutes;
+              message = "Tailnet Caddy routes cannot use the Cloudflare proxy.";
             }
           ];
 

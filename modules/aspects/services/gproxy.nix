@@ -5,6 +5,7 @@
     caddyRoutes = {
       gproxy = {
         host = "gproxy.${host.domain}";
+        access = "tailnet";
         upstreams = [ "gproxy:8787" ];
       };
     };
@@ -43,7 +44,6 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gproxy" ];
             environmentFiles = [ "${containers.secretDir}/gproxy.env" ];
-            publishPorts = [ "8787:8787" ];
             volumes = [ "${containers.dataRoot}/gproxy:/app/data" ];
             autoUpdate = "registry";
           };
