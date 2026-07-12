@@ -20,6 +20,7 @@
       };
     };
     rcloneWebdav = {
+      domain = "media.bhunter.tech";
       remote = "gpix:";
       cacheDir = "/mnt/drive/rclone";
       cacheMaxAge = "8670h";

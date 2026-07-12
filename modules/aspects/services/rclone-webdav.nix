@@ -2,7 +2,7 @@
 {
   den.aspects.rclone-webdav = { host, user, ... }: {
     caddyRoutes.rclone-webdav = {
-      host = "media.${host.domain}";
+      host = host.rcloneWebdav.domain;
       access = "tailnet";
       proxied = false;
       upstreams = [ "host.containers.internal:${toString host.rcloneWebdav.port}" ];

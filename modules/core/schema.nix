@@ -84,6 +84,12 @@
         rcloneWebdav = lib.mkOption {
           type = lib.types.submodule {
             options = {
+              domain = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                example = "media.example.com";
+                description = "Domain serving rclone WebDAV.";
+              };
               remote = lib.mkOption {
                 type = lib.types.str;
                 default = "gpix:";
