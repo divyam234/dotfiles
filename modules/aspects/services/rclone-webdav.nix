@@ -37,14 +37,12 @@
           description = "Rclone WebDAV server";
           after = [
             "network-online.target"
-            "sops-install-secrets.service"
             "tailscale-autoconnect.service"
           ];
           wants = [
             "network-online.target"
             "tailscale-autoconnect.service"
           ];
-          requires = [ "sops-install-secrets.service" ];
           wantedBy = [ "multi-user.target" ];
           unitConfig.RequiresMountsFor = [ cfg.cacheDir ];
           serviceConfig = {
