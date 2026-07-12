@@ -26,6 +26,7 @@
           vlc
           obs-studio
           spotify
+          spotify-player
           cutter
           androidenv.androidPkgs.platform-tools
         ];
