@@ -34,6 +34,7 @@
           options = [
             "nofail"
             "x-systemd.automount"
+            "noatime"
           ];
         };
         facter.reportPath = ./facter.json;

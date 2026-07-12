@@ -39,6 +39,7 @@
             "nofail"
             "x-systemd.automount"
             "x-gvfs-show"
+            "noatime"
           ];
         };
         system.stateVersion = "26.05";
