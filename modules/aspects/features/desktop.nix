@@ -27,6 +27,7 @@
           enableGraphical = true;
         };
         security.polkit.enable = true;
+        security.soteria.enable = true;
         programs.dconf.enable = true;
 
         services = {

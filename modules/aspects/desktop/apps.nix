@@ -26,6 +26,7 @@
           spotify
           spotify-player
           cutter
+          ida-pro
           androidenv.androidPkgs.platform-tools
         ];
       };

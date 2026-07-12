@@ -164,8 +164,6 @@
             ${pkgs.coreutils}/bin/install -m 0644 -o greeter -g greeter ${../../../theme/wallpaper.png} /var/lib/noctalia-greeter/wallpaper.png
           '';
 
-          security.soteria.enable = true;
-
           environment.systemPackages = [ pkgs.xwayland-satellite ];
         };
 
