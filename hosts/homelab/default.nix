@@ -28,7 +28,6 @@
           timeout = 3;
         };
         hardware.graphics.enable = true;
-        boot.kernelPackages = pkgs.linuxPackages_latest;
         facter.reportPath = ./facter.json;
         system.stateVersion = "26.05";
       };
