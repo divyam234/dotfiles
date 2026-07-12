@@ -30,7 +30,7 @@
           efi.canTouchEfiVariables = true;
           timeout = 3;
         };
-        boot.kernelPackages = pkgs.linuxPackages_latest;
+        boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-x86_64-v3;
         facter.reportPath = ./facter.json;
         fileSystems."/mnt/drive" = {
           device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
