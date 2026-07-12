@@ -25,7 +25,7 @@
           vesktop
           vlc
           obs-studio
-          spotify-player
+          spotify
           cutter
           androidenv.androidPkgs.platform-tools
         ];
