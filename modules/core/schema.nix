@@ -99,6 +99,16 @@
                 default = "/var/cache/rclone-webdav";
                 description = "Host directory used for the rclone VFS cache.";
               };
+              cacheMode = lib.mkOption {
+                type = lib.types.enum [
+                  "off"
+                  "minimal"
+                  "writes"
+                  "full"
+                ];
+                default = "full";
+                description = "Rclone VFS cache mode.";
+              };
               cacheMaxAge = lib.mkOption {
                 type = lib.types.str;
                 default = "720h";
@@ -108,6 +118,26 @@
                 type = lib.types.str;
                 default = "100GiB";
                 description = "Maximum total size of the VFS cache.";
+              };
+              readChunkSize = lib.mkOption {
+                type = lib.types.str;
+                default = "128Mi";
+                description = "Initial VFS read chunk size.";
+              };
+              readChunkSizeLimit = lib.mkOption {
+                type = lib.types.str;
+                default = "128Mi";
+                description = "Maximum VFS read chunk size.";
+              };
+              readAhead = lib.mkOption {
+                type = lib.types.str;
+                default = "384Mi";
+                description = "Additional VFS data read ahead of the current position.";
+              };
+              bufferSize = lib.mkOption {
+                type = lib.types.str;
+                default = "32Mi";
+                description = "In-memory buffer size used per open file.";
               };
             };
           };

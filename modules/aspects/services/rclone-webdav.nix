@@ -64,11 +64,11 @@
           script = ''
             exec ${pkgs.rclone}/bin/rclone serve webdav ${lib.escapeShellArg cfg.remote} \
               --addr ${lib.escapeShellArg "0.0.0.0:${toString cfg.port}"} \
-              --vfs-cache-mode full \
-              --vfs-read-chunk-size 128Mi \
-              --vfs-read-chunk-size-limit 128Mi \
-              --vfs-read-ahead 384Mi \
-              --buffer-size 32Mi \
+              --vfs-cache-mode ${lib.escapeShellArg cfg.cacheMode} \
+              --vfs-read-chunk-size ${lib.escapeShellArg cfg.readChunkSize} \
+              --vfs-read-chunk-size-limit ${lib.escapeShellArg cfg.readChunkSizeLimit} \
+              --vfs-read-ahead ${lib.escapeShellArg cfg.readAhead} \
+              --buffer-size ${lib.escapeShellArg cfg.bufferSize} \
               --cache-dir ${lib.escapeShellArg cfg.cacheDir} \
               --vfs-cache-max-age ${lib.escapeShellArg cfg.cacheMaxAge} \
               --vfs-cache-max-size ${lib.escapeShellArg cfg.cacheMaxSize}
