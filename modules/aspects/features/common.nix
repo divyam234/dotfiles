@@ -9,5 +9,9 @@
       den.aspects.ssh
       den.aspects.starship
     ];
+
+    nixos = { pkgs, ... }: {
+      environment.systemPackages = [ pkgs.parted ];
+    };
   };
 }

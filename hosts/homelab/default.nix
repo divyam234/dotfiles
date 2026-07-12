@@ -28,6 +28,14 @@
           timeout = 3;
         };
         hardware.graphics.enable = true;
+        fileSystems."/mnt/drive" = {
+          device = "/dev/disk/by-id/ata-ST500LT012-1DG142_WBY3EXQ5-part1";
+          fsType = "ext4";
+          options = [
+            "nofail"
+            "x-systemd.automount"
+          ];
+        };
         facter.reportPath = ./facter.json;
         system.stateVersion = "26.05";
       };
