@@ -50,7 +50,6 @@
             efiSupport = true;
             efiInstallAsRemovable = true;
           };
-
           efi.canTouchEfiVariables = false;
           timeout = 3;
         };

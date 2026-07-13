@@ -25,9 +25,14 @@
           ./msi-ec/kmod.nix
         ];
         boot.loader = {
-          systemd-boot.enable = true;
-          systemd-boot.configurationLimit = 3;
-          efi.canTouchEfiVariables = true;
+          grub = {
+            enable = true;
+            configurationLimit = 3;
+            devices = [ "nodev" ];
+            efiSupport = true;
+            efiInstallAsRemovable = true;
+          };
+          efi.canTouchEfiVariables = false;
           timeout = 3;
         };
         boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-x86_64-v3;
