@@ -33,9 +33,11 @@
             configurationLimit = 3;
             devices = [ "nodev" ];
             efiSupport = true;
-            efiInstallAsRemovable = true;
           };
-          efi.canTouchEfiVariables = false;
+          efi = {
+            canTouchEfiVariables = true;
+            efiSysMountPoint = "/boot";
+          };
           timeout = 3;
         };
         hardware.graphics.enable = true;
