@@ -11,7 +11,10 @@
     ];
 
     nixos = { pkgs, ... }: {
-      environment.systemPackages = [ pkgs.parted ];
+      environment.systemPackages = with pkgs; [
+        parted
+        efibootmgr
+      ];
     };
   };
 }
