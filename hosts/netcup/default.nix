@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, inputs, ... }:
 {
   den.aspects.netcup = {
     includes = [
@@ -37,12 +37,24 @@
       { pkgs, ... }:
       {
         imports = [
-          ./hardware-configuration.nix
-          ./boot.nix
+          inputs.nixos-facter-modules.nixosModules.facter
           ./disko.nix
           ./networking.nix
         ];
+        boot.kernelParams = [ "console=ttyS0" ];
+        boot.loader = {
+          grub = {
+            enable = true;
+            devices = [ "nodev" ];
+            efiSupport = true;
+            efiInstallAsRemovable = true;
+          };
+
+          efi.canTouchEfiVariables = false;
+          timeout = 3;
+        };
         boot.kernelPackages = pkgs.linuxPackages_latest;
+        facter.reportPath = ./facter.json;
         services.qemuGuest.enable = true;
         system.stateVersion = "26.05";
       };
