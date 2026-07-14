@@ -39,6 +39,7 @@
             image = "ghcr.io/pgdogdev/pgdog";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "pgdog" ];
+            publishPorts = [ "6432:6432" ];
             volumes = [ "${pgdogConfigFile}:/pgdog/pgdog.toml:ro" ];
             autoUpdate = "registry";
           };
