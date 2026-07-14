@@ -18,6 +18,7 @@
             default_pool_size = 20;
             pooler_mode = "transaction";
             passthrough_auth = "enabled_plain";
+            pub_sub_channel_size = 4096;
           };
           databases = [
             {
