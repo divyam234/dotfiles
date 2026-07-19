@@ -17,7 +17,7 @@
     ];
 
     nixos =
-      { pkgs, user, ... }:
+      { host, pkgs, ... }:
       {
 
         networking.networkmanager.enable = true;
@@ -47,7 +47,7 @@
           };
         };
 
-        users.users.${user.userName}.extraGroups = [
+        users.users.${host.user}.extraGroups = [
           "audio"
           "video"
           "input"

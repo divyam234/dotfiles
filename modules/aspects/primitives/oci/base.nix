@@ -11,7 +11,7 @@
 
     oci-runtime = {
       nixos =
-        { user, ... }:
+        { host, ... }:
         {
           virtualisation = {
             containers.enable = true;
@@ -29,7 +29,7 @@
           };
 
           users.groups.podman = { };
-          users.users.${user.userName}.extraGroups = [ "podman" ];
+          users.users.${host.user}.extraGroups = [ "podman" ];
         };
 
       homeManager =

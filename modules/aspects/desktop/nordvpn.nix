@@ -4,11 +4,11 @@
     includes = [ den.aspects.sops ];
 
     nixos =
-      { pkgs, user, ... }:
+      { host, pkgs, ... }:
       {
         users = {
           groups.nordvpn = { };
-          users.${user.userName}.extraGroups = [ "nordvpn" ];
+          users.${host.user}.extraGroups = [ "nordvpn" ];
         };
 
         networking.firewall = {

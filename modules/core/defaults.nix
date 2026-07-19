@@ -124,13 +124,12 @@ in
       nixos =
         {
           config,
-          host ? null,
-          user,
+          host,
           ...
         }:
         let
           containers = {
-            dataRoot = "/home/${user.userName}/.local/state/container-services";
+            dataRoot = "/home/${host.user}/.local/state/container-services";
             networkName = "svc";
             secretDir = "/run/secrets/container-env";
           };

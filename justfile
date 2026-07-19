@@ -9,7 +9,11 @@ fmt-check:
     git diff --check
 
 check:
-    nix flake check --show-trace
+    nix build --no-link --show-trace .#checks.x86_64-linux.formatter .#checks.x86_64-linux.deadnix .#checks.x86_64-linux.statix .#checks.x86_64-linux.architecture .#checks.x86_64-linux.composition-contract
+    nix eval .#nixosConfigurations.laptop.config.system.build.toplevel.drvPath
+    nix eval .#nixosConfigurations.homelab.config.system.build.toplevel.drvPath
+    nix eval .#nixosConfigurations.netcup.config.system.build.toplevel.drvPath
+    nix eval .#homeConfigurations.bhunter@laptop.config.home.username
 
 eval h=host:
     nix eval .#nixosConfigurations.{{ h }}.config.system.build.toplevel.drvPath
