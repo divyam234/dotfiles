@@ -25,6 +25,7 @@
         duplicateRouteHosts = lib.filter (
           name: builtins.length (lib.filter (candidate: candidate == name) routeHosts) > 1
         ) (lib.unique routeHosts);
+        cacheDir = host.caddy.cacheDir;
         publicRoutes = lib.filter (route: (route.access or null) == "public") routeList;
         tailnetRoutes = lib.filter (route: (route.access or null) == "tailnet") routeList;
         acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
@@ -123,12 +124,14 @@
                 "/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
                 "${containers.dataRoot}/caddy:/data"
                 "${containers.dataRoot}/caddy-config:/config"
+                "${cacheDir}:/var/cache/caddy"
               ];
               healthCmd = "caddy version > /dev/null || exit 1";
               autoUpdate = "registry";
             };
+            unitConfig.RequiresMountsFor = [ cacheDir ];
             serviceConfig = {
-              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config /var/cache/caddy/vips /var/cache/caddy/varc";
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${lib.escapeShellArg "${cacheDir}/vips"} ${lib.escapeShellArg "${cacheDir}/varc"}";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;

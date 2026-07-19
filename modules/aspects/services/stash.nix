@@ -67,10 +67,6 @@
           '';
         };
 
-        virtualisation.quadlet.containers.caddy.containerConfig.volumes = [
-          "/var/cache/caddy:/var/cache/caddy"
-        ];
-
         virtualisation.quadlet.containers.stash = {
           autoStart = true;
           containerConfig = {

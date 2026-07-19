@@ -18,6 +18,8 @@ assert builtins.elem "ghcr-auth.service"
   netcup.virtualisation.quadlet.containers.stash-worker.unitConfig.Requires;
 assert builtins.elem "/home/bhunter/downloads:/downloads"
   netcup.virtualisation.quadlet.containers.stash-worker.containerConfig.volumes;
+assert builtins.elem "/var/cache/caddy:/var/cache/caddy"
+  netcup.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem 53 netcup.networking.firewall.interfaces."br-svc".allowedUDPPorts;
 assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;

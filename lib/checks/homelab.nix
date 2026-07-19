@@ -21,9 +21,11 @@ assert builtins.elem "ghcr-auth.service"
   homelab.virtualisation.quadlet.containers.stash.unitConfig.Requires;
 assert builtins.elem "tailscale-autoconnect.service"
   homelab.virtualisation.quadlet.containers.stash.unitConfig.After;
-assert builtins.elem "/var/cache/caddy:/var/cache/caddy"
+assert builtins.elem "/mnt/drive/caddy-cache:/var/cache/caddy"
   homelab.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
+assert builtins.elem "/mnt/drive/caddy-cache"
+  homelab.virtualisation.quadlet.containers.caddy.unitConfig.RequiresMountsFor;
 assert lib.hasInfix "cache_dir /var/cache/caddy/vips" caddyfile;
 assert lib.hasInfix "cache_dir /var/cache/caddy/varc" caddyfile;
-assert lib.hasInfix "varc stash:8080" caddyfile;
+assert lib.hasInfix "varc http://stash:8080" caddyfile;
 true

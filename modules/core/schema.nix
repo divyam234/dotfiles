@@ -27,6 +27,18 @@
           description = "ACME contact email. Defaults to admin@domain when unset.";
         };
 
+        caddy = lib.mkOption {
+          type = lib.types.submodule {
+            options.cacheDir = lib.mkOption {
+              type = lib.types.str;
+              default = "/var/cache/caddy";
+              description = "Host directory mounted as the Caddy cache.";
+            };
+          };
+          default = { };
+          description = "Host-specific Caddy settings.";
+        };
+
         dns = lib.mkOption {
           type = lib.types.submodule {
             options.publicTarget =
