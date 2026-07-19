@@ -6,7 +6,7 @@
       access = "tailnet";
       upstreams = [ "stash:8080" ];
       extraConfig = ''
-        @cacheable `path('/api/assets/*') || path_regexp('^/api/scenes/[^/]+/files/[^/]+/stream$')`
+        @cacheable `path('/api/assets/*') || path_regexp('^/api/scenes/[^/]+/stream$')`
         route @cacheable {
           @asset path /api/assets/*
           route @asset {
@@ -22,7 +22,7 @@
 
           varc http://stash:8080 {
             cache_dir /var/cache/caddy/varc
-            key {host}:{path}
+            key {path}
             append_uri on
             ignore_query on
             forward_header *
@@ -42,6 +42,8 @@
             response_header_timeout 30s
             max_idle_conns 128
             stale_if_error 1h
+
+            debug_headers on
           }
         }
       '';
