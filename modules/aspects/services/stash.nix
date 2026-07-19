@@ -63,7 +63,7 @@
           path = "${containers.secretDir}/stash.env";
           mode = "0440";
           content = ''
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:5432/postgres
+            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:6432/postgres
           '';
         };
 
@@ -80,7 +80,6 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
-            volumes = [ "${containers.dataRoot}/stash/downloads:/downloads" ];
             autoUpdate = "registry";
           };
           unitConfig = {
