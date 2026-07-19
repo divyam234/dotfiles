@@ -38,8 +38,6 @@ in
       {
         systemd.services.ghcr-auth = {
           description = "Generate rootful Podman authentication for GHCR";
-          after = [ "sops-nix.service" ];
-          requires = [ "sops-nix.service" ];
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             Type = "oneshot";
@@ -62,8 +60,6 @@ in
         systemd.user.services.ghcr-auth = {
           Unit = {
             Description = "Generate rootless Podman authentication for GHCR";
-            After = [ "sops-nix.service" ];
-            Requires = [ "sops-nix.service" ];
           };
           Service = {
             Type = "oneshot";

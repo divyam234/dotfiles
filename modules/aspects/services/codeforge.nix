@@ -35,8 +35,6 @@
           systemd.user.services.codeforge = {
             Unit = {
               Description = "Codeforge Server";
-              After = [ "sops-nix.service" ];
-              Requires = [ "sops-nix.service" ];
             };
 
             Service = {
