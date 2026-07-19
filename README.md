@@ -57,3 +57,10 @@ Secrets use SOPS and Age.
 - Home Manager Age key: `~/.config/sops/age/keys.txt`
 
 Secret declarations are centralized in `lib/secrets.nix`. Service and feature modules consume the provided `secrets` argument instead of setting `sopsFile` directly.
+
+## Container Deployments
+
+OCI hosts expose a Tailscale-only webhook that lets an image-publishing GitHub
+workflow queue Quadlet registry updates on every host. See
+[`docs/container-updates.md`](docs/container-updates.md) for the tailnet policy
+and workflow configuration.

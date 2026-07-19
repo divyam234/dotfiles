@@ -25,4 +25,5 @@ assert contains ''mode "1920x1080@74.973"'';
 assert contains "scale 1.250000";
 assert contains "position x=0 y=0";
 assert contains "position x=1536 y=0";
+assert !(builtins.hasAttr "container-update-webhook" laptop.systemd.services);
 true

@@ -5,6 +5,7 @@
       includes = [
         den.aspects.oci-base
         den.aspects.container-network
+        den.aspects.container-update-webhook
         den.aspects.sops
       ];
     };
@@ -50,15 +51,7 @@
       includes = [ den.aspects.oci-runtime ];
 
       nixos =
-        { lib, pkgs, ... }:
-        let
-          cfg = {
-            autoUpdate = {
-              enable = false;
-              calendar = "daily";
-            };
-          };
-        in
+        { lib, ... }:
         {
           options.virtualisation.quadlet.containers = lib.mkOption {
             type = lib.types.attrsOf (
@@ -71,23 +64,78 @@
             );
           };
 
-          config = {
-            systemd = {
-              services.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
-                description = "Podman auto-update containers";
-                serviceConfig = {
-                  Type = "oneshot";
-                  ExecStart = "${pkgs.podman}/bin/podman auto-update";
-                };
-              };
+          config = { };
+        };
+    };
 
-              timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
-                wantedBy = [ "timers.target" ];
-                timerConfig = {
-                  OnCalendar = cfg.autoUpdate.calendar;
-                  Persistent = true;
-                };
+    container-update-webhook = {
+      nixos =
+        { pkgs, ... }:
+        let
+          port = 9080;
+          trigger = pkgs.writeShellScript "trigger-container-update" ''
+            exec ${pkgs.systemd}/bin/systemctl --no-block start podman-auto-update.service
+          '';
+          hooks = pkgs.writeText "container-update-hooks.json" (
+            builtins.toJSON [
+              {
+                id = "container-update";
+                execute-command = trigger;
+                response-message = "Container update queued\n";
+              }
+            ]
+          );
+        in
+        {
+          systemd.services = {
+            podman-auto-update = {
+              description = "Update registry-managed Quadlet containers";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${pkgs.podman}/bin/podman auto-update";
               };
+            };
+
+            container-update-webhook = {
+              description = "Tailscale-only container update webhook";
+              after = [ "tailscale-autoconnect.service" ];
+              wants = [ "tailscale-autoconnect.service" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                ExecStart = "${pkgs.webhook}/bin/webhook -hooks ${hooks} -http-methods POST -port ${toString port} -verbose";
+                Restart = "on-failure";
+                NoNewPrivileges = true;
+                PrivateDevices = true;
+                PrivateTmp = true;
+                ProtectHome = true;
+                ProtectSystem = "strict";
+                ProtectKernelLogs = true;
+                ProtectKernelModules = true;
+                ProtectKernelTunables = true;
+                ProtectControlGroups = true;
+                RestrictAddressFamilies = [
+                  "AF_INET"
+                  "AF_INET6"
+                  "AF_UNIX"
+                ];
+                IPAddressDeny = "any";
+                IPAddressAllow = [
+                  "127.0.0.0/8"
+                  "::1/128"
+                  "100.64.0.0/10"
+                  "fd7a:115c:a1e0::/48"
+                ];
+              };
+            };
+          };
+
+          systemd.timers.podman-auto-update = {
+            description = "Daily Quadlet registry update check";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "daily";
+              Persistent = true;
+              RandomizedDelaySec = "1h";
             };
           };
         };
