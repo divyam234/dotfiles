@@ -91,7 +91,6 @@
             Wants = [ "tailscale-autoconnect.service" ];
           };
           serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 1000 -g 100 ${containers.dataRoot}/stash/downloads";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;
