@@ -19,13 +19,6 @@
         };
       };
     };
-    rcloneWebdav = {
-      domain = "media.bhunter.tech";
-      remote = "gpix:";
-      cacheDir = "/mnt/drive/rclone";
-      cacheMaxAge = "8670h";
-      cacheMaxSize = "450GiB";
-    };
     tailscale.autoconnect = true;
 
     instantiate = entityLib.mkNixos "x86_64-linux";

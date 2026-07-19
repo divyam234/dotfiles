@@ -39,7 +39,7 @@
           type = "A";
           target = "tailscale-ipv4";
         };
-        manifest = pkgs.writeText "cloudflare-dns-manifest.json" (
+        manifest = builtins.toFile "cloudflare-dns-manifest.json" (
           builtins.toJSON {
             zone = host.domain;
             ttl = 300;

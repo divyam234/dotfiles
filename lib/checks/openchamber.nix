@@ -6,7 +6,10 @@ let
   opencode = userHome.systemd.user.services.opencode;
   firewall = netcup.networking.firewall.interfaces."br-svc";
   caddyfile = netcup.environment.etc."caddy/Caddyfile".text;
-  domain = netcup.networking.domain;
+  dnsManifest = builtins.fromJSON (
+    builtins.readFile netcup.environment.etc."cloudflare-dns/manifest.json".source
+  );
+  domain = dnsManifest.zone;
 in
 assert netcup.users.users.${userName}.linger == true;
 assert builtins.elem 39173 firewall.allowedTCPPorts;

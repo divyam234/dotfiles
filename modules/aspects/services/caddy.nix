@@ -128,7 +128,7 @@
               autoUpdate = "registry";
             };
             serviceConfig = {
-              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config";
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config /var/cache/caddy/vips /var/cache/caddy/varc";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;

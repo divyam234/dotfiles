@@ -12,6 +12,7 @@
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.requires-secrets
+      den.aspects.ghcr-auth
       den.aspects.ai
 
       den.aspects.adguard
@@ -30,6 +31,7 @@
       den.aspects.redis
       den.aspects.restic
       den.aspects.siyuan
+      den.aspects.stash-worker
       den.aspects.vaultwarden
     ];
 

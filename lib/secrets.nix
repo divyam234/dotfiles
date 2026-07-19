@@ -37,25 +37,20 @@ let
       "ssh"
       "private_key"
     ]
+    [
+      "postgres"
+      "user"
+    ]
+    [
+      "postgres"
+      "password"
+    ]
   ];
 
   hostPaths = {
-    homelab = [
-      [
-        "rclone"
-        "postgres_url"
-      ]
-    ];
+    homelab = [ ];
     laptop = [ ];
     netcup = [
-      [
-        "postgres"
-        "user"
-      ]
-      [
-        "postgres"
-        "password"
-      ]
       [
         "redis"
         "password"
