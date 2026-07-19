@@ -20,7 +20,7 @@
             }
           }
 
-          varc stash:8080 {
+          varc http://stash:8080 {
             cache_dir /var/cache/caddy/varc
             key {host}:{path}
             append_uri on
