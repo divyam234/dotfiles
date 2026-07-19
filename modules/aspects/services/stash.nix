@@ -102,8 +102,6 @@
   };
 
   den.aspects.stash-worker = { user, ... }: {
-    postgresSchemas.stash = { };
-
     nixos =
       {
         config,
