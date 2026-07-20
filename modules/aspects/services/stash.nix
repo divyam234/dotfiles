@@ -129,7 +129,11 @@
             exec = "worker";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
-            environments.RCLONE_USE_MMAP = "true";
+            environments = {
+              RCLONE_USE_MMAP = "true";
+              HTTP_PROXY = "http://gluetun:3128";
+              HTTPS_PROXY = "http://gluetun:3128";
+            };
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";
           };
