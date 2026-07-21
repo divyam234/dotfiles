@@ -5,7 +5,7 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
-          pgcli
+          postgresql_18
           sqlite
         ];
       };
