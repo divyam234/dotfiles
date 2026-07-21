@@ -117,7 +117,7 @@
           path = "${containers.secretDir}/stash-worker.env";
           mode = "0440";
           content = ''
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres:5432/postgres
+            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
           '';
         };
 
@@ -136,6 +136,7 @@
             };
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";
+            stopTimeout = 60;
           };
           unitConfig = {
             After = [
@@ -154,6 +155,7 @@
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;
+            TimeoutStopSec = "70s";
           };
         };
       };

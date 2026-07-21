@@ -20,7 +20,7 @@
             VPN_SERVICE_PROVIDER=nordvpn
             VPN_TYPE=wireguard
             WIREGUARD_PRIVATE_KEY=${secrets.nordvpn.private_key}
-            SERVER_HOSTNAMES=nl885.nordvpn.com,nl886.nordvpn.com
+            SERVER_HOSTNAMES=nl1181.nordvpn.com,nl1173.nordvpn.com
             HTTPPROXY=on
             HTTPPROXY_LISTENING_ADDRESS=:3128
             FIREWALL_OUTBOUND_SUBNETS=100.64.0.0/10
