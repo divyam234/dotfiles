@@ -27,7 +27,10 @@
             image = "docker.io/b3log/siyuan";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "siyuan" ];
-            exec = [ "--workspace=/siyuan/workspace" ];
+            exec = [
+              "serve"
+              "--workspace=/siyuan/workspace"
+            ];
             environments = {
               RUN_IN_CONTAINER = "true";
               SIYUAN_ACCESS_AUTH_CODE_BYPASS = "true";
