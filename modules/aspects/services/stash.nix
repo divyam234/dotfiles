@@ -10,6 +10,7 @@
         route @cacheable {
           @asset path /api/assets/*
           route @asset {
+            header Cache-Control "public, max-age=31536000, immutable"
             vips {
               cache_dir /var/cache/caddy/vips
               cache_max_size 20GiB

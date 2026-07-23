@@ -24,6 +24,7 @@ svc stop forgejo
 svc restart forgejo
 svc shell forgejo
 svc pull forgejo
+svc update forgejo       # pull; if changed, stop, remove old image, start
 svc stack status
 ```
 

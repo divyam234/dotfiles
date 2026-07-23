@@ -85,6 +85,12 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
+        Commands::Update { services: names } => {
+            for service in services_for_names(&services, &names)? {
+                operations::update_service(service, false)?;
+            }
+            Ok(())
+        }
         Commands::Stack { action } => match action {
             StackAction::Status => {
                 output::print_services(&services, cli.json, global_error.as_deref())

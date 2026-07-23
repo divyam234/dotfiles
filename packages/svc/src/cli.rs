@@ -49,6 +49,9 @@ pub enum Commands {
     Pull {
         services: Vec<String>,
     },
+    Update {
+        services: Vec<String>,
+    },
     Stack {
         #[arg(value_enum, default_value_t = StackAction::Status)]
         action: StackAction,
@@ -62,4 +65,19 @@ pub enum StackAction {
     Stop,
     Restart,
     Pull,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_update_services() {
+        let cli = Cli::try_parse_from(["svc", "update", "forgejo", "postgres"]).unwrap();
+
+        let Some(Commands::Update { services }) = cli.command else {
+            panic!("expected update command");
+        };
+        assert_eq!(services, ["forgejo", "postgres"]);
+    }
 }
