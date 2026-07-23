@@ -90,10 +90,6 @@
           systemd.services = {
             podman-auto-update = {
               description = "Update registry-managed Quadlet containers";
-              serviceConfig = {
-                Type = "oneshot";
-                ExecStart = "${pkgs.podman}/bin/podman auto-update";
-              };
             };
 
             container-update-webhook = {

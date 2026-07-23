@@ -35,6 +35,8 @@ assert netcup.systemd.services.container-update-webhook.serviceConfig.IPAddressD
 assert homelab.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert homelab.systemd.timers.podman-auto-update.timerConfig.Persistent;
+assert !(netcup.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
+assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert !(builtins.elem 9080 netcup.networking.firewall.allowedTCPPorts);
 assert !(builtins.elem 9080 homelab.networking.firewall.allowedTCPPorts);
 true
