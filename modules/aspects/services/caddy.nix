@@ -135,7 +135,7 @@
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;
-              MemoryMax = "512M";
+              MemoryMax = "2G";
               CPUQuota = "100%";
             };
           };
