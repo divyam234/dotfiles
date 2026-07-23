@@ -29,19 +29,19 @@
 
             chunk_size 128MiB
             chunk_size_limit 128MiB
-            max_inflight_bytes 512MiB
-            read_ahead 0
+            preload_chunks 2
             max_size 400GiB
             max_age 8670h
             poll_interval 1m
             shard_level 1
 
-            timeout 60s
             probe_timeout 15s
             dial_timeout 10s
             response_header_timeout 30s
             max_idle_conns 128
             stale_if_error 1h
+            read_retry_count 3
+            read_retry_delay 1s
 
             debug_headers on
           }
