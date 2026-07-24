@@ -51,6 +51,15 @@
             "noatime"
           ];
         };
+        fileSystems."/mnt/external" = {
+          device = "/dev/disk/by-id/usb-Samsung_M3_Portable_97EF7DF80600006F-0:0-part1";
+          fsType = "ext4";
+          options = [
+            "nofail"
+            "x-systemd.automount"
+            "noatime"
+          ];
+        };
         facter.reportPath = ./facter.json;
         system.stateVersion = "26.05";
       };
