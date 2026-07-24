@@ -31,7 +31,6 @@
             chunk_size 128MiB
             chunk_size_limit 128MiB
             preload_chunks 2
-            max_size 400GiB
             max_age 8670h
             poll_interval 1m
             shard_level 1
