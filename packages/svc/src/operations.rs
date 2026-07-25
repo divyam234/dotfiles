@@ -56,14 +56,32 @@ fn container_image_id(service: &Service, non_interactive: bool) -> Result<String
     run_output(command).with_context(|| format!("get current image ID for {}", service.name))
 }
 
-fn pulled_image_id(service: &Service, non_interactive: bool) -> Result<String> {
-    let image = service
-        .image
-        .as_deref()
-        .ok_or_else(|| anyhow!("{} has no Image= entry", service.name))?;
+fn image_update_available(service: &Service, non_interactive: bool) -> Result<bool> {
     let mut command = privilege::command("podman", non_interactive);
-    command.args(["image", "inspect", "--format", "{{.Id}}", image]);
-    run_output(command).with_context(|| format!("get pulled image ID for {}", service.name))
+    command.args([
+        "auto-update",
+        "--dry-run",
+        "--format",
+        "{{.ContainerName}}\t{{.Updated}}",
+    ]);
+    let output = run_output(command).context("check registry for image updates")?;
+    let status = output
+        .lines()
+        .filter_map(|line| line.split_once('\t'))
+        .find_map(|(name, status)| (name == service.container_name).then_some(status))
+        .ok_or_else(|| {
+            anyhow!(
+                "{} is not configured for registry auto-update",
+                service.name
+            )
+        })?;
+
+    match status {
+        "pending" => Ok(true),
+        "false" => Ok(false),
+        "failed" => bail!("registry update check failed for {}", service.name),
+        status => bail!("unexpected update status '{status}' for {}", service.name),
+    }
 }
 
 fn remove_image(image_id: &str, non_interactive: bool) -> Result<()> {
@@ -78,8 +96,8 @@ fn remove_image(image_id: &str, non_interactive: bool) -> Result<()> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum UpdateStep {
-    Pull,
     Stop,
+    Pull,
     RemoveOldImage,
     Start,
 }
@@ -92,18 +110,17 @@ enum UpdateOutcome {
 
 fn run_update(
     get_old_image: impl FnOnce() -> Result<String>,
-    get_new_image: impl FnOnce() -> Result<String>,
+    update_available: impl FnOnce() -> Result<bool>,
     mut run: impl FnMut(UpdateStep, Option<&str>) -> Result<()>,
 ) -> Result<UpdateOutcome> {
     let old_image = get_old_image()?;
-    run(UpdateStep::Pull, None)?;
-    let new_image = get_new_image()?;
-    if old_image == new_image {
+    if !update_available()? {
         return Ok(UpdateOutcome::AlreadyCurrent);
     }
 
     run(UpdateStep::Stop, None)?;
-    let update_result = run(UpdateStep::RemoveOldImage, Some(&old_image));
+    let update_result = run(UpdateStep::Pull, None)
+        .and_then(|()| run(UpdateStep::RemoveOldImage, Some(&old_image)));
     let start_result = run(UpdateStep::Start, None);
 
     match (update_result, start_result) {
@@ -120,8 +137,12 @@ pub fn update_service(service: &Service, non_interactive: bool) -> Result<()> {
     eprintln!("svc: {}: checking current image", service.name);
     let outcome = run_update(
         || container_image_id(service, non_interactive),
-        || pulled_image_id(service, non_interactive),
+        || image_update_available(service, non_interactive),
         |step, image_id| match step {
+            UpdateStep::Stop => {
+                eprintln!("svc: {}: new image found; stopping service", service.name);
+                systemctl_action("stop", service, non_interactive)
+            }
             UpdateStep::Pull => {
                 eprintln!(
                     "svc: {}: pulling {}",
@@ -129,10 +150,6 @@ pub fn update_service(service: &Service, non_interactive: bool) -> Result<()> {
                     service.image.as_deref().unwrap_or("image")
                 );
                 pull_service(service, non_interactive)
-            }
-            UpdateStep::Stop => {
-                eprintln!("svc: {}: new image found; stopping service", service.name);
-                systemctl_action("stop", service, non_interactive)
             }
             UpdateStep::RemoveOldImage => {
                 eprintln!("svc: {}: removing old image", service.name);
@@ -216,7 +233,7 @@ mod tests {
 
         run_update(
             || Ok("old".into()),
-            || Ok("new".into()),
+            || Ok(true),
             |step, _| {
                 steps.push(step);
                 Ok(())
@@ -227,8 +244,8 @@ mod tests {
         assert_eq!(
             steps,
             [
-                UpdateStep::Pull,
                 UpdateStep::Stop,
+                UpdateStep::Pull,
                 UpdateStep::RemoveOldImage,
                 UpdateStep::Start
             ]
@@ -236,12 +253,12 @@ mod tests {
     }
 
     #[test]
-    fn update_does_not_stop_service_after_pull_failure() {
+    fn update_restarts_service_after_pull_failure() {
         let mut steps = Vec::new();
 
         let error = run_update(
             || Ok("old".into()),
-            || Ok("new".into()),
+            || Ok(true),
             |step, _| {
                 steps.push(step);
                 if step == UpdateStep::Pull {
@@ -252,7 +269,10 @@ mod tests {
         )
         .unwrap_err();
 
-        assert_eq!(steps, [UpdateStep::Pull]);
+        assert_eq!(
+            steps,
+            [UpdateStep::Stop, UpdateStep::Pull, UpdateStep::Start]
+        );
         assert_eq!(error.to_string(), "pull failed");
     }
 
@@ -260,7 +280,7 @@ mod tests {
     fn update_reports_update_and_restart_failures() {
         let error = run_update(
             || Ok("old".into()),
-            || Ok("new".into()),
+            || Ok(true),
             |step, _| match step {
                 UpdateStep::RemoveOldImage => bail!("remove failed"),
                 UpdateStep::Start => bail!("start failed"),
@@ -277,12 +297,12 @@ mod tests {
     }
 
     #[test]
-    fn update_keeps_image_when_pull_returns_same_id() {
+    fn update_does_nothing_when_registry_image_is_current() {
         let mut steps = Vec::new();
 
         run_update(
             || Ok("same".into()),
-            || Ok("same".into()),
+            || Ok(false),
             |step, _| {
                 steps.push(step);
                 Ok(())
@@ -290,6 +310,6 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(steps, [UpdateStep::Pull]);
+        assert!(steps.is_empty());
     }
 }
