@@ -65,7 +65,8 @@
           path = "${containers.secretDir}/stash.env";
           mode = "0440";
           content = ''
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:6432/postgres
+            STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:6432/postgres
+            STASH_SECRET_KEY=${secrets.stash.secret_key}
           '';
         };
 
@@ -117,7 +118,8 @@
           path = "${containers.secretDir}/stash-worker.env";
           mode = "0440";
           content = ''
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
+            STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
+            STASH_SECRET_KEY=${secrets.stash.secret_key}
           '';
         };
 

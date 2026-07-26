@@ -34,6 +34,10 @@ let
       "token"
     ]
     [
+      "stash"
+      "secret_key"
+    ]
+    [
       "ssh"
       "private_key"
     ]

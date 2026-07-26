@@ -13,6 +13,7 @@ let
     "nordvpn/token"
     "postgres/password"
     "postgres/user"
+    "stash/secret_key"
     "ssh/private_key"
     "tailscale/oauth_client_secret"
     "users/bhunter/password"
