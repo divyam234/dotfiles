@@ -130,7 +130,7 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
             environments = {
-              RCLONE_USE_MMAP = "true";
+              #RCLONE_USE_MMAP = "true";
             };
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";

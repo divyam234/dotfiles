@@ -8,6 +8,7 @@ description = "Quadlet service CLI and terminal dashboard"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
 crossterm = "0.29"
 libc = "0.2"
 ratatui = "0.29"

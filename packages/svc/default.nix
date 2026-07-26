@@ -1,5 +1,6 @@
 {
   lib,
+  installShellFiles,
   makeWrapper,
   podman,
   rustPlatform,
@@ -15,8 +16,14 @@ rustPlatform.buildRustPackage {
   };
   cargoLock.lockFile = ./Cargo.lock;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    installShellFiles
+    makeWrapper
+  ];
   postInstall = ''
+    installShellCompletion --cmd svc \
+      --fish <($out/bin/svc completions fish)
+
     wrapProgram $out/bin/svc \
       --prefix PATH : ${
         lib.makeBinPath [

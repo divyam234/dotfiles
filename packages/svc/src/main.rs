@@ -8,7 +8,8 @@ mod systemd;
 mod tui;
 
 use anyhow::{Result, bail};
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::{Shell, generate};
 
 use crate::{
     cli::{Cli, Commands, StackAction},
@@ -40,15 +41,71 @@ fn services_for_names<'a>(services: &'a [Service], names: &[String]) -> Result<V
         .collect()
 }
 
+fn print_completions(shell: Shell) {
+    let mut generated = Vec::new();
+    generate(shell, &mut Cli::command(), "svc", &mut generated);
+    let generated = String::from_utf8(generated).expect("completion output is UTF-8");
+    for line in generated.lines().filter(|line| {
+        !line.contains("using_subcommand __complete-services")
+            && !line.ends_with("-a \"__complete-services\"")
+    }) {
+        println!("{line}");
+    }
+    if shell == Shell::Fish {
+        println!(
+            r#"function __fish_svc_services
+    set -l quadlet_dir
+    set -l next_is_dir 0
+    for token in (commandline -opc)[2..]
+        if test $next_is_dir -eq 1
+            set quadlet_dir $token
+            set next_is_dir 0
+        else if test $token = --quadlet-dir
+            set next_is_dir 1
+        else if string match -q -- '--quadlet-dir=*' $token
+            set quadlet_dir (string replace -- '--quadlet-dir=' '' $token)
+        end
+    end
+    if test -n "$quadlet_dir"
+        command svc --quadlet-dir "$quadlet_dir" __complete-services 2>/dev/null
+    else
+        command svc __complete-services 2>/dev/null
+    end
+end"#
+        );
+        println!("complete -c svc -n '__fish_svc_needs_command' -f -a 'ls' -d 'Alias for list'");
+        println!("complete -c svc -n '__fish_svc_needs_command' -f -a 'log' -d 'Alias for logs'");
+        println!("complete -c svc -n '__fish_svc_needs_command' -f -a 'sh' -d 'Alias for shell'");
+        println!(
+            "complete -c svc -f -n '__fish_svc_using_subcommand status logs log start stop restart shell sh pull update' -a '(__fish_svc_services)'"
+        );
+    }
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     if matches!(cli.command, None | Some(Commands::Ui)) {
         return tui::run(cli.quadlet_dir);
     }
 
+    match cli.command.as_ref() {
+        Some(Commands::Completions { shell }) => {
+            print_completions(*shell);
+            return Ok(());
+        }
+        Some(Commands::CompleteServices) => {
+            for service in quadlet::discover(&cli.quadlet_dir)? {
+                println!("{}", service.name);
+            }
+            return Ok(());
+        }
+        _ => {}
+    }
+
     let (services, global_error) = load_services(&cli.quadlet_dir)?;
     match cli.command.expect("handled UI above") {
         Commands::Ui => unreachable!(),
+        Commands::Completions { .. } | Commands::CompleteServices => unreachable!(),
         Commands::List | Commands::Status { service: None } => {
             output::print_services(&services, cli.json, global_error.as_deref())
         }

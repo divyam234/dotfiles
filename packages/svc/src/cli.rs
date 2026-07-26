@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
+use clap_complete::Shell;
 
 pub const DEFAULT_QUADLET_DIR: &str = "/etc/containers/systemd";
 
@@ -19,39 +20,45 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    /// Open the terminal dashboard
     Ui,
+    /// List all services
     #[command(alias = "ls")]
     List,
-    Status {
-        service: Option<String>,
-    },
+    /// Show service status
+    Status { service: Option<String> },
+    /// Follow service logs
     #[command(alias = "log")]
     Logs {
         service: String,
         #[arg(short = 'n', long, default_value_t = 100)]
         lines: usize,
     },
-    Start {
-        services: Vec<String>,
-    },
-    Stop {
-        services: Vec<String>,
-    },
-    Restart {
-        services: Vec<String>,
-    },
+    /// Start one or more services
+    Start { services: Vec<String> },
+    /// Stop one or more services
+    Stop { services: Vec<String> },
+    /// Restart one or more services
+    Restart { services: Vec<String> },
+    /// Open an interactive shell in a container
     #[command(alias = "sh")]
     Shell {
         service: String,
         #[arg(default_value = "sh")]
         shell: String,
     },
-    Pull {
-        services: Vec<String>,
+    /// Pull images for one or more services
+    Pull { services: Vec<String> },
+    /// Update one or more services when new images are available
+    Update { services: Vec<String> },
+    /// Generate shell completions
+    Completions {
+        #[arg(value_enum)]
+        shell: Shell,
     },
-    Update {
-        services: Vec<String>,
-    },
+    #[command(name = "__complete-services", hide = true)]
+    CompleteServices,
+    /// Operate on the full service stack
     Stack {
         #[arg(value_enum, default_value_t = StackAction::Status)]
         action: StackAction,
@@ -79,5 +86,15 @@ mod tests {
             panic!("expected update command");
         };
         assert_eq!(services, ["forgejo", "postgres"]);
+    }
+
+    #[test]
+    fn parses_fish_completions() {
+        let cli = Cli::try_parse_from(["svc", "completions", "fish"]).unwrap();
+
+        assert!(matches!(
+            cli.command,
+            Some(Commands::Completions { shell: Shell::Fish })
+        ));
     }
 }

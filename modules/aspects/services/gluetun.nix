@@ -42,8 +42,8 @@
               "net.ipv6.conf.all.disable_ipv6" = "1";
             };
             publishPorts = [
-              "127.0.0.1:3128:3128" # HTTP proxy
-              "127.0.0.1:1081:1081" # SOCKS5 proxy (for Caddy layer4)
+              "3128:3128" # HTTP proxy
+              "1081:1081" # SOCKS5 proxy (for Caddy layer4)
             ];
             volumes = [ "${containers.dataRoot}/gluetun:/gluetun" ];
             autoUpdate = "registry";
