@@ -1,7 +1,7 @@
 { inputs, den, ... }:
 {
   flake-file.inputs.stylix = {
-    url = "github:nix-community/stylix";
+    url = "github:nix-community/stylix/release-26.05";
     inputs.nixpkgs.follows = "nixpkgs";
   };
   flake-file.inputs.tinted-schemes = {
