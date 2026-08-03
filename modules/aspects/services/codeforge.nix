@@ -45,6 +45,8 @@
                 "CODEFORGE_HTTP_ADDRESS=:18473"
                 "CODEFORGE_COMMAND_POLICY=unrestricted"
                 "CODEFORGE_FOREGROUND_YIELD_MS=10000"
+                "CODEFORGE_CAMOFOX_TIMEOUT_SECONDS=60"
+                "CODEFORGE_PUBLIC_URL=https://codeforge.${host.domain}"
               ];
               ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${workspaceRoot}";
               ExecStart = "${pkgs.codeforge}/bin/codeforge";
