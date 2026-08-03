@@ -22,9 +22,6 @@
             containers.dataRoot
             postgresDumpDir
           ];
-          exclude = [
-            "${containers.dataRoot}/hermes"
-          ];
           passwordFile = secrets.restic.password.path;
           repositoryFile = secrets.restic.repository.path;
           rcloneConfigFile = secrets.restic.rclone_conf.path;
@@ -39,9 +36,7 @@
 
             ${pkgs.podman}/bin/podman container exists postgres
             ${pkgs.podman}/bin/podman exec postgres \
-              pg_dumpall \
-                --username=postgres \
-                --no-role-passwords \
+              sh -c 'pg_dumpall --username="$POSTGRES_USER" --no-role-passwords' \
                 > "$temporary_file"
 
             test -s "$temporary_file"
@@ -58,26 +53,6 @@
             "--keep-monthly 6"
           ];
           checkOpts = [ "--read-data-subset=1G" ];
-        };
-
-        systemd = {
-          tmpfiles.rules = [
-            "d ${postgresDumpDir} 0750 root root -"
-          ];
-
-          services = {
-            "restic-backups-${backupName}".unitConfig.OnFailure = [
-              "restic-backups-${backupName}-failure.service"
-            ];
-
-            "restic-backups-${backupName}-failure" = {
-              description = "Report failed ${backupName} Restic backup";
-              serviceConfig.Type = "oneshot";
-              script = ''
-                ${pkgs.systemd}/bin/journalctl -u restic-backups-${backupName}.service -n 100 --no-pager >&2
-              '';
-            };
-          };
         };
       };
   };

@@ -70,7 +70,6 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "postgres" ];
             environmentFiles = [ "${containers.secretDir}/postgres.env" ];
-            publishPorts = [ "5432:5432" ];
             volumes = [ "${containers.dataRoot}/postgres:/var/lib/postgresql" ];
             healthCmd = "pg_isready -U $POSTGRES_USER -d postgres || exit 1";
             autoUpdate = "registry";

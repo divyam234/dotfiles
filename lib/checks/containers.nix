@@ -7,12 +7,9 @@ let
   expected = [
     "adguard-cli"
     "caddy"
-    "camofox-browser"
-    "databasus"
     "forgejo"
     "gluetun"
     "gproxy"
-    "hermes"
     "pgdog"
     "postgres"
     "redis"

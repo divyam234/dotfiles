@@ -129,7 +129,7 @@ in
         }:
         let
           containers = {
-            dataRoot = "/home/${host.user}/.local/state/container-services";
+            dataRoot = "/var/lib/oci-services";
             networkName = "svc";
             secretDir = "/run/secrets/container-env";
           };

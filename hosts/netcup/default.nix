@@ -18,13 +18,10 @@
       den.aspects.adguard
       den.aspects.caddy
       den.aspects.cloudflare-dns
-      den.aspects.camofox
       den.aspects.codeforge
-      den.aspects.databasus
       den.aspects.forgejo
       den.aspects.gluetun
       den.aspects.gproxy
-      den.aspects.hermes
       den.aspects.openchamber
       den.aspects.pgdog
       den.aspects.postgres

@@ -34,5 +34,21 @@ _:
       "8.8.8.8"
       "2001:4860:4860::8888"
     ];
+
+    nftables = {
+      enable = true;
+      tables.container-ingress = {
+        family = "inet";
+        content = ''
+          chain forward {
+            type filter hook forward priority -10; policy accept;
+
+            iifname "eth0" ct status dnat tcp dport { 80, 443 } accept
+            iifname "eth0" ct status dnat udp dport 443 accept
+            iifname "eth0" ct status dnat drop
+          }
+        '';
+      };
+    };
   };
 }
