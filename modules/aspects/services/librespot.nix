@@ -24,6 +24,7 @@
           enable = true;
           settings = {
             name = host.hostName;
+            backend = "pulseaudio";
             device-type = "speaker";
             bitrate = 320;
             cache = "/mnt/drive/librespot/cache";

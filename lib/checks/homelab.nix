@@ -32,6 +32,7 @@ assert homelab.security.rtkit.enable;
 assert builtins.elem "audio" homelab.users.users.bhunter.extraGroups;
 assert userHome.services.librespot.enable;
 assert userHome.services.librespot.settings.name == "homelab";
+assert userHome.services.librespot.settings.backend == "pulseaudio";
 assert userHome.services.librespot.settings.cache == "/mnt/drive/librespot/cache";
 assert userHome.services.librespot.settings.zeroconf-port == 24879;
 assert builtins.elem 24879 homelab.networking.firewall.allowedTCPPorts;
