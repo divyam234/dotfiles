@@ -8,6 +8,7 @@
       den.aspects.sops
       den.aspects.security-base
       den.aspects.server
+      den.aspects.librespot
       den.aspects.tailscale
       den.aspects.integrated-home-manager
       den.aspects.oci-service
@@ -21,7 +22,7 @@
     ];
 
     nixos =
-      { pkgs, ... }:
+      { ... }:
       {
         imports = [
           inputs.nixos-facter-modules.nixosModules.facter

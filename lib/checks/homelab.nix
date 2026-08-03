@@ -25,6 +25,15 @@ assert builtins.elem "/mnt/external/caddy-cache:/var/cache/caddy"
   homelab.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem "/mnt/external/caddy-cache"
   homelab.virtualisation.quadlet.containers.caddy.unitConfig.RequiresMountsFor;
+assert homelab.services.pipewire.enable;
+assert homelab.services.pipewire.pulse.enable;
+assert homelab.services.pipewire.alsa.enable;
+assert homelab.security.rtkit.enable;
+assert builtins.elem "audio" homelab.users.users.bhunter.extraGroups;
+assert userHome.services.librespot.enable;
+assert userHome.services.librespot.settings.name == "homelab";
+assert userHome.services.librespot.settings.cache == "/mnt/drive/librespot/cache";
+assert homelab.users.users.bhunter.linger;
 assert lib.hasInfix "cache_dir /var/cache/caddy/vips" caddyfile;
 assert lib.hasInfix "cache_dir /var/cache/caddy/varc" caddyfile;
 assert lib.hasInfix "varc http://stash:8080" caddyfile;

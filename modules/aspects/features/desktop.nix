@@ -3,6 +3,7 @@
   den.aspects.desktop = {
     includes = [
       den.aspects.development
+      den.aspects.audio
       den.aspects.fonts
       den.aspects.portals
       den.aspects.desktop-apps
@@ -38,17 +39,9 @@
           power-profiles-daemon.enable = true;
           gnome.gnome-keyring.enable = true;
           blueman.enable = true;
-          pipewire = {
-            enable = true;
-            pulse.enable = true;
-            alsa.enable = true;
-            alsa.support32Bit = true;
-            jack.enable = true;
-          };
         };
 
         users.users.${host.user}.extraGroups = [
-          "audio"
           "video"
           "input"
           "render"
