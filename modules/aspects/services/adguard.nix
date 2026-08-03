@@ -27,6 +27,7 @@
             name = "adguard-cli";
             image = "ghcr.io/tgdrive/adguard-cli";
             networks = [ "container:gluetun" ];
+            addCapabilities = [ "NET_ADMIN" ];
             exec = [
               "adguard-cli"
               "start"

@@ -49,6 +49,7 @@
             "noatime"
           ];
         };
+        security.pki.certificateFiles = [ ./adguard.pem ];
         system.stateVersion = "26.05";
       };
   };
