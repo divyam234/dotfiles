@@ -11,10 +11,7 @@
       ];
 
   inputs = {
-    cachyos-kernel = {
-      url = "github:xddxdd/nix-cachyos-kernel/release";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";

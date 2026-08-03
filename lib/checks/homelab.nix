@@ -33,6 +33,11 @@ assert builtins.elem "audio" homelab.users.users.bhunter.extraGroups;
 assert userHome.services.librespot.enable;
 assert userHome.services.librespot.settings.name == "homelab";
 assert userHome.services.librespot.settings.cache == "/mnt/drive/librespot/cache";
+assert userHome.services.librespot.settings.zeroconf-port == 24879;
+assert builtins.elem 24879 homelab.networking.firewall.allowedTCPPorts;
+assert builtins.elem 5353 homelab.networking.firewall.allowedUDPPorts;
+assert builtins.elem "/mnt/drive"
+  homelab.systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor;
 assert homelab.users.users.bhunter.linger;
 assert lib.hasInfix "cache_dir /var/cache/caddy/vips" caddyfile;
 assert lib.hasInfix "cache_dir /var/cache/caddy/varc" caddyfile;
