@@ -13,7 +13,6 @@ let
     "nordvpn/token"
     "postgres/password"
     "postgres/user"
-    "stash/secret_key"
     "ssh/private_key"
     "tailscale/oauth_client_secret"
     "users/bhunter/password"
@@ -37,7 +36,6 @@ let
     "gproxy.env"
     "postgres.env"
     "redis.env"
-    "stash-worker.env"
     "vaultwarden.env"
   ];
 in

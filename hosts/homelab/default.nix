@@ -18,7 +18,6 @@
 
       den.aspects.caddy
       den.aspects.cloudflare-dns
-      den.aspects.stash
     ];
 
     nixos =

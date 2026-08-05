@@ -111,7 +111,7 @@
         containers = import ../lib/checks/containers.nix {
           inherit homelab lib netcup;
         };
-        homelab = import ../lib/checks/homelab.nix { inherit homelab lib; };
+        homelab = import ../lib/checks/homelab.nix { inherit homelab; };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
         netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
         openchamber = import ../lib/checks/openchamber.nix { inherit lib netcup; };
