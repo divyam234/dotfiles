@@ -21,6 +21,10 @@ assert builtins.elem "ghcr-auth.service"
   homelab.virtualisation.quadlet.containers.stash.unitConfig.Requires;
 assert builtins.elem "tailscale-autoconnect.service"
   homelab.virtualisation.quadlet.containers.stash.unitConfig.After;
+assert builtins.elem "/mnt/external/rclone:/var/cache/rclone"
+  homelab.virtualisation.quadlet.containers.stash.containerConfig.volumes;
+assert builtins.elem "/mnt/external/rclone"
+  homelab.virtualisation.quadlet.containers.stash.unitConfig.RequiresMountsFor;
 assert builtins.elem "/mnt/external/caddy-cache:/var/cache/caddy"
   homelab.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem "/mnt/external/caddy-cache"
