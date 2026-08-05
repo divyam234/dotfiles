@@ -57,7 +57,8 @@
               RCLONE_VFS_CACHE_MAX_AGE = "8670h";
               RCLONE_VFS_READ_CHUNK_SIZE = "128MiB";
               RCLONE_VFS_READ_CHUNK_SIZE_LIMIT = "128MiB";
-              RCLONE_VFS_READ_AHEAD = "128MiB";
+              RCLONE_VFS_READ_CHUNK_STREAMS = "2";
+              #RCLONE_VFS_READ_AHEAD = "128MiB";
               RCLONE_DIR_CACHE_TIME = "8670h";
               RCLONE_GPIX_CHANGE_NOTIFY = "true";
             };
