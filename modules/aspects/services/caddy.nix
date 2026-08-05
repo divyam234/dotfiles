@@ -131,7 +131,7 @@
             };
             unitConfig.RequiresMountsFor = [ cacheDir ];
             serviceConfig = {
-              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${lib.escapeShellArg "${cacheDir}/vips"} ${lib.escapeShellArg "${cacheDir}/varc"}";
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${lib.escapeShellArg "${cacheDir}/vips"}";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;

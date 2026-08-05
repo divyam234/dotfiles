@@ -6,44 +6,16 @@
       access = "tailnet";
       upstreams = [ "stash:8080" ];
       extraConfig = ''
-        @cacheable `path('/api/assets/*') || path_regexp('^/api/scenes/[^/]+/stream$')`
-        route @cacheable {
-          @asset path /api/assets/*
-          route @asset {
-            header Cache-Control "public, max-age=31536000, immutable"
-            vips {
-              cache_dir /var/cache/caddy/vips
-              cache_max_size 20GiB
-              quality 82
-              max_dimension 8192
-              max_pixels 40000000
-              max_source_size 64MiB
-            }
-          }
-
-          varc http://stash:8080 {
-            cache_dir /var/cache/caddy/varc
-            key {path}
-            append_uri on
-            ignore_query on
-            forward_header *
-
-            chunk_size 128MiB
-            chunk_size_limit 128MiB
-            preload_chunks 2
-            max_age 8670h
-            poll_interval 1m
-            shard_level 1
-
-            probe_timeout 15s
-            dial_timeout 10s
-            response_header_timeout 30s
-            max_idle_conns 128
-            stale_if_error 1h
-            read_retry_count 3
-            read_retry_delay 1s
-
-            debug_headers on
+        @asset path /api/assets/*
+        route @asset {
+          header Cache-Control "public, max-age=31536000, immutable"
+          vips {
+            cache_dir /var/cache/caddy/vips
+            cache_max_size 20GiB
+            quality 82
+            max_dimension 8192
+            max_pixels 40000000
+            max_source_size 64MiB
           }
         }
       '';
@@ -79,7 +51,16 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
-            environments.RCLONE_USE_MMAP = "true";
+            environments = {
+              RCLONE_CACHE_DIR = " /var/cache/rclone";
+              RCLONE_VFS_CACHE_MODE = "full";
+              RCLONE_VFS_CACHE_MAX_AGE = "8670h";
+              RCLONE_VFS_READ_CHUNK_SIZE = "128MiB";
+              RCLONE_VFS_READ_CHUNK_SIZE_LIMIT = "128MiB";
+              RCLONE_VFS_READ_AHEAD = "128MiB";
+              RCLONE_DIR_CACHE_TIME = "8670h";
+              RCLONE_GPIX_CHANGE_NOTIFY = "true";
+            };
             autoUpdate = "registry";
           };
           unitConfig = {
@@ -131,9 +112,6 @@
             exec = "worker";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
-            environments = {
-              #RCLONE_USE_MMAP = "true";
-            };
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";
             stopTimeout = 60;

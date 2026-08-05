@@ -41,6 +41,5 @@ assert builtins.elem "/mnt/drive"
   homelab.systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor;
 assert homelab.users.users.bhunter.linger;
 assert lib.hasInfix "cache_dir /var/cache/caddy/vips" caddyfile;
-assert lib.hasInfix "cache_dir /var/cache/caddy/varc" caddyfile;
-assert lib.hasInfix "varc http://stash:8080" caddyfile;
+assert !lib.hasInfix "varc" caddyfile;
 true
