@@ -74,7 +74,7 @@
             RequiresMountsFor = [ "/mnt/external/rclone" ];
           };
           serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 /mnt/external/rclone";
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 1000 -g 100 /mnt/external/rclone";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;
