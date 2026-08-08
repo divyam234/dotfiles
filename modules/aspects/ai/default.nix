@@ -198,6 +198,7 @@
 
         programs.bunGlobalCli = {
           enable = true;
+          cachePruneScopes = [ "@oh-my-pi" ];
           packages = lib.mkAfter [
             "@oh-my-pi/pi-coding-agent"
           ];

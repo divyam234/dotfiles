@@ -18,6 +18,12 @@
 
         packagesFile = pkgs.writeText "bun-global-cli-packages.txt" packagesText;
 
+        cachePruneScopesText =
+          builtins.concatStringsSep "\n" cfg.cachePruneScopes
+          + lib.optionalString (cfg.cachePruneScopes != [ ]) "\n";
+
+        cachePruneScopesFile = pkgs.writeText "bun-global-cli-cache-prune-scopes.txt" cachePruneScopesText;
+
         syncScript = pkgs.writeShellScriptBin "bun-global-cli-sync" ''
           set -euo pipefail
 
@@ -102,6 +108,39 @@
               | ${pkgs.gawk}/bin/awk '{print $2}' || true
           }
 
+          prune_scope_cache() {
+            scope="$1"
+            cache_scope="$BUN_INSTALL/install/cache/$scope"
+            installed_scope="$BUN_INSTALL_GLOBAL_DIR/node_modules/$scope"
+
+            [ -d "$cache_scope" ] || return 0
+
+            echo "Pruning stale Bun cache entries for scope: $scope"
+
+            for cache_entry in "$cache_scope"/*; do
+              [ -d "$cache_entry" ] || continue
+
+              entry_name="''${cache_entry##*/}"
+              case "$entry_name" in
+                *@*@@@1)
+                  package_name="''${entry_name%%@*}"
+                  cache_version="''${entry_name#*@}"
+                  cache_version="''${cache_version%@@@1}"
+                  package_json="$installed_scope/$package_name/package.json"
+
+                  installed_version=""
+                  if [ -f "$package_json" ]; then
+                    installed_version="$(${pkgs.jq}/bin/jq -r '.version // empty' "$package_json")"
+                  fi
+
+                  if [ "$cache_version" != "$installed_version" ]; then
+                    ${pkgs.coreutils}/bin/rm -rf -- "$cache_entry"
+                  fi
+                  ;;
+              esac
+            done
+          }
+
           changed=0
 
           while IFS= read -r spec; do
@@ -134,6 +173,11 @@
           if [ "$changed" = 0 ]; then
             echo "All Bun global CLI packages are current."
           fi
+
+          while IFS= read -r scope; do
+            [ -z "$scope" ] && continue
+            prune_scope_cache "$scope"
+          done < "${cachePruneScopesFile}"
         '';
       in
       {
@@ -158,6 +202,13 @@
             description = "Global CLI npm packages installed with bun add -g.";
           };
 
+          cachePruneScopes = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            example = [ "@oh-my-pi" ];
+            description = "Package scopes whose stale versioned cache entries should be removed after sync.";
+          };
+
           timer.enable = lib.mkOption {
             type = lib.types.bool;
             default = false;
@@ -173,6 +224,13 @@
         };
 
         config = lib.mkIf cfg.enable {
+          assertions = [
+            {
+              assertion = lib.all (scope: builtins.match "^@[A-Za-z0-9._-]+$" scope != null) cfg.cachePruneScopes;
+              message = "programs.bunGlobalCli.cachePruneScopes must contain npm scopes such as @oh-my-pi.";
+            }
+          ];
+
           home = {
             packages = lib.optional cfg.installBun pkgs.bun ++ [
               syncScript
