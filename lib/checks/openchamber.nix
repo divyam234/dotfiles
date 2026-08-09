@@ -15,6 +15,8 @@ assert netcup.users.users.${userName}.linger == true;
 assert builtins.elem 39173 firewall.allowedTCPPorts;
 assert builtins.hasAttr "openchamber" userHome.systemd.user.services;
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
+assert openchamber.Unit.Wants == [ "opencode.service" ];
+assert !(openchamber.Unit ? Requires);
 assert lib.hasInfix "--port 39173" (lib.concatStringsSep " " openchamber.Service.ExecStart);
 assert lib.hasInfix "--port 4095" (lib.concatStringsSep " " opencode.Service.ExecStart);
 assert lib.hasInfix "ai.${domain}" caddyfile;

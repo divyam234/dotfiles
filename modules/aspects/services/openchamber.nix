@@ -36,7 +36,7 @@
             Unit = {
               Description = "OpenChamber Web Server";
               After = [ "opencode.service" ];
-              Requires = [ "opencode.service" ];
+              Wants = [ "opencode.service" ];
             };
 
             Service = {
