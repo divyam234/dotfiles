@@ -1,6 +1,7 @@
 { den, ... }:
 {
   den.aspects = {
+
     workstation.includes = [
       den.aspects.desktop
       den.aspects.security-workstation

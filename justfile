@@ -9,7 +9,7 @@ fmt-check:
     git diff --check
 
 check:
-    nix build --no-link --show-trace .#checks.x86_64-linux.formatter .#checks.x86_64-linux.deadnix .#checks.x86_64-linux.statix .#checks.x86_64-linux.architecture .#checks.x86_64-linux.composition-contract
+    nix build --no-link .#checks.x86_64-linux.{formatter,deadnix,statix,architecture,contract-containers,contract-homelab,contract-laptop,contract-netcup,contract-openchamber,contract-secrets}
     nix eval .#nixosConfigurations.laptop.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.homelab.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.netcup.config.system.build.toplevel.drvPath

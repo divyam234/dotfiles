@@ -21,6 +21,7 @@ assert netcup.networking.nftables.enable;
 assert
   netcup.virtualisation.quadlet.containers.gluetun.containerConfig.publishPorts == [
     "3128:3128"
+    "3129:3129"
     "1081:1081"
   ];
 assert

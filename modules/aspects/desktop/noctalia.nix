@@ -118,7 +118,7 @@
               };
             };
             shell.font_family = config.stylix.fonts.sansSerif.name;
-            wallpaper.default.path = "${../../../theme/wallpaper.png}";
+            wallpaper.default.path = "${config.stylix.image}";
           };
         };
       };

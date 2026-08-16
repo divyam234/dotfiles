@@ -5,69 +5,7 @@
   ...
 }:
 let
-  displayConfig =
-    host:
-    let
-      rawOutputs = host.outputs or [ ];
-      greeterOutput = (host.greeter or { }).output or { };
-      greeterScale = greeterOutput.scale or 1.25;
-
-      round = value: builtins.floor (value + 0.5);
-      parseModeWidth =
-        mode:
-        let
-          match = builtins.match "([0-9]+)x[0-9]+.*" mode;
-        in
-        if match == null then null else builtins.fromJSON (builtins.elemAt match 0);
-      logicalWidth =
-        scaleOf: o:
-        let
-          mode = o.mode or (throw "Active output ${o.name} needs mode to generate logical position");
-          width = parseModeWidth mode;
-          scale = scaleOf o;
-        in
-        if width != null then round (width / scale) else throw "Output ${o.name} has invalid mode: ${mode}";
-      normalizeOutputs =
-        scaleOf: outputs:
-        let
-          step =
-            state: output:
-            let
-              off = output.off or false;
-              width = if off then null else logicalWidth scaleOf output;
-              position =
-                if output ? position && output.position != null then
-                  output.position
-                else if !off && width != null then
-                  {
-                    inherit (state) x;
-                    y = 0;
-                  }
-                else
-                  null;
-              nextX = if !off && width != null && position != null then position.x + width else state.x;
-            in
-            {
-              x = nextX;
-              outputs = state.outputs ++ [ (output // { inherit position; }) ];
-            };
-        in
-        (builtins.foldl' step {
-          x = 0;
-          outputs = [ ];
-        } outputs).outputs;
-      outputs = normalizeOutputs (o: o.scale or 1.0) rawOutputs;
-      greeterOutputs = normalizeOutputs (_: greeterScale) rawOutputs;
-      activeGreeterOutputs = builtins.filter (
-        o: !(o.off or false) && (o.position or null) != null
-      ) greeterOutputs;
-      greeterLayout = lib.concatStringsSep "; " (
-        map (o: "${o.name}:${toString o.position.x},${toString o.position.y}") activeGreeterOutputs
-      );
-    in
-    {
-      inherit greeterLayout greeterScale outputs;
-    };
+  displayConfig = import ../../../lib/display-layout.nix { inherit lib; };
 in
 {
   flake-file.inputs.noctalia-greeter = {

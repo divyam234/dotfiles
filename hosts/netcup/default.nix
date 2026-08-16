@@ -1,9 +1,11 @@
-{ den, inputs, ... }:
+{ den, ... }:
 {
   den.aspects.netcup = {
     includes = [
       den.aspects.common
       den.aspects.sops
+      den.aspects.boot-policy
+      den.aspects.facter
       den.aspects.security-base
       den.aspects.server
       den.aspects.tailscale
@@ -35,7 +37,6 @@
       { pkgs, ... }:
       {
         imports = [
-          inputs.nixos-facter-modules.nixosModules.facter
           ./disko.nix
           ./networking.nix
         ];
@@ -43,15 +44,8 @@
           kernelPackages = pkgs.linuxPackages_latest;
           kernelParams = [ "console=ttyS0" ];
           loader = {
-            grub = {
-              enable = true;
-              configurationLimit = 3;
-              devices = [ "nodev" ];
-              efiSupport = true;
-              efiInstallAsRemovable = true;
-            };
+            grub.efiInstallAsRemovable = true;
             efi.canTouchEfiVariables = false;
-            timeout = 3;
           };
         };
         facter.reportPath = ./facter.json;

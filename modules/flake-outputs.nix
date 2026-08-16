@@ -124,6 +124,15 @@
             ;
         };
       };
+      contractChecks = lib.mapAttrs' (
+        name: contract:
+        lib.nameValuePair "contract-${name}" (
+          assert builtins.addErrorContext "while checking ${name} composition contract" contract;
+          pkgs.runCommand "dotfiles-contract-${name}" { } ''
+            touch $out
+          ''
+        )
+      ) contracts;
     in
     {
       packages = lib.optionalAttrs (system == "x86_64-linux") {
@@ -203,12 +212,8 @@
           touch $out
         '';
 
-        composition-contract =
-          assert lib.all (contract: contract) (builtins.attrValues contracts);
-          pkgs.runCommand "dotfiles-composition-contract" { } ''
-            touch $out
-          '';
       }
+      // contractChecks
       // lib.optionalAttrs (system == "x86_64-linux") {
         homelab-nixos-eval = self.nixosConfigurations.homelab.config.system.build.toplevel;
         laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;

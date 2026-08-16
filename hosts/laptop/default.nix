@@ -1,12 +1,13 @@
 { den, inputs, ... }:
 {
   flake-file.inputs.cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
-  flake-file.inputs.nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
   den.aspects.laptop = {
     includes = [
       den.aspects.common
       den.aspects.sops
+      den.aspects.boot-policy
+      den.aspects.facter
       den.aspects.security-base
       den.aspects.workstation
       den.aspects.btrfs
@@ -18,25 +19,11 @@
       { pkgs, ... }:
       {
         imports = [
-          inputs.nixos-facter-modules.nixosModules.facter
           ./graphics.nix
           ./networking.nix
           ./disko.nix
           ./msi-ec/kmod.nix
         ];
-        boot.loader = {
-          grub = {
-            enable = true;
-            configurationLimit = 3;
-            devices = [ "nodev" ];
-            efiSupport = true;
-          };
-          efi = {
-            canTouchEfiVariables = true;
-            efiSysMountPoint = "/boot";
-          };
-          timeout = 3;
-        };
         boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-x86_64-v3;
         facter.reportPath = ./facter.json;
         fileSystems."/mnt/drive" = {

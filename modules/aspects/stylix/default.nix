@@ -39,6 +39,7 @@
         enable = true;
         polarity = "dark";
         base16Scheme = ./nord.yaml;
+        image = ../../../theme/wallpaper.png;
         targets.chromium.enable = false;
         homeManagerIntegration = {
           autoImport = false;
@@ -70,6 +71,7 @@
           enable = true;
           polarity = "dark";
           base16Scheme = ./nord.yaml;
+          image = ../../../theme/wallpaper.png;
           autoEnable = true;
           cursor = {
             name = "Bibata-Modern-Classic";

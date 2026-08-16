@@ -1,7 +1,11 @@
 { lib, den, ... }:
 {
   den.schema.host =
-    { lib, ... }:
+    { config, lib, ... }:
+    let
+      positiveFloat = lib.types.addCheck lib.types.float (value: value > 0.0);
+      staticTargetValid = target: target.source != "static" || target.address != null;
+    in
     {
       options = {
         user = lib.mkOption {
@@ -110,7 +114,7 @@
         greeter = lib.mkOption {
           type = lib.types.submodule {
             options.output.scale = lib.mkOption {
-              type = lib.types.nullOr lib.types.float;
+              type = lib.types.nullOr positiveFloat;
               default = 1.25;
               description = "Noctalia Greeter output scale override.";
             };
@@ -134,7 +138,7 @@
                   description = "Display mode string.";
                 };
                 scale = lib.mkOption {
-                  type = lib.types.float;
+                  type = positiveFloat;
                   default = 1.0;
                   description = "Output scale factor.";
                 };
@@ -167,6 +171,22 @@
           default = [ { name = "eDP-1"; } ];
           description = "Monitor output configuration for niri.";
         };
+
       };
+
+      config.assertions = [
+        {
+          assertion = staticTargetValid config.dns.publicTarget.ipv4;
+          message = "Static public IPv4 DNS requires an address.";
+        }
+        {
+          assertion = staticTargetValid config.dns.publicTarget.ipv6;
+          message = "Static public IPv6 DNS requires an address.";
+        }
+        {
+          assertion = lib.all (output: !(output.off && output.mode != null)) config.outputs;
+          message = "Disabled outputs must not declare a display mode.";
+        }
+      ];
     };
 }

@@ -1,11 +1,11 @@
-{ den, inputs, ... }:
+{ den, ... }:
 {
-  flake-file.inputs.nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
-
   den.aspects.homelab = {
     includes = [
       den.aspects.common
       den.aspects.sops
+      den.aspects.boot-policy
+      den.aspects.facter
       den.aspects.security-base
       den.aspects.server
       den.aspects.librespot
@@ -24,23 +24,9 @@
       { ... }:
       {
         imports = [
-          inputs.nixos-facter-modules.nixosModules.facter
           ./disko.nix
           ./networking.nix
         ];
-        boot.loader = {
-          grub = {
-            enable = true;
-            configurationLimit = 3;
-            devices = [ "nodev" ];
-            efiSupport = true;
-          };
-          efi = {
-            canTouchEfiVariables = true;
-            efiSysMountPoint = "/boot";
-          };
-          timeout = 3;
-        };
         hardware.graphics.enable = true;
         fileSystems."/mnt/drive" = {
           device = "/dev/disk/by-id/ata-ST500LT012-1DG142_WBY3EXQ5-part1";
