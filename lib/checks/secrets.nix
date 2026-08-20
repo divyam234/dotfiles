@@ -15,6 +15,9 @@ let
     "postgres/user"
     "ssh/private_key"
     "tailscale/oauth_client_secret"
+    "teldrive/data_key"
+    "teldrive/encryption_key"
+    "teldrive/signing_key"
     "users/bhunter/password"
   ];
   expectedNetcup = expectedCommon ++ [
@@ -35,6 +38,7 @@ let
     "gluetun.env"
     "gproxy.env"
     "postgres.env"
+    "teldrive.env"
     "redis.env"
     "vaultwarden.env"
   ];

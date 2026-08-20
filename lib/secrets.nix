@@ -45,6 +45,18 @@ let
       "postgres"
       "password"
     ]
+    [
+      "teldrive"
+      "signing_key"
+    ]
+    [
+      "teldrive"
+      "data_key"
+    ]
+    [
+      "teldrive"
+      "encryption_key"
+    ]
   ];
 
   hostPaths = {
