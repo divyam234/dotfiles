@@ -30,6 +30,8 @@
             TELDRIVE_SECURITY_DATA_KEY=${secrets.teldrive.data_key}
             TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION=1
             TELDRIVE_ENCRYPTION_KEYS=1:${secrets.teldrive.encryption_key}
+            TELDRIVE_TELEGRAM_MTPROXY_ADDRESS=mtproxy:443
+            TELDRIVE_TELEGRAM_MTPROXY_SECRET=${secrets.mtproxy.secret}
             TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY=false
             TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL=true
             TELDRIVE_TELEGRAM_DOWNLOAD_BOTS=4
@@ -53,10 +55,12 @@
           unitConfig = {
             After = [
               quadlet.containers.postgres.ref
+              quadlet.containers.mtproxy.ref
               "postgres-provision.service"
             ];
             Requires = [
               quadlet.containers.postgres.ref
+              quadlet.containers.mtproxy.ref
               "postgres-provision.service"
             ];
           };

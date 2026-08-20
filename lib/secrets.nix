@@ -57,6 +57,10 @@ let
       "teldrive"
       "encryption_key"
     ]
+    [
+      "mtproxy"
+      "secret"
+    ]
   ];
 
   hostPaths = {
