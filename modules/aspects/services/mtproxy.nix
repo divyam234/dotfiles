@@ -29,6 +29,7 @@
             image = "ghcr.io/teleproxy/teleproxy:latest";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "mtproxy" ];
+            publishPorts = [ "8670:443" ];
             environmentFiles = [ "${containers.secretDir}/mtproxy.env" ];
             autoUpdate = "registry";
           };
