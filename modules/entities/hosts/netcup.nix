@@ -11,7 +11,7 @@
     secretsFile = ../../../hosts/netcup/secrets.yaml;
     dns.publicTarget.ipv4.source = "local";
     tailscale.autoconnect = true;
-
+    caddy.cacheDir = "/var/cache/caddy";
     instantiate = entityLib.mkNixos "aarch64-linux";
 
     users.bhunter = bhunterUser // {

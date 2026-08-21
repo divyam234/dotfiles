@@ -9,7 +9,6 @@
     user = "bhunter";
     domain = "bhunter.tech";
     secretsFile = ../../../hosts/homelab/secrets.yaml;
-    caddy.cacheDir = "/mnt/external/caddy-cache";
     dns = {
       refreshInterval = "15m";
       publicTarget = {

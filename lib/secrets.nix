@@ -34,6 +34,10 @@ let
       "token"
     ]
     [
+      "stash"
+      "secret_key"
+    ]
+    [
       "ssh"
       "private_key"
     ]
@@ -56,6 +60,10 @@ let
     [
       "teldrive"
       "encryption_key"
+    ]
+    [
+      "teldrive"
+      "api_key"
     ]
     [
       "mtproxy"

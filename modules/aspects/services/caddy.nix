@@ -126,12 +126,11 @@
                 "${containers.dataRoot}/caddy-config:/config"
                 "${cacheDir}:/var/cache/caddy"
               ];
-              healthCmd = "caddy version > /dev/null || exit 1";
               autoUpdate = "registry";
             };
             unitConfig.RequiresMountsFor = [ cacheDir ];
             serviceConfig = {
-              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${lib.escapeShellArg "${cacheDir}/vips"}";
+              ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${cacheDir}";
               Restart = "always";
               RestartSec = "10s";
               NoNewPrivileges = true;
