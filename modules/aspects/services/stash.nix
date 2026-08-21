@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.stash = { user,host, ... }: {
+  den.aspects.stash = { user, host, ... }: {
     caddyRoutes.stash = {
       host = "stash.${host.domain}";
       access = "tailnet";
@@ -53,12 +53,13 @@
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
             environments = {
-              RCLONE_CONFIG_TDRIVE_TYPE="teldrive";
-              RCLONE_CONFIG_TDRIVE_HASH_ENABLED="false";
-              RCLONE_CONFIG_TDRIVE_API_HOST="http://teldrive:8080";
+              RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
+              RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
+              RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
               RCLONE_CACHE_DIR = "/var/cache/rclone";
               RCLONE_VFS_CACHE_MODE = "full";
               RCLONE_VFS_CACHE_MAX_AGE = "8670h";
+              RCLONE_VFS_CACHE_MAX_SIZE = "300GiB";
               RCLONE_DIR_CACHE_TIME = "8670h";
             };
             volumes = [ "/var/cache/rclone:/var/cache/rclone" ];
@@ -117,9 +118,9 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
             environments = {
-              RCLONE_CONFIG_TDRIVE_TYPE="teldrive";
-              RCLONE_CONFIG_TDRIVE_HASH_ENABLED="false";
-              RCLONE_CONFIG_TDRIVE_API_HOST="http://teldrive:8080";
+              RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
+              RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
+              RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
             };
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";
