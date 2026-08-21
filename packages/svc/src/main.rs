@@ -143,10 +143,8 @@ fn main() -> Result<()> {
             Ok(())
         }
         Commands::Update { services: names } => {
-            for service in services_for_names(&services, &names)? {
-                operations::update_service(service, false)?;
-            }
-            Ok(())
+            let targets = services_for_names(&services, &names)?;
+            operations::update_services(&services, &targets, false)
         }
         Commands::Stack { action } => match action {
             StackAction::Status => {
