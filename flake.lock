@@ -345,11 +345,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787292465,
-        "narHash": "sha256-1o396Q0nM1ZN9opNthIWfIGlgdV/hG0PvHhoNyDucGw=",
+        "lastModified": 1787376274,
+        "narHash": "sha256-UwwKuZaqXvxjDL+22IIIWDcfrplIxyB9xENgoEYbvoI=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "78d73c35ef951fb43497751879ef43c1ab2468d2",
+        "rev": "4674a4f0223fc5486bc44df1239025560bf98933",
         "type": "github"
       },
       "original": {
