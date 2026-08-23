@@ -15,7 +15,9 @@ let
     "postgres/password"
     "postgres/user"
     "ssh/private_key"
+    "stash/secret_key"
     "tailscale/oauth_client_secret"
+    "teldrive/api_key"
     "teldrive/data_key"
     "teldrive/encryption_key"
     "teldrive/signing_key"
@@ -40,8 +42,10 @@ let
     "gproxy.env"
     "mtproxy.env"
     "postgres.env"
-    "teldrive.env"
     "redis.env"
+    "stash-worker.env"
+    "stash.env"
+    "teldrive.env"
     "vaultwarden.env"
   ];
 in

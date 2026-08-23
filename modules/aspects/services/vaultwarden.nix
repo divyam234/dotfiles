@@ -29,9 +29,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."vaultwarden.env" = {
-          path = "${containers.secretDir}/vaultwarden.env";
-          mode = "0440";
+        sops.templates."vaultwarden.env" = secrets.mkTemplate {
+          name = "vaultwarden.env";
           content = ''
             DOMAIN=https://vault.${host.domain}
             ADMIN_TOKEN=${secrets.vaultwarden.admin_token}

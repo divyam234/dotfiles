@@ -1,6 +1,6 @@
 # Dotfiles
 
-NixOS and Home Manager configuration for two machines, built with flakes, flake-parts, and Den.
+NixOS and Home Manager configuration for three machines, built with flakes, flake-parts, and Den.
 
 ## Hosts
 
@@ -8,6 +8,7 @@ NixOS and Home Manager configuration for two machines, built with flakes, flake-
 | --- | --- | --- |
 | `laptop` | `x86_64-linux` | NixOS with standalone Home Manager (`bhunter@laptop`) |
 | `netcup` | `aarch64-linux` | NixOS server with integrated Home Manager |
+| `homelab` | `x86_64-linux` | NixOS server with integrated Home Manager |
 
 ## Structure
 
@@ -41,11 +42,10 @@ just build netcup            # build without activating
 just test netcup             # activate until reboot
 just switch netcup           # build and activate
 just home                    # switch bhunter@laptop Home Manager
-just svc-status              # show hosted service status
 cargo test --manifest-path packages/svc/Cargo.toml
 ```
 
-The default NixOS host is `netcup`; the default Home Manager configuration is `bhunter@laptop`.
+The default host for `just build/test/switch` is `laptop` (`host` parameter); the default Home Manager configuration is `bhunter@laptop`.
 
 ## Secrets
 

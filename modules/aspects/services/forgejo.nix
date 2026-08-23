@@ -27,9 +27,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."forgejo.env" = {
-          path = "${containers.secretDir}/forgejo.env";
-          mode = "0440";
+        sops.templates."forgejo.env" = secrets.mkTemplate {
+          name = "forgejo.env";
           content = ''
             FORGEJO__database__DB_TYPE=postgres
             FORGEJO__database__HOST=pgdog:6432

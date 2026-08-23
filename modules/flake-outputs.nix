@@ -2,6 +2,7 @@
   self,
   inputs,
   lib,
+  den,
   ...
 }:
 {
@@ -114,7 +115,6 @@
         homelab = import ../lib/checks/homelab.nix { inherit homelab; };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
         netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
-        openchamber = import ../lib/checks/openchamber.nix { inherit lib netcup; };
         secrets = import ../lib/checks/secrets.nix {
           inherit
             home
@@ -135,16 +135,18 @@
       ) contracts;
     in
     {
-      packages = lib.optionalAttrs (system == "x86_64-linux") {
-        homelab-installer-iso = mkInstallerIso {
-          name = "homelab";
-          diskoConfig = ../hosts/homelab/disko.nix;
+      packages =
+        den.lib.nh.denPackages { fromFlake = true; } pkgs
+        // lib.optionalAttrs (system == "x86_64-linux") {
+          homelab-installer-iso = mkInstallerIso {
+            name = "homelab";
+            diskoConfig = ../hosts/homelab/disko.nix;
+          };
+          laptop-installer-iso = mkInstallerIso {
+            name = "laptop";
+            diskoConfig = ../hosts/laptop/disko.nix;
+          };
         };
-        laptop-installer-iso = mkInstallerIso {
-          name = "laptop";
-          diskoConfig = ../hosts/laptop/disko.nix;
-        };
-      };
 
       formatter = pkgs.writeShellApplication {
         name = "dotfiles-fmt";

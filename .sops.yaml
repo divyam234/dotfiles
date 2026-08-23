@@ -7,6 +7,3 @@ creation_rules:
   - path_regex: hosts/.*/secrets\.yaml$
     key_groups:
       - age: [*bhunter]
-  - path_regex: secrets/files/.*
-    key_groups:
-      - age: [*bhunter]

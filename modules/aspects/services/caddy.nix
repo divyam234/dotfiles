@@ -15,19 +15,38 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        routeNames = lib.concatMap builtins.attrNames caddyRoutes;
-        duplicateRouteNames = lib.filter (
-          name: builtins.length (lib.filter (candidate: candidate == name) routeNames) > 1
-        ) (lib.unique routeNames);
-        routes = lib.foldl' lib.recursiveUpdate { } caddyRoutes;
-        routeList = lib.mapAttrsToList (name: route: route // { inherit name; }) routes;
-        routeHosts = map (route: route.host) routeList;
-        duplicateRouteHosts = lib.filter (
-          name: builtins.length (lib.filter (candidate: candidate == name) routeHosts) > 1
-        ) (lib.unique routeHosts);
+        routes = lib.pipe caddyRoutes [ (lib.foldl' lib.recursiveUpdate { }) ];
+        routeList = lib.pipe routes [
+          (lib.mapAttrsToList (name: route: route // { inherit name; }))
+        ];
+        duplicateRouteNames = lib.pipe caddyRoutes [
+          (lib.concatMap builtins.attrNames)
+          lib.denful.findDuplicates
+        ];
+        duplicateRouteHosts = lib.pipe routeList [
+          (map (route: route.host))
+          lib.denful.findDuplicates
+        ];
+        duplicateLayer4Routes = lib.pipe caddyLayer4Routes [
+          lib.flatten
+          lib.denful.findDuplicates
+        ];
         cacheDir = host.caddy.cacheDir;
-        publicRoutes = lib.filter (route: (route.access or null) == "public") routeList;
-        tailnetRoutes = lib.filter (route: (route.access or null) == "tailnet") routeList;
+        publicRoutes = lib.pipe routeList [
+          (lib.filter (route: (route.access or null) == "public"))
+        ];
+        tailnetRoutes = lib.pipe routeList [
+          (lib.filter (route: (route.access or null) == "tailnet"))
+        ];
+        invalidAccessRoutes = lib.pipe routeList [
+          (lib.filter (
+            route:
+            !(builtins.elem (route.access or null) [
+              "public"
+              "tailnet"
+            ])
+          ))
+        ];
         acmeEmail = if (host.caddyEmail or null) != null then host.caddyEmail else "admin@${host.domain}";
         global = {
           email = acmeEmail;
@@ -45,18 +64,18 @@
               message = "Duplicate Caddy route quirk names: ${lib.concatStringsSep ", " duplicateRouteNames}";
             }
             {
+              assertion = duplicateLayer4Routes == [ ];
+              message = "Duplicate Caddy layer4 route snippets: ${lib.concatStringsSep ", " duplicateLayer4Routes}";
+            }
+            {
               assertion = lib.all (route: builtins.hasAttr "access" route) routeList;
               message = "Every Caddy route must declare access = public or tailnet.";
             }
             {
-              assertion = lib.all (
-                route:
-                builtins.elem (route.access or null) [
-                  "public"
-                  "tailnet"
-                ]
-              ) routeList;
-              message = "Caddy route access must be public or tailnet.";
+              assertion = invalidAccessRoutes == [ ];
+              message = "Caddy route access must be public or tailnet: ${
+                lib.concatStringsSep ", " (map (r: r.name or r.host or "unknown") invalidAccessRoutes)
+              }";
             }
             {
               assertion = duplicateRouteHosts == [ ];
@@ -95,9 +114,8 @@
             inherit global routes;
           };
 
-          sops.templates."caddy.env" = {
-            path = "${containers.secretDir}/caddy.env";
-            mode = "0440";
+          sops.templates."caddy.env" = secrets.mkTemplate {
+            name = "caddy.env";
             content = ''
               CLOUDFLARE_API_TOKEN=${secrets.cloudflare.api_token}
             '';

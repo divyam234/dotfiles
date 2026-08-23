@@ -4,10 +4,6 @@ let
 in
 assert builtins.hasAttr "ghcr-auth" homelab.systemd.services;
 assert builtins.hasAttr "ghcr-auth" userHome.systemd.user.services;
-assert builtins.elem "/mnt/external/caddy-cache:/var/cache/caddy"
-  homelab.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
-assert builtins.elem "/mnt/external/caddy-cache"
-  homelab.virtualisation.quadlet.containers.caddy.unitConfig.RequiresMountsFor;
 assert homelab.services.pipewire.enable;
 assert homelab.services.pipewire.pulse.enable;
 assert homelab.services.pipewire.alsa.enable;

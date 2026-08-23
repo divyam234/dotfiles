@@ -1,4 +1,17 @@
 { den, ... }:
+let
+  stashEnv = secrets: ''
+    STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
+    STASH_SECRET_KEY=${secrets.stash.secret_key}
+    RCLONE_CONFIG_TDRIVE_API_KEY=${secrets.teldrive.api_key}
+  '';
+
+  baseRcloneEnv = {
+    RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
+    RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
+    RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
+  };
+in
 {
   den.aspects.stash = { user, host, ... }: {
     caddyRoutes.stash = {
@@ -33,14 +46,9 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."stash.env" = {
-          path = "${containers.secretDir}/stash.env";
-          mode = "0440";
-          content = ''
-            STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
-            STASH_SECRET_KEY=${secrets.stash.secret_key}
-            RCLONE_CONFIG_TDRIVE_API_KEY=${secrets.teldrive.api_key}
-          '';
+        sops.templates."stash.env" = secrets.mkTemplate {
+          name = "stash.env";
+          content = stashEnv secrets;
         };
 
         virtualisation.quadlet.containers.stash = {
@@ -52,10 +60,7 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
-            environments = {
-              RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
-              RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
-              RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
+            environments = baseRcloneEnv // {
               RCLONE_CACHE_DIR = "/var/cache/rclone";
               RCLONE_VFS_CACHE_MODE = "full";
               RCLONE_VFS_CACHE_MAX_AGE = "8670h";
@@ -72,7 +77,6 @@
             ];
             Requires = [ "ghcr-auth.service" ];
             Wants = [ "tailscale-autoconnect.service" ];
-            RequiresMountsFor = [ "/mnt/external/rclone" ];
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users /var/cache/rclone";
@@ -99,14 +103,9 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."stash-worker.env" = {
-          path = "${containers.secretDir}/stash-worker.env";
-          mode = "0440";
-          content = ''
-            STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
-            STASH_SECRET_KEY=${secrets.stash.secret_key}
-            RCLONE_CONFIG_TDRIVE_API_KEY=${secrets.teldrive.api_key}
-          '';
+        sops.templates."stash-worker.env" = secrets.mkTemplate {
+          name = "stash-worker.env";
+          content = stashEnv secrets;
         };
 
         virtualisation.quadlet.containers.stash-worker = {
@@ -117,11 +116,7 @@
             exec = "worker";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
-            environments = {
-              RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
-              RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
-              RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
-            };
+            environments = baseRcloneEnv;
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             autoUpdate = "registry";
             stopTimeout = 60;

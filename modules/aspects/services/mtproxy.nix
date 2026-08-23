@@ -12,9 +12,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."mtproxy.env" = {
-          path = "${containers.secretDir}/mtproxy.env";
-          mode = "0440";
+        sops.templates."mtproxy.env" = secrets.mkTemplate {
+          name = "mtproxy.env";
           content = ''
             SECRET=${secrets.mtproxy.secret}
             DIRECT_MODE=true

@@ -14,16 +14,16 @@
       }:
       let
         quadlet = config.virtualisation.quadlet;
-        databaseNames = lib.concatMap builtins.attrNames postgresDatabases;
-        schemaNames = lib.concatMap builtins.attrNames postgresSchemas;
-        duplicateDatabaseNames = lib.filter (
-          name: builtins.length (lib.filter (candidate: candidate == name) databaseNames) > 1
-        ) (lib.unique databaseNames);
-        duplicateSchemaNames = lib.filter (
-          name: builtins.length (lib.filter (candidate: candidate == name) schemaNames) > 1
-        ) (lib.unique schemaNames);
-        databases = lib.foldl' lib.recursiveUpdate { } postgresDatabases;
-        schemas = lib.foldl' lib.recursiveUpdate { } postgresSchemas;
+        databases = lib.pipe postgresDatabases [ (lib.foldl' lib.recursiveUpdate { }) ];
+        schemas = lib.pipe postgresSchemas [ (lib.foldl' lib.recursiveUpdate { }) ];
+        duplicateDatabaseNames = lib.pipe postgresDatabases [
+          (lib.concatMap builtins.attrNames)
+          lib.denful.findDuplicates
+        ];
+        duplicateSchemaNames = lib.pipe postgresSchemas [
+          (lib.concatMap builtins.attrNames)
+          lib.denful.findDuplicates
+        ];
         mkIdentifier = name: ''"${lib.replaceStrings [ ''"'' ] [ ''""'' ] name}"'';
         mkLiteral = name: "'${lib.replaceStrings [ "'" ] [ "''" ] name}'";
         schemaSql = lib.concatStringsSep "\n" (
@@ -52,9 +52,8 @@
           }
         ];
 
-        sops.templates."postgres.env" = {
-          path = "${containers.secretDir}/postgres.env";
-          mode = "0440";
+        sops.templates."postgres.env" = secrets.mkTemplate {
+          name = "postgres.env";
           content = ''
             POSTGRES_USER=${secrets.postgres.user}
             POSTGRES_PASSWORD=${secrets.postgres.password}

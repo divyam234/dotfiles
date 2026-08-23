@@ -60,7 +60,8 @@
 
         environment.etc."cloudflare-dns/manifest.json".source = manifest;
 
-        sops.templates."cloudflare-dns.env" = {
+        sops.templates."cloudflare-dns.env" = secrets.mkTemplate {
+          name = "cloudflare-dns.env";
           path = "/run/secrets/cloudflare-dns.env";
           mode = "0400";
           content = ''

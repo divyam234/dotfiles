@@ -24,7 +24,8 @@
           workspaceRoot = "${config.home.homeDirectory}/repos/github";
         in
         {
-          sops.templates."codeforge.env" = {
+          sops.templates."codeforge.env" = secrets.mkTemplate {
+            name = "codeforge.env";
             path = codeforgeEnv;
             mode = "0400";
             content = ''

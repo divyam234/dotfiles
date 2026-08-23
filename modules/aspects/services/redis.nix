@@ -13,9 +13,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."redis.env" = {
-          path = "${containers.secretDir}/redis.env";
-          mode = "0440";
+        sops.templates."redis.env" = secrets.mkTemplate {
+          name = "redis.env";
           content = ''
             REDIS_PASSWORD=${secrets.redis.password}
           '';

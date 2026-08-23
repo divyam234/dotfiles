@@ -23,9 +23,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."gproxy.env" = {
-          path = "${containers.secretDir}/gproxy.env";
-          mode = "0440";
+        sops.templates."gproxy.env" = secrets.mkTemplate {
+          name = "gproxy.env";
           content = ''
             GPROXY_HOST=0.0.0.0
             GPROXY_PORT=8787

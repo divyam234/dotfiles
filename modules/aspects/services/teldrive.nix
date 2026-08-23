@@ -20,9 +20,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."teldrive.env" = {
-          path = "${containers.secretDir}/teldrive.env";
-          mode = "0440";
+        sops.templates."teldrive.env" = secrets.mkTemplate {
+          name = "teldrive.env";
           content = ''
             TELDRIVE_HTTP_ADDRESS=0.0.0.0:8080
             TELDRIVE_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres

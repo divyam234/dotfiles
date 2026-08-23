@@ -1,5 +1,4 @@
-{ lib }:
-{
+_: {
   importPackages =
     pkgs: directory:
     if builtins.pathExists directory then

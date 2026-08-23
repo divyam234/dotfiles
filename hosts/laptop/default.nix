@@ -1,18 +1,13 @@
-{ den, inputs, ... }:
+{ den, ... }:
 {
   flake-file.inputs.cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
   den.aspects.laptop = {
     includes = [
-      den.aspects.common
-      den.aspects.sops
-      den.aspects.boot-policy
-      den.aspects.facter
-      den.aspects.security-base
+      den.aspects.base
       den.aspects.workstation
       den.aspects.btrfs
       den.aspects.oci-runtime
-      den.aspects.tailscale
     ];
 
     nixos =

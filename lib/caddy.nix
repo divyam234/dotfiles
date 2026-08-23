@@ -78,8 +78,10 @@ rec {
   mkCaddyfile =
     { global, routes }:
     let
-      enabledRoutes = lib.filterAttrs (_: route: route.enable or true) routes;
-      renderedRoutes = lib.mapAttrsToList mkCaddyRoute enabledRoutes;
+      renderedRoutes = lib.pipe routes [
+        (lib.filterAttrs (_: route: route.enable or true))
+        (lib.mapAttrsToList mkCaddyRoute)
+      ];
       layer4Block =
         if global.layer4Routes == [ ] then
           ""

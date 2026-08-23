@@ -23,8 +23,8 @@ entity -> same-named host aspect -> reusable aspects -> NixOS/Home Manager modul
 - `hosts/<name>/default.nix` defines the host aspect and selects shared platform aspects once.
 - Reusable behavior lives in `modules/aspects/`; aspects expose `den.aspects.<name>`, compose through `includes`, and provide `nixos` and/or `homeManager` functions.
 - `modules/core/` defines Den defaults, schemas, shared arguments, and host options. Libraries and overlays are assembled in `lib/bootstrap.nix`.
-- Cross-aspect data flows through the shared quirks `caddyRoutes`, `caddyLayer4Routes`, `containerDataDirs`, `postgresDatabases`, and `postgresSchemas`. Consumers must reject duplicate top-level names.
-- Secrets flow from `lib/secrets.nix` and the injected `secrets` argument into SOPS declarations. Feature and service modules must not set `sopsFile` directly.
+- Cross-aspect data flows through the shared quirks `caddyRoutes`, `caddyLayer4Routes`, `postgresDatabases`, and `postgresSchemas`. Consumers must reject duplicate top-level names.
+- Secrets flow from `lib/secrets.nix` and the injected `secrets` argument into SOPS templates. Prefer `secrets` placeholders and `secrets.mkTemplate { name, content }` helper; `sopsFile` defaults via the shared contract and only needs overriding for host-specific files.
 - Service aspects define Quadlet units and their systemd runtime dependencies. Do not duplicate `oci-service`, `requires-domain`, or `requires-secrets` through leaf services; Den `includes` are compositional, not identity-deduplicated.
 
 Home Manager relationships are structural: `netcup` uses integrated Home Manager with a `homeManager`-class user; `bhunter@laptop` is a standalone home for a classless system user.

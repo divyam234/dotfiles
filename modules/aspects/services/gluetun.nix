@@ -13,9 +13,8 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."gluetun.env" = {
-          path = "${containers.secretDir}/gluetun.env";
-          mode = "0440";
+        sops.templates."gluetun.env" = secrets.mkTemplate {
+          name = "gluetun.env";
           content = ''
             VPN_SERVICE_PROVIDER=nordvpn
             VPN_TYPE=wireguard

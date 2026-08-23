@@ -143,30 +143,36 @@ let
       sopsFile,
       paths,
     }:
-    builtins.foldl' (
-      acc: path:
-      lib.recursiveUpdate acc (
-        lib.setAttrByPath path (mkSecret {
-          inherit
-            config
-            source
-            sopsFile
-            path
-            ;
-        })
-      )
-    ) { } paths;
+    lib.pipe paths [
+      (lib.foldl' (
+        acc: path:
+        lib.recursiveUpdate acc (
+          lib.setAttrByPath path (mkSecret {
+            inherit
+              config
+              source
+              sopsFile
+              path
+              ;
+          })
+        )
+      ) { })
+    ];
 
   collectLeaves =
     value:
     if isSecret value then
       [ value ]
     else if builtins.isAttrs value then
-      lib.flatten (map collectLeaves (builtins.attrValues value))
+      lib.pipe value [
+        builtins.attrValues
+        (map collectLeaves)
+        lib.flatten
+      ]
     else
       [ ];
 
-  groupsFrom = tree: lib.mapAttrs (_: collectLeaves) tree;
+  groupsFrom = tree: lib.pipe tree [ (lib.mapAttrs (_: collectLeaves)) ];
 
   mkSecrets =
     {
@@ -182,7 +188,7 @@ let
         else if builtins.hasAttr hostName hostPaths then
           hostPaths.${hostName}
         else
-          throw "No explicit secret contract defined for host ${hostName}.";
+          throw "No explicit secret contract defined for host ${hostName}. Add it to hostPaths in lib/secrets.nix.";
       commonTree = treeFromPaths {
         inherit config;
         source = "common";
@@ -193,7 +199,7 @@ let
         if selectedHostPaths == [ ] then
           { }
         else if hostSopsFile == null then
-          throw "Host ${hostName} declares host secrets but has no secretsFile."
+          throw "Host ${hostName} declares host secrets but has no secretsFile. Set host.secretsFile or add hostPaths entry in lib/secrets.nix."
         else
           treeFromPaths {
             inherit config;
@@ -201,21 +207,33 @@ let
             sopsFile = hostSopsFile;
             paths = selectedHostPaths;
           };
-      mergedTree = lib.recursiveUpdate commonTree hostTree;
+      mergedTree = lib.pipe [ commonTree hostTree ] [ (lib.foldl' lib.recursiveUpdate { }) ];
       helpers = {
         inherit commonSopsFile collectLeaves hostSopsFile;
         common = commonTree;
         host = hostTree;
-        all = collectLeaves mergedTree;
+        all = lib.pipe mergedTree [ collectLeaves ];
         declare =
           secrets:
-          builtins.listToAttrs (
-            map (secret: {
+          lib.pipe secrets [
+            lib.flatten
+            (map (secret: {
               inherit (secret) name;
               value = secret.sops;
-            }) (lib.flatten secrets)
-          );
-        groups = groupsFrom mergedTree;
+            }))
+            builtins.listToAttrs
+          ];
+        groups = lib.pipe mergedTree [ groupsFrom ];
+        mkTemplate =
+          {
+            name,
+            content,
+            mode ? "0440",
+            path ? "/run/secrets/container-env/${name}",
+          }:
+          {
+            inherit path mode content;
+          };
       };
     in
     mergedTree // helpers;
