@@ -47,7 +47,7 @@
           openaiStrong = "openai/gpt-5.6-sol";
           openaiMedium = "openai/gpt-5.6-terra";
           openaiFast = "openai/gpt-5.6-luna";
-          opencodeFree = "opencode/deepseek-v4-flash-free";
+          opencode = "opencode/muse-spark-1.2-contributor-free";
         };
 
         opencodeConfig = {
@@ -131,7 +131,7 @@
 
             opencode = {
               orchestrator = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 skills = [ "*" ];
                 mcps = [
                   "*"
@@ -140,18 +140,18 @@
               };
 
               oracle = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 variant = "high";
                 skills = [ "simplify" ];
               };
 
               council = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 variant = "high";
               };
 
               librarian = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 mcps = [
                   "websearch"
                   "context7"
@@ -160,26 +160,21 @@
               };
 
               explorer = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
               };
 
               designer = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 variant = "medium";
               };
 
               fixer = mkAgent {
-                model = models.opencodeFree;
+                model = models.opencode;
                 variant = "high";
               };
             };
           };
           balanceProviderUsage = false;
-
-          fallback = {
-            enabled = false;
-            timeoutMs = 15000;
-          };
           # multiplexer = {
           #   type = "zellij";
           # };
