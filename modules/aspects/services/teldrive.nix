@@ -37,6 +37,7 @@
             TELDRIVE_TELEGRAM_RATE_LIMIT=false
             TELDRIVE_SECURITY_ACCESS_TOKEN_TTL=24h
             TELDRIVE_SECURITY_REFRESH_TOKEN_TTL=8760h
+            TELDRIVE_LOGGING_LOG_FORMAT=text
           '';
         };
 

@@ -66,6 +66,7 @@ in
               RCLONE_VFS_CACHE_MAX_AGE = "8670h";
               RCLONE_VFS_CACHE_MAX_SIZE = "300GiB";
               RCLONE_DIR_CACHE_TIME = "8670h";
+              RCLONE_POLL_INTERVAL = "1s";
             };
             volumes = [ "/var/cache/rclone:/var/cache/rclone" ];
             autoUpdate = "registry";
