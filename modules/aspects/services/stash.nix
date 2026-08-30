@@ -18,20 +18,6 @@ in
       host = "stash.${host.domain}";
       access = "tailnet";
       upstreams = [ "stash:8080" ];
-      extraConfig = ''
-        @asset path /api/assets/*
-        route @asset {
-          header Cache-Control "public, max-age=31536000, immutable"
-          vips {
-            cache_dir /var/cache/caddy/vips
-            cache_max_size 20GiB
-            quality 82
-            max_dimension 8192
-            max_pixels 40000000
-            max_source_size 64MiB
-          }
-        }
-      '';
     };
 
     nixos =
@@ -67,8 +53,13 @@ in
               RCLONE_VFS_CACHE_MAX_SIZE = "300GiB";
               RCLONE_DIR_CACHE_TIME = "8670h";
               RCLONE_POLL_INTERVAL = "1s";
+              STASH_IMAGE_CACHE_DIR = "/var/cache/images";
+              STASH_IMAGE_CACHE_MAX_SIZE = "30G";
             };
-            volumes = [ "/var/cache/rclone:/var/cache/rclone" ];
+            volumes = [
+              "/var/cache/rclone:/var/cache/rclone"
+              "/var/cache/images:/var/cache/images"
+            ];
             autoUpdate = "registry";
           };
           unitConfig = {
@@ -80,7 +71,7 @@ in
             Wants = [ "tailscale-autoconnect.service" ];
           };
           serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users /var/cache/rclone";
+            ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /var/cache/rclone /var/cache/images";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;
@@ -135,7 +126,7 @@ in
             ];
           };
           serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users /home/${user.userName}/downloads";
+            ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /home/${user.userName}/downloads";
             Restart = "always";
             RestartSec = "10s";
             NoNewPrivileges = true;
