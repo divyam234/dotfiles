@@ -8,6 +8,9 @@
       den.aspects.workstation
       den.aspects.btrfs
       den.aspects.oci-runtime
+      den.aspects.container-network
+      den.aspects.rclone-webdav
+      den.aspects.teldrive
     ];
 
     nixos =
@@ -35,4 +38,5 @@
         system.stateVersion = "26.05";
       };
   };
+
 }

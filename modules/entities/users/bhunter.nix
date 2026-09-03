@@ -18,7 +18,5 @@ in
       den.batteries.host-aspects
       den.aspects.user-signing
     ];
-
-    provides.laptop.includes = [ den.aspects.laptop ];
   };
 }

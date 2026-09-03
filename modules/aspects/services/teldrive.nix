@@ -1,39 +1,66 @@
 { den, ... }:
 {
   den.aspects.teldrive = { host, ... }: {
-    postgresDatabases.teldrive = { };
-
-    caddyRoutes.teldrive = {
-      host = "teldrive.${host.domain}";
-      access = "tailnet";
-      upstreams = [ "teldrive:8080" ];
-    };
+    caddyRoutes =
+      if host.teldrive.exposeThroughCaddy then
+        {
+          teldrive = {
+            host = "teldrive.${host.domain}";
+            access = "tailnet";
+            upstreams = [ "teldrive:8080" ];
+          };
+        }
+      else
+        { };
 
     nixos =
       {
         config,
         containers,
         secrets,
+        lib,
         ...
       }:
       let
         quadlet = config.virtualisation.quadlet;
+        cfg = host.teldrive;
+        download = cfg.download;
+        optionalEnv =
+          name: value:
+          lib.optionalString (value != null)
+            "${name}=${if builtins.isBool value then lib.boolToString value else toString value}";
+        localDatabase = cfg.databaseHost == "pgdog";
+        databaseDependencies = lib.optionals localDatabase [
+          quadlet.containers.postgres.ref
+          "postgres-provision.service"
+        ];
+        remoteDatabaseDependencies = lib.optional (!localDatabase) "tailscale-autoconnect.service";
+        mtproxyDependencies = lib.optional cfg.useMtproxy quadlet.containers.mtproxy.ref;
       in
       {
         sops.templates."teldrive.env" = secrets.mkTemplate {
           name = "teldrive.env";
           content = ''
             TELDRIVE_HTTP_ADDRESS=0.0.0.0:8080
-            TELDRIVE_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
+            TELDRIVE_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@${cfg.databaseHost}:6432/postgres
             TELDRIVE_SECURITY_SIGNING_KEY=${secrets.teldrive.signing_key}
             TELDRIVE_SECURITY_DATA_KEY=${secrets.teldrive.data_key}
             TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION=1
             TELDRIVE_ENCRYPTION_KEYS=1:${secrets.teldrive.encryption_key}
-            TELDRIVE_TELEGRAM_MTPROXY_ADDRESS=mtproxy:443
-            TELDRIVE_TELEGRAM_MTPROXY_SECRET=${secrets.mtproxy.secret}
+            TELDRIVE_JOBS_RUN_WORKERS=${lib.boolToString cfg.runWorkers}
+            ${lib.optionalString cfg.useMtproxy ''
+              TELDRIVE_TELEGRAM_MTPROXY_ADDRESS=mtproxy:443
+                          TELDRIVE_TELEGRAM_MTPROXY_SECRET=${secrets.mtproxy.secret}''}
             TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY=false
-            TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL=true
-            TELDRIVE_TELEGRAM_DOWNLOAD_BOTS=4
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_BOTS" download.bots}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL" download.clientPool}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL_SIZE" download.clientPoolSize}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL_MAX" download.clientPoolMax}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_MAX_SESSIONS" download.clientMaxSessions}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_READ_BUFFERS" download.readBuffers}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_READ_PARALLEL" download.readParallel}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_IDLE_TIMEOUT" download.clientIdleTimeout}
+            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_ACQUIRE_TIMEOUT" download.clientAcquireTimeout}
             TELDRIVE_TELEGRAM_RATE_LIMIT=false
             TELDRIVE_SECURITY_ACCESS_TOKEN_TTL=24h
             TELDRIVE_SECURITY_REFRESH_TOKEN_TTL=8760h
@@ -49,19 +76,13 @@
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "teldrive" ];
             environmentFiles = [ "${containers.secretDir}/teldrive.env" ];
+            publishPorts = lib.optional (cfg.port != null) "${toString cfg.port}:8080";
             autoUpdate = "registry";
           };
           unitConfig = {
-            After = [
-              quadlet.containers.postgres.ref
-              quadlet.containers.mtproxy.ref
-              "postgres-provision.service"
-            ];
-            Requires = [
-              quadlet.containers.postgres.ref
-              quadlet.containers.mtproxy.ref
-              "postgres-provision.service"
-            ];
+            After = databaseDependencies ++ remoteDatabaseDependencies ++ mtproxyDependencies;
+            Requires = databaseDependencies ++ mtproxyDependencies;
+            Wants = remoteDatabaseDependencies;
           };
           serviceConfig = {
             Restart = "always";

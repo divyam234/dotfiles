@@ -8,7 +8,36 @@
     hostName = "laptop";
     user = "bhunter";
     secretsFile = ../../../hosts/laptop/secrets.yaml;
+    rcloneWebdav = {
+      remote = "tdrive:";
+      port = 8888;
+      configDatabaseHost = "netcup.tail69fe7a.ts.net";
+      cors = true;
+      extraArgs = [ "--teldrive-api-host=http://127.0.0.1:8887" ];
+      cacheDir = "/mnt/drive/rclone";
+      vfs = {
+        cacheMode = "full";
+        cacheMaxAge = "8670h";
+        dirCacheTime = "24h";
+        pollInterval = "1s";
+        readAhead = "512M";
+      };
+    };
     tailscale.autoconnect = true;
+    teldrive = {
+      databaseHost = "netcup.tail69fe7a.ts.net";
+      download = {
+        bots = 2;
+        clientPool = true;
+        clientPoolSize = 32;
+        readBuffers = 32;
+        readParallel = 4;
+      };
+      exposeThroughCaddy = false;
+      port = 8887;
+      runWorkers = false;
+      useMtproxy = false;
+    };
     outputs = [
       {
         name = "eDP-1";

@@ -11,6 +11,10 @@
     secretsFile = ../../../hosts/netcup/secrets.yaml;
     dns.publicTarget.ipv4.source = "local";
     tailscale.autoconnect = true;
+    teldrive.download = {
+      bots = 4;
+      clientPool = true;
+    };
     caddy.cacheDir = "/var/cache/caddy";
     instantiate = entityLib.mkNixos "aarch64-linux";
 

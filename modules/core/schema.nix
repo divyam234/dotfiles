@@ -111,6 +111,239 @@
           description = "Host-specific Tailscale settings.";
         };
 
+        teldrive = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              databaseHost = lib.mkOption {
+                type = lib.types.str;
+                default = "pgdog";
+                description = "PostgreSQL connection host used by TelDrive.";
+              };
+              port = lib.mkOption {
+                type = lib.types.nullOr lib.types.port;
+                default = null;
+                description = "Optional host port published to TelDrive's container port 8080.";
+              };
+              exposeThroughCaddy = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether to publish TelDrive through this host's Caddy instance.";
+              };
+              runWorkers = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether this TelDrive instance runs background workers.";
+              };
+              useMtproxy = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether TelDrive connects to Telegram through MTProxy.";
+              };
+              download = lib.mkOption {
+                type = lib.types.submodule {
+                  options = {
+                    bots = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    clientPool = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    clientPoolSize = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    clientPoolMax = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    clientMaxSessions = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    readBuffers = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    readParallel = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    clientIdleTimeout = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    clientAcquireTimeout = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                  };
+                };
+                default = { };
+                description = "Optional Telegram download settings; null values are omitted.";
+              };
+            };
+          };
+          default = { };
+          description = "Host-specific TelDrive settings.";
+        };
+
+        rcloneWebdav = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              remote = lib.mkOption {
+                type = lib.types.str;
+                default = "gpix:";
+                description = "Rclone remote served over WebDAV.";
+              };
+              port = lib.mkOption {
+                type = lib.types.port;
+                default = 9000;
+                description = "Tailnet port used by the WebDAV server.";
+              };
+              configDatabaseHost = lib.mkOption {
+                type = lib.types.str;
+                default = "netcup";
+                description = "PostgreSQL host containing the shared rclone configuration.";
+              };
+              configDatabasePort = lib.mkOption {
+                type = lib.types.port;
+                default = 6432;
+                description = "PostgreSQL port containing the shared rclone configuration.";
+              };
+              extraArgs = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                example = [
+                  "--read-only"
+                  "--baseurl=/media"
+                ];
+                description = "Additional arguments passed to rclone serve webdav.";
+              };
+              cors = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Allow cross-origin WebDAV requests from any origin.";
+              };
+              cacheDir = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Host directory used for the rclone VFS cache.";
+              };
+              vfs = lib.mkOption {
+                type = lib.types.submodule {
+                  options = {
+                    dirCacheTime = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    pollInterval = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    blockNormDupes = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    cacheMaxAge = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    cacheMaxSize = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    cacheMinFreeSpace = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    cacheMode = lib.mkOption {
+                      type = lib.types.nullOr (
+                        lib.types.enum [
+                          "off"
+                          "minimal"
+                          "writes"
+                          "full"
+                        ]
+                      );
+                      default = null;
+                    };
+                    cachePollInterval = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    caseInsensitive = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    diskSpaceTotalSize = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    fastFingerprint = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    handleCaching = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    links = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    metadataExtension = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    readAhead = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    readChunkSize = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    readChunkSizeLimit = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    readChunkStreams = lib.mkOption {
+                      type = lib.types.nullOr lib.types.int;
+                      default = null;
+                    };
+                    readWait = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    refresh = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    usedIsSize = lib.mkOption {
+                      type = lib.types.nullOr lib.types.bool;
+                      default = null;
+                    };
+                    writeBack = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                    writeWait = lib.mkOption {
+                      type = lib.types.nullOr lib.types.str;
+                      default = null;
+                    };
+                  };
+                };
+                default = { };
+                description = "Optional rclone VFS settings; null values are omitted.";
+              };
+            };
+          };
+          default = { };
+          description = "Host-specific rclone WebDAV settings.";
+        };
+
         greeter = lib.mkOption {
           type = lib.types.submodule {
             options.output.scale = lib.mkOption {
