@@ -14,6 +14,8 @@
     teldrive.download = {
       bots = 4;
       clientPool = true;
+      readBuffers = 32;
+      readParallel = 4;
     };
     caddy.cacheDir = "/var/cache/caddy";
     instantiate = entityLib.mkNixos "aarch64-linux";

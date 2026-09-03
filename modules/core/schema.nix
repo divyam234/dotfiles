@@ -150,32 +150,12 @@
                       type = lib.types.nullOr lib.types.bool;
                       default = null;
                     };
-                    clientPoolSize = lib.mkOption {
-                      type = lib.types.nullOr lib.types.int;
-                      default = null;
-                    };
-                    clientPoolMax = lib.mkOption {
-                      type = lib.types.nullOr lib.types.int;
-                      default = null;
-                    };
-                    clientMaxSessions = lib.mkOption {
-                      type = lib.types.nullOr lib.types.int;
-                      default = null;
-                    };
                     readBuffers = lib.mkOption {
                       type = lib.types.nullOr lib.types.int;
                       default = null;
                     };
                     readParallel = lib.mkOption {
                       type = lib.types.nullOr lib.types.int;
-                      default = null;
-                    };
-                    clientIdleTimeout = lib.mkOption {
-                      type = lib.types.nullOr lib.types.str;
-                      default = null;
-                    };
-                    clientAcquireTimeout = lib.mkOption {
-                      type = lib.types.nullOr lib.types.str;
                       default = null;
                     };
                   };

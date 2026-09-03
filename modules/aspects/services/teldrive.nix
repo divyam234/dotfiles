@@ -54,13 +54,8 @@
             TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY=false
             ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_BOTS" download.bots}
             ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL" download.clientPool}
-            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL_SIZE" download.clientPoolSize}
-            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL_MAX" download.clientPoolMax}
-            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_MAX_SESSIONS" download.clientMaxSessions}
             ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_READ_BUFFERS" download.readBuffers}
             ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_READ_PARALLEL" download.readParallel}
-            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_IDLE_TIMEOUT" download.clientIdleTimeout}
-            ${optionalEnv "TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_ACQUIRE_TIMEOUT" download.clientAcquireTimeout}
             TELDRIVE_TELEGRAM_RATE_LIMIT=false
             TELDRIVE_SECURITY_ACCESS_TOKEN_TTL=24h
             TELDRIVE_SECURITY_REFRESH_TOKEN_TTL=8760h

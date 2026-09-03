@@ -29,7 +29,6 @@
       download = {
         bots = 2;
         clientPool = true;
-        clientPoolSize = 32;
         readBuffers = 32;
         readParallel = 4;
       };
