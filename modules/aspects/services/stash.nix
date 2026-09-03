@@ -55,6 +55,7 @@ in
               RCLONE_POLL_INTERVAL = "1s";
               STASH_IMAGE_CACHE_DIR = "/var/cache/images";
               STASH_IMAGE_CACHE_MAX_SIZE = "30G";
+              GOMAXPROCS = "4";
             };
             volumes = [
               "/var/cache/rclone:/var/cache/rclone"
@@ -76,7 +77,7 @@ in
             RestartSec = "10s";
             NoNewPrivileges = true;
             MemoryMax = "2G";
-            CPUQuota = "200%";
+            CPUQuota = "400%";
           };
         };
       };
