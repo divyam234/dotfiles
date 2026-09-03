@@ -83,8 +83,8 @@ in
           };
           signingKey = lib.mkOption {
             type = lib.types.str;
-            default = "~/.ssh/id_ed25519.pub";
-            description = "SSH public key path used for Git commit signing.";
+            default = ".ssh/id_ed25519.pub";
+            description = "SSH public key path used for Git commit signing (relative to home or absolute; ~ is not reliably expanded for SSH signing).";
           };
           signingPublicKey = lib.mkOption {
             type = lib.types.str;

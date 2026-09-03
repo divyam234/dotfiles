@@ -35,7 +35,7 @@
           enable = true;
           lfs.enable = true;
           signing = {
-            key = "~/.ssh/id_ed25519.pub";
+            key = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
             format = "ssh";
             signByDefault = true;
           };
@@ -53,7 +53,7 @@
               pager = "delta";
             };
             color.ui = true;
-            gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
+            gpg.ssh.allowedSignersFile = "${config.home.homeDirectory}/.ssh/allowed_signers";
             url."ssh://git@github.com/".insteadOf = "https://github.com/";
 
             alias = {
