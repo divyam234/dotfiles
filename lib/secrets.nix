@@ -69,6 +69,10 @@ let
       "mtproxy"
       "secret"
     ]
+    [
+      "openai"
+      "api_key"
+    ]
   ];
 
   hostPaths = {

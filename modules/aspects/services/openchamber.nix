@@ -22,6 +22,7 @@
 
             Service = {
               Type = "simple";
+              EnvironmentFile = "%h/.config/opencode/opencode.env";
               ExecStart = "${pkgs.opencode}/bin/opencode serve --port 4095";
               Restart = "on-failure";
               RestartSec = "5s";

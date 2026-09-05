@@ -75,7 +75,7 @@ in
 
         programs.noctalia-greeter = {
           enable = true;
-          package = inputs.noctalia-greeter.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = pkgs.noctalia-greeter;
 
           greeter-args = "--session niri --user ${host.user}";
 

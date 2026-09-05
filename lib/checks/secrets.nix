@@ -12,6 +12,7 @@ let
     "nordvpn/private_key"
     "mtproxy/secret"
     "nordvpn/token"
+    "openai/api_key"
     "postgres/password"
     "postgres/user"
     "ssh/private_key"

@@ -1,33 +1,21 @@
 { den, ... }:
 
 {
-  den.aspects.ai = {
+  den.aspects.ai = { host, ... }: {
     homeManager =
-      { lib, pkgs, ... }:
+      {
+        lib,
+        pkgs,
+        config,
+        secrets,
+        ...
+      }:
 
       let
         json = pkgs.formats.json { };
 
-        mkLocalMcp =
-          {
-            package,
-            args ? [ ],
-            enabled ? false,
-            environment ? null,
-          }:
-          {
-            type = "local";
-            command = [
-              "bun"
-              "x"
-              "${package}@latest"
-            ]
-            ++ args;
-            inherit enabled;
-          }
-          // lib.optionalAttrs (environment != null) {
-            inherit environment;
-          };
+        gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
+        opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
 
         mkAgent =
           {
@@ -44,33 +32,58 @@
           };
 
         models = {
-          openaiStrong = "openai/gpt-5.6-sol";
-          openaiMedium = "openai/gpt-5.6-terra";
+          openaiStrong = "openai/gpt-6-astra";
           openaiFast = "openai/gpt-5.6-luna";
-          opencode = "opencode/muse-spark-1.2-contributor-free";
+          opencode = "opencode/muse-spark-1.3-contributor-free";
         };
 
         opencodeConfig = {
           "$schema" = "https://opencode.ai/config.json";
           autoupdate = false;
+          compaction = {
+            auto = true;
+            prune = true;
+            reserved = 32768;
+          };
           tools = {
             task = false;
           };
-
-          mcp = {
-            react-aria = mkLocalMcp {
-              package = "@react-aria/mcp";
+          provider = {
+            openai = {
+              npm = "@ai-sdk/openai";
+              options = {
+                baseURL = gproxyBaseUrl;
+                apiKey = "{env:OPENAI_API_KEY}";
+              };
+              models = {
+                gpt-6-astra = {
+                  name = "GPT 6 Astra";
+                  release_date = "2026-09-03";
+                  attachment = true;
+                  reasoning = true;
+                  temperature = false;
+                  tool_call = true;
+                  cost = {
+                    input = 10.0;
+                    output = 50.0;
+                    cache_read = 1.0;
+                    cache_write = 12.5;
+                  };
+                  limit = {
+                    context = 1050000;
+                    input = 922000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                };
+              };
             };
-
-            heroui = mkLocalMcp {
-              package = "@heroui/react-mcp";
-            };
-
-            shadcn = mkLocalMcp {
-              package = "shadcn";
-              args = [ "mcp" ];
-            };
-
           };
 
           plugin = [
@@ -88,15 +101,14 @@
           presets = {
             openai = {
               orchestrator = mkAgent {
-                model = models.openaiMedium;
-                variant = "medium";
+                model = models.openaiStrong;
+                variant = "high";
                 skills = [ "*" ];
                 mcps = [
                   "*"
                   "!context7"
                 ];
               };
-
               oracle = mkAgent {
                 model = models.openaiStrong;
                 variant = "high";
@@ -124,7 +136,7 @@
               };
 
               fixer = mkAgent {
-                model = models.openaiFast;
+                model = models.openaiStrong;
                 variant = "medium";
               };
             };
@@ -181,27 +193,52 @@
         };
       in
       {
-        programs.opencode = {
-          enable = true;
-          package = pkgs.opencode;
-          settings = opencodeConfig;
+        programs = {
+          opencode = {
+            enable = true;
+            package = pkgs.opencode;
+            settings = opencodeConfig;
+          };
+
+          fish.interactiveShellInit = lib.mkAfter ''
+            if test -f "${opencodeEnvFile}"
+              envsource "${opencodeEnvFile}"
+            end
+          '';
+
+          bash.initExtra = lib.mkAfter ''
+            if [ -f "${opencodeEnvFile}" ]; then
+              set -a
+              . "${opencodeEnvFile}"
+              set +a
+            fi
+          '';
+
+          bunGlobalCli = {
+            enable = true;
+            cachePruneScopes = [ "@oh-my-pi" ];
+            packages = lib.mkAfter [
+              "@oh-my-pi/pi-coding-agent"
+            ];
+            timer = {
+              enable = true;
+              calendar = "daily";
+            };
+          };
         };
 
         stylix.targets.opencode.enable = true;
 
-        home.packages = [ pkgs.codeforge ];
-
-        programs.bunGlobalCli = {
-          enable = true;
-          cachePruneScopes = [ "@oh-my-pi" ];
-          packages = lib.mkAfter [
-            "@oh-my-pi/pi-coding-agent"
-          ];
-          timer = {
-            enable = true;
-            calendar = "daily";
-          };
+        sops.templates."opencode.env" = secrets.mkTemplate {
+          name = "opencode.env";
+          path = opencodeEnvFile;
+          mode = "0400";
+          content = ''
+            OPENAI_API_KEY=${secrets.openai.api_key}
+          '';
         };
+
+        home.packages = [ pkgs.codeforge ];
 
         home.file.".config/opencode/oh-my-opencode-slim.json".source =
           json.generate "oh-my-opencode-slim.json" omoSlimConfig;

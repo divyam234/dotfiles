@@ -24,7 +24,7 @@
       let
         quadlet = config.virtualisation.quadlet;
         cfg = host.teldrive;
-        download = cfg.download;
+        inherit (cfg) download;
         optionalEnv =
           name: value:
           lib.optionalString (value != null)

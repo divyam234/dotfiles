@@ -7,6 +7,7 @@
   den.hosts.x86_64-linux.laptop = {
     hostName = "laptop";
     user = "bhunter";
+    domain = "bhunter.tech";
     secretsFile = ../../../hosts/laptop/secrets.yaml;
     rcloneWebdav = {
       remote = "tdrive:";
