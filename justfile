@@ -30,6 +30,9 @@ write-flake:
 clean:
     nh clean all
 
+pull:
+    git pull --ff-only
+
 update:
     nix flake update
 

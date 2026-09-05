@@ -79,6 +79,7 @@
           zoxide = {
             enable = true;
             enableFishIntegration = true;
+            options = [ "--cmd cd" ];
           };
           fzf = {
             enable = true;
