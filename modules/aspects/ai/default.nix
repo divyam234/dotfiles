@@ -43,7 +43,6 @@
           compaction = {
             auto = true;
             prune = true;
-            reserved = 32768;
           };
           tools = {
             task = false;
@@ -54,34 +53,6 @@
               options = {
                 baseURL = gproxyBaseUrl;
                 apiKey = "{env:OPENAI_API_KEY}";
-              };
-              models = {
-                gpt-6-astra = {
-                  name = "GPT 6 Astra";
-                  release_date = "2026-09-03";
-                  attachment = true;
-                  reasoning = true;
-                  temperature = false;
-                  tool_call = true;
-                  cost = {
-                    input = 10.0;
-                    output = 50.0;
-                    cache_read = 1.0;
-                    cache_write = 12.5;
-                  };
-                  limit = {
-                    context = 1050000;
-                    input = 922000;
-                    output = 128000;
-                  };
-                  modalities = {
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                    output = [ "text" ];
-                  };
-                };
               };
             };
           };
