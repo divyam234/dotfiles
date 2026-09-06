@@ -54,6 +54,7 @@ rec {
         securityHeaders = true;
         access = null;
         proxied = false;
+        upstreams = [ ];
         extraConfig = "";
       }
       // route;
@@ -63,6 +64,7 @@ rec {
       encodeBlock = if normalized.encode then "encode zstd gzip" else "";
       upstreams = lib.concatStringsSep " " normalized.upstreams;
       inherit (normalized) extraConfig;
+      proxyBlock = if normalized.upstreams == [ ] then "" else "reverse_proxy ${upstreams}";
     in
     ''
       ${normalized.host} {
@@ -71,7 +73,7 @@ rec {
         ${headersBlock}
         ${cacheBlock}
         ${extraConfig}
-        reverse_proxy ${upstreams}
+        ${proxyBlock}
       }
     '';
 
