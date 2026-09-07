@@ -8,6 +8,7 @@ let
     "adguard-cli"
     "caddy"
     "forgejo"
+    "gemini-fastapi"
     "gluetun"
     "gproxy"
     "pgdog"

@@ -8,6 +8,7 @@
       den.aspects.adguard
       den.aspects.codeforge
       den.aspects.forgejo
+      den.aspects.gemini-fastapi
       den.aspects.gluetun
       den.aspects.gproxy
       den.aspects.openchamber

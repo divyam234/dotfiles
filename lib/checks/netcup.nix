@@ -31,6 +31,7 @@ assert lib.hasInfix ''iifname "eth0" ct status dnat tcp dport { 80, 443 } accept
 assert lib.hasInfix ''iifname "eth0" ct status dnat udp dport 443 accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat drop'' containerIngress;
 assert lib.hasInfix "git.${domain}" caddyfile;
+assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert builtins.elem {
   name = "git.${domain}";

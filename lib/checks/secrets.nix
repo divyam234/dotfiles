@@ -25,6 +25,9 @@ let
     "users/bhunter/password"
   ];
   expectedNetcup = expectedCommon ++ [
+    "gemini-fastapi/api_key"
+    "gemini-fastapi/secure_1psid"
+    "gemini-fastapi/secure_1psidts"
     "gproxy/admin_password"
     "gproxy/master_key"
     "redis/password"
@@ -39,6 +42,7 @@ let
     "caddy.env"
     "cloudflare-dns.env"
     "forgejo.env"
+    "gemini-fastapi.env"
     "gluetun.env"
     "gproxy.env"
     "mtproxy.env"
