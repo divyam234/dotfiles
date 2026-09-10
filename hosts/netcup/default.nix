@@ -6,6 +6,7 @@
       den.aspects.ai
 
       den.aspects.adguard
+      den.aspects.camofox
       den.aspects.codeforge
       den.aspects.forgejo
       den.aspects.gemini-fastapi

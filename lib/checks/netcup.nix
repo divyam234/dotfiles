@@ -14,6 +14,10 @@ assert builtins.hasAttr userName netcup.home-manager.users;
 assert builtins.hasAttr hostName netcup.services.restic.backups;
 assert builtins.hasAttr "ghcr-auth" netcup.systemd.services;
 assert builtins.hasAttr "ghcr-auth" userHome.systemd.user.services;
+assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
+assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
+assert !(userHome.systemd.user.services.codeforge.Service ? NoNewPrivileges);
+assert builtins.hasAttr "codeforge.env" userHome.sops.templates;
 assert builtins.elem "/var/cache/caddy:/var/cache/caddy"
   netcup.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem 53 netcup.networking.firewall.interfaces."br-svc".allowedUDPPorts;

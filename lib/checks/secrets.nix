@@ -6,6 +6,9 @@
 }:
 let
   expectedCommon = [
+    "camofox/access_key"
+    "camofox/admin_key"
+    "camofox/api_key"
     "cloudflare/api_token"
     "codeforge/token"
     "github/token"
@@ -40,6 +43,7 @@ let
   netcupHome = netcup.home-manager.users.bhunter;
   expectedTemplates = [
     "caddy.env"
+    "camofox.env"
     "cloudflare-dns.env"
     "forgejo.env"
     "gemini-fastapi.env"

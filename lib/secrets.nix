@@ -34,6 +34,18 @@ let
       "token"
     ]
     [
+      "camofox"
+      "access_key"
+    ]
+    [
+      "camofox"
+      "admin_key"
+    ]
+    [
+      "camofox"
+      "api_key"
+    ]
+    [
       "stash"
       "secret_key"
     ]

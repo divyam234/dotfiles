@@ -11,6 +11,7 @@
           curl
           curlie
           doggo
+          gost
           gping
           httpie
           ipcalc

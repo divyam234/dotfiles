@@ -7,6 +7,7 @@ let
   expected = [
     "adguard-cli"
     "caddy"
+    "camofox-browser"
     "forgejo"
     "gemini-fastapi"
     "gluetun"
@@ -37,4 +38,11 @@ assert !(netcup.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert !(builtins.elem 9080 netcup.networking.firewall.allowedTCPPorts);
 assert !(builtins.elem 9080 homelab.networking.firewall.allowedTCPPorts);
+assert
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
+    "9377:9377"
+  ];
+assert
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
+  == "0.0.0.0";
 true

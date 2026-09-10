@@ -39,7 +39,7 @@
           autoStart = true;
           containerConfig = {
             name = "gemini-fastapi";
-            image = "ghcr.io/nativu5/gemini-fastapi:latest";
+            image = "ghcr.io/divyam234/gemini-fastapi:latest";
             networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gemini-fastapi" ];
             environmentFiles = [ "${containers.secretDir}/gemini-fastapi.env" ];
