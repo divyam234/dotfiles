@@ -110,7 +110,12 @@
       home = self.homeConfigurations."bhunter@laptop".config;
       contracts = {
         containers = import ../lib/checks/containers.nix {
-          inherit homelab lib netcup;
+          inherit
+            homelab
+            laptop
+            lib
+            netcup
+            ;
         };
         homelab = import ../lib/checks/homelab.nix { inherit homelab; };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
@@ -209,8 +214,9 @@
           test ! -e ${./core}/dispatch.nix
           test ! -e ${./core}/entities.nix
           test ! -e ${./core}/composition.nix
-          ! grep -R --include='*.nix' -E '__scopeHandlers|constantHandler|resolveHost|homeManagerMode' \
+          ! grep -R --include='*.nix' -E '__scopeHandlers|constantHandler|resolveHost|homeManagerMode|entityLib|mutual-provider|host\.user|den\.aspects\.sops' \
             ${../hosts} ${../lib} ${./aspects} ${./core} ${./entities}
+          ! grep -R --include='*.nix' -E 'sopsFile[[:space:]]*=' ${./aspects}
           touch $out
         '';
 

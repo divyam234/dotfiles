@@ -1,17 +1,19 @@
 { den, ... }:
 {
   den.aspects.camofox = { user, ... }: {
+    nixosSecrets = [
+      "camofox/access_key"
+      "camofox/admin_key"
+      "camofox/api_key"
+    ];
+
     nixos =
       {
-        config,
         containers,
         pkgs,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."camofox.env" = secrets.mkTemplate {
           name = "camofox.env";
@@ -23,12 +25,9 @@
         };
 
         virtualisation.quadlet.containers.camofox-browser = {
-          autoStart = true;
           containerConfig = {
-            name = "camofox-browser";
             image = "ghcr.io/jo-inc/camofox-browser:latest";
             healthCmd = "none";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "camofox-browser" ];
             environmentFiles = [ "${containers.secretDir}/camofox.env" ];
             environments = {
@@ -38,13 +37,9 @@
             };
             publishPorts = [ "9377:9377" ];
             volumes = [ "${containers.dataRoot}/camofox:/root/.camofox" ];
-            autoUpdate = "registry";
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/camofox";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "3G";
             CPUQuota = "200%";
           };

@@ -1,13 +1,13 @@
 { den, ... }:
 {
-  den.aspects.users = {
+  den.aspects.users = { user, ... }: {
     includes = [
       den.batteries.primary-user
       (den.batteries.user-shell "fish")
     ];
 
     nixos =
-      { user, secrets, ... }:
+      { secrets, ... }:
       let
         passwordSecret = secrets.users.${user.userName}.password;
       in
@@ -23,12 +23,18 @@
           )
         ];
 
-        users.users.${user.userName} = {
-          inherit (user) uid;
-          description = user.fullName or user.userName;
-          openssh.authorizedKeys.keys = user.authorizedKeys;
-          hashedPasswordFile = passwordSecret.path;
-        };
+      };
+
+    user =
+      { secrets, ... }:
+      let
+        passwordSecret = secrets.users.${user.userName}.password;
+      in
+      {
+        inherit (user) uid;
+        description = user.fullName or user.userName;
+        openssh.authorizedKeys.keys = user.authorizedKeys;
+        hashedPasswordFile = passwordSecret.path;
       };
   };
 

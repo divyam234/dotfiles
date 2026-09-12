@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, inputs, ... }:
 {
   flake-file.inputs.lazyvim = {
     url = "github:pfassina/lazyvim-nix";
@@ -7,7 +7,7 @@
 
   den.aspects.neovim = {
     homeManager =
-      { pkgs, inputs, ... }:
+      { pkgs, ... }:
       {
         imports = [
           inputs.lazyvim.homeManagerModules.default

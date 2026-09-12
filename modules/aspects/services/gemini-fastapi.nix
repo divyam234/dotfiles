@@ -1,6 +1,12 @@
 { den, ... }:
 {
   den.aspects.gemini-fastapi = { host, ... }: {
+    nixosSecrets = [
+      "gemini-fastapi/api_key"
+      "gemini-fastapi/secure_1psid"
+      "gemini-fastapi/secure_1psidts"
+    ];
+
     caddyRoutes = {
       gemini-fastapi = {
         host = "gemini.${host.domain}";
@@ -11,16 +17,12 @@
 
     nixos =
       {
-        config,
         containers,
         pkgs,
         user,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."gemini-fastapi.env" = secrets.mkTemplate {
           name = "gemini-fastapi.env";
@@ -36,11 +38,8 @@
         };
 
         virtualisation.quadlet.containers.gemini-fastapi = {
-          autoStart = true;
           containerConfig = {
-            name = "gemini-fastapi";
             image = "ghcr.io/divyam234/gemini-fastapi:latest";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gemini-fastapi" ];
             environmentFiles = [ "${containers.secretDir}/gemini-fastapi.env" ];
             environments = {
@@ -52,13 +51,9 @@
               "${containers.dataRoot}/gemini-fastapi/data:/app/data"
               "${containers.dataRoot}/gemini-fastapi/cache:/app/cache"
             ];
-            autoUpdate = "registry";
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gemini-fastapi/data ${containers.dataRoot}/gemini-fastapi/cache";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "1G";
             CPUQuota = "100%";
           };

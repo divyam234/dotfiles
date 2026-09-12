@@ -1,13 +1,5 @@
-{
-  bhunterUser,
-  entityLib,
-  ...
-}:
-{
+_: {
   den.hosts.x86_64-linux.laptop = {
-    hostName = "laptop";
-    user = "bhunter";
-    domain = "bhunter.tech";
     secretsFile = ../../../hosts/laptop/secrets.yaml;
     rcloneWebdav = {
       remote = "tdrive:";
@@ -24,14 +16,10 @@
         readAhead = "512M";
       };
     };
-    tailscale.autoconnect = true;
     teldrive = {
       databaseHost = "netcup.tail69fe7a.ts.net";
       download = {
         bots = 2;
-        clientPool = true;
-        readBuffers = 32;
-        readParallel = 4;
       };
       exposeThroughCaddy = false;
       port = 8887;
@@ -55,10 +43,6 @@
       }
     ];
 
-    instantiate = entityLib.mkNixos "x86_64-linux";
-
-    users.bhunter = bhunterUser // {
-      classes = [ ];
-    };
+    users.bhunter.classes = [ "user" ];
   };
 }

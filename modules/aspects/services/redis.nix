@@ -1,17 +1,15 @@
 { den, ... }:
 {
   den.aspects.redis = _: {
+    nixosSecrets = [ "redis/password" ];
+
     nixos =
       {
-        config,
         containers,
         pkgs,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."redis.env" = secrets.mkTemplate {
           name = "redis.env";
@@ -21,22 +19,15 @@
         };
 
         virtualisation.quadlet.containers.redis = {
-          autoStart = true;
           containerConfig = {
-            name = "redis";
             image = "docker.io/bitnami/redis";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "redis" ];
             environmentFiles = [ "${containers.secretDir}/redis.env" ];
             volumes = [ "${containers.dataRoot}/redis:/bitnami/redis/data" ];
             healthCmd = "redis-cli -a $REDIS_PASSWORD ping | grep -q PONG";
-            autoUpdate = "registry";
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 1001 -g 0 ${containers.dataRoot}/redis";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "512M";
             CPUQuota = "100%";
           };

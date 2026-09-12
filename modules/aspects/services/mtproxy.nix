@@ -1,16 +1,14 @@
 { den, ... }:
 {
   den.aspects.mtproxy = _: {
+    nixosSecrets = [ "mtproxy/secret" ];
+
     nixos =
       {
-        config,
         containers,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."mtproxy.env" = secrets.mkTemplate {
           name = "mtproxy.env";
@@ -22,20 +20,13 @@
         };
 
         virtualisation.quadlet.containers.mtproxy = {
-          autoStart = true;
           containerConfig = {
-            name = "mtproxy";
             image = "ghcr.io/teleproxy/teleproxy:latest";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "mtproxy" ];
             publishPorts = [ "8670:443" ];
             environmentFiles = [ "${containers.secretDir}/mtproxy.env" ];
-            autoUpdate = "registry";
           };
           serviceConfig = {
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "512M";
             CPUQuota = "100%";
           };

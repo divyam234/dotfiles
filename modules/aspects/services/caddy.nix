@@ -1,6 +1,32 @@
 { den, ... }:
 {
+  den.schema.host =
+    { lib, ... }:
+    {
+      options = {
+        caddyEmail = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "ACME contact email. Defaults to admin@domain when unset.";
+        };
+
+        caddy = lib.mkOption {
+          type = lib.types.submodule {
+            options.cacheDir = lib.mkOption {
+              type = lib.types.str;
+              default = "/var/cache/caddy";
+              description = "Host directory mounted as the Caddy cache.";
+            };
+          };
+          default = { };
+          description = "Host-specific Caddy settings.";
+        };
+      };
+    };
+
   den.aspects.caddy = { user, ... }: {
+    nixosSecrets = [ "cloudflare/api_token" ];
+
     nixos =
       {
         config,
@@ -8,28 +34,28 @@
         caddyRoutes,
         containers,
         lib,
+        dotfiles,
         host,
         pkgs,
         secrets,
         ...
       }:
       let
-        quadlet = config.virtualisation.quadlet;
         routes = lib.pipe caddyRoutes [ (lib.foldl' lib.recursiveUpdate { }) ];
         routeList = lib.pipe routes [
           (lib.mapAttrsToList (name: route: route // { inherit name; }))
         ];
         duplicateRouteNames = lib.pipe caddyRoutes [
           (lib.concatMap builtins.attrNames)
-          lib.denful.findDuplicates
+          dotfiles.findDuplicates
         ];
         duplicateRouteHosts = lib.pipe routeList [
           (map (route: route.host))
-          lib.denful.findDuplicates
+          dotfiles.findDuplicates
         ];
         duplicateLayer4Routes = lib.pipe caddyLayer4Routes [
           lib.flatten
-          lib.denful.findDuplicates
+          dotfiles.findDuplicates
         ];
         cacheDir = host.caddy.cacheDir;
         publicRoutes = lib.pipe routeList [
@@ -110,7 +136,7 @@
             }
           ];
 
-          environment.etc."caddy/Caddyfile".text = lib.denful.mkCaddyfile {
+          environment.etc."caddy/Caddyfile".text = dotfiles.mkCaddyfile {
             inherit global routes;
           };
 
@@ -126,11 +152,8 @@
           ];
 
           virtualisation.quadlet.containers.caddy = {
-            autoStart = true;
             containerConfig = {
-              name = "caddy";
               image = "ghcr.io/tgdrive/caddy";
-              networks = [ quadlet.networks.${containers.networkName}.ref ];
               networkAliases = [ "caddy" ];
               environmentFiles = [ "${containers.secretDir}/caddy.env" ];
               publishPorts = [
@@ -144,14 +167,10 @@
                 "${containers.dataRoot}/caddy-config:/config"
                 "${cacheDir}:/var/cache/caddy"
               ];
-              autoUpdate = "registry";
             };
             unitConfig.RequiresMountsFor = [ cacheDir ];
             serviceConfig = {
               ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/caddy ${containers.dataRoot}/caddy-config ${cacheDir}";
-              Restart = "always";
-              RestartSec = "10s";
-              NoNewPrivileges = true;
               MemoryMax = "2G";
               CPUQuota = "100%";
             };

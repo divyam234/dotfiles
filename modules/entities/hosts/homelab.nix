@@ -1,13 +1,5 @@
-{
-  bhunterUser,
-  entityLib,
-  ...
-}:
-{
+_: {
   den.hosts.x86_64-linux.homelab = {
-    hostName = "homelab";
-    user = "bhunter";
-    domain = "bhunter.tech";
     secretsFile = ../../../hosts/homelab/secrets.yaml;
     dns = {
       refreshInterval = "15m";
@@ -19,12 +11,6 @@
         };
       };
     };
-    tailscale.autoconnect = true;
-
-    instantiate = entityLib.mkNixos "x86_64-linux";
-
-    users.bhunter = bhunterUser // {
-      classes = [ "homeManager" ];
-    };
+    users.bhunter = { };
   };
 }

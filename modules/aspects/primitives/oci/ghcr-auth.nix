@@ -1,11 +1,11 @@
 { den, ... }:
 let
-  ghcrUser = "divyam234";
   mkAuthWriter =
     {
       authFile,
       pkgs,
       tokenFile,
+      username,
     }:
     pkgs.writeShellScript "write-ghcr-auth" ''
       set -eu
@@ -15,7 +15,7 @@ let
       ${pkgs.coreutils}/bin/install -d -m 0700 "$auth_dir"
 
       token="$(${pkgs.coreutils}/bin/tr -d '[:space:]' < ${tokenFile})"
-      auth="$(${pkgs.coreutils}/bin/printf '%s:%s' ${ghcrUser} "$token" | ${pkgs.coreutils}/bin/base64 --wrap=0)"
+      auth="$(${pkgs.coreutils}/bin/printf '%s:%s' ${username} "$token" | ${pkgs.coreutils}/bin/base64 --wrap=0)"
       tmp="$auth_file.tmp.$$"
       trap '${pkgs.coreutils}/bin/rm -f "$tmp"' EXIT
       ${pkgs.coreutils}/bin/printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$auth" > "$tmp"
@@ -25,7 +25,10 @@ let
     '';
 in
 {
-  den.aspects.ghcr-auth = {
+  den.aspects.ghcr-auth = { user, ... }: {
+    homeSecrets = [ "github/token" ];
+    nixosSecrets = [ "github/token" ];
+
     nixos =
       { pkgs, secrets, ... }:
       let
@@ -33,6 +36,7 @@ in
         writer = mkAuthWriter {
           inherit authFile pkgs;
           tokenFile = secrets.github.token.path;
+          username = user.githubUser;
         };
       in
       {
@@ -54,6 +58,7 @@ in
           authFile = "\"$XDG_RUNTIME_DIR/containers/auth.json\"";
           inherit pkgs;
           tokenFile = secrets.github.token.path;
+          username = user.githubUser;
         };
       in
       {

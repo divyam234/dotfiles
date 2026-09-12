@@ -1,6 +1,13 @@
 { den, ... }:
 {
   den.aspects.gproxy = { user, host, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+      "gproxy/admin_password"
+      "gproxy/master_key"
+    ];
+
     postgresSchemas.gproxy = { };
     caddyRoutes = {
       gproxy = {
@@ -36,15 +43,11 @@
         };
 
         virtualisation.quadlet.containers.gproxy = {
-          autoStart = true;
           containerConfig = {
-            name = "gproxy";
             image = "ghcr.io/leenhawk/gproxy:latest";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gproxy" ];
             environmentFiles = [ "${containers.secretDir}/gproxy.env" ];
             volumes = [ "${containers.dataRoot}/gproxy:/app/data" ];
-            autoUpdate = "registry";
           };
           unitConfig = {
             After = [
@@ -58,9 +61,6 @@
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gproxy";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "512M";
             CPUQuota = "100%";
           };

@@ -1,17 +1,15 @@
 { den, ... }:
 {
   den.aspects.gluetun = { user, ... }: {
+    nixosSecrets = [ "nordvpn/private_key" ];
+
     nixos =
       {
-        config,
         containers,
         pkgs,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."gluetun.env" = secrets.mkTemplate {
           name = "gluetun.env";
@@ -27,11 +25,8 @@
         };
 
         virtualisation.quadlet.containers.gluetun = {
-          autoStart = true;
           containerConfig = {
-            name = "gluetun";
             image = "docker.io/qmcgaw/gluetun";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "gluetun" ];
             environmentFiles = [ "${containers.secretDir}/gluetun.env" ];
             addCapabilities = [ "NET_ADMIN" ];
@@ -46,13 +41,9 @@
               "1081:1081"
             ];
             volumes = [ "${containers.dataRoot}/gluetun:/gluetun" ];
-            autoUpdate = "registry";
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gluetun";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "512M";
             CPUQuota = "100%";
           };

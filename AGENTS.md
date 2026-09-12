@@ -19,15 +19,15 @@ entity -> same-named host aspect -> reusable aspects -> NixOS/Home Manager modul
                                       -> quirks -> single consumers
 ```
 
-- Host, home, and user entities live under `modules/entities/`. Constructors in `modules/entities/defaults.nix` create NixOS and Home Manager configurations.
+- Host, home, and user entities live under `modules/entities/` and contain data only. Den's built-in instantiation creates NixOS and Home Manager configurations.
 - `hosts/<name>/default.nix` defines the host aspect and selects shared platform aspects once.
 - Reusable behavior lives in `modules/aspects/`; aspects expose `den.aspects.<name>`, compose through `includes`, and provide `nixos` and/or `homeManager` functions.
 - `modules/core/` defines Den defaults, schemas, shared arguments, and host options. Libraries and overlays are assembled in `lib/bootstrap.nix`.
-- Cross-aspect data flows through the shared quirks `caddyRoutes`, `caddyLayer4Routes`, `postgresDatabases`, and `postgresSchemas`. Consumers must reject duplicate top-level names.
-- Secrets flow from `lib/secrets.nix` and the injected `secrets` argument into SOPS templates. Prefer `secrets` placeholders and `secrets.mkTemplate { name, content }` helper; `sopsFile` defaults via the shared contract and only needs overriding for host-specific files.
+- Cross-aspect data flows through the shared quirks `caddyRoutes`, `caddyLayer4Routes`, `postgresDatabases`, `postgresSchemas`, `nixosSecrets`, and `homeSecrets`. Consumers must reject duplicate top-level names where names are significant.
+- Secrets flow from the allowed catalog in `lib/secrets.nix` and the injected `secrets` argument into SOPS templates. Aspects emit catalog paths through `nixosSecrets` or `homeSecrets`; prefer `secrets` placeholders and `secrets.mkTemplate { name, content }`, and do not set `sopsFile` in leaf aspects.
 - Service aspects define Quadlet units and their systemd runtime dependencies. Do not duplicate `oci-service`, `requires-domain`, or `requires-secrets` through leaf services; Den `includes` are compositional, not identity-deduplicated.
 
-Home Manager relationships are structural: `netcup` uses integrated Home Manager with a `homeManager`-class user; `bhunter@laptop` is a standalone home for a classless system user.
+Home Manager relationships are structural: `netcup` and `homelab` use Den's integrated Home Manager policy with `homeManager`-class users; `bhunter@laptop` is a standalone home for a `user`-class system user.
 
 Do not introduce inventories, mode flags, string routing, registries, dispatchers, dependency resolvers, forwarding layers, or Den-internal mutation. Never access Den internals such as `__scopeHandlers`.
 
@@ -74,11 +74,11 @@ just write-flake
 
 ### Nix
 
-- Use `entityLib.mkNixos` and `entityLib.mkHome` from `modules/entities/defaults.nix`.
+- Rely on Den's built-in `instantiate` defaults unless a genuinely custom Nix class requires another constructor.
 - Put direct declarations in `modules/entities/`, host implementation in `hosts/<name>/`, reusable behavior in `modules/aspects/`, and shared options/defaults in `modules/core/`.
 - Name aspect files and `den.aspects.<name>` consistently. Compose existing aspects instead of creating a parallel convention.
 - Use module options and `lib.mkIf` for reusable toggles. Enforce composition invariants with assertions and `lib/checks/` contracts.
-- Use the injected `secrets` argument and `lib.denful.secrets` helpers. Shared secrets belong in `secrets/common.yaml`; host secrets belong in `hosts/<name>/secrets.yaml`.
+- Use the injected `secrets` argument and `dotfiles` secret helpers. Shared secrets belong in `secrets/common.yaml`; host secrets belong in `hosts/<name>/secrets.yaml`.
 - Preserve NixOS age key `/var/lib/sops-nix/key.txt` and Home Manager age key `~/.config/sops/age/keys.txt`.
 - Keep Caddy on `ghcr.io/tgdrive/caddy`, desktop composition on Niri + Noctalia v5 + selected GNOME apps, and laptop storage on unencrypted Btrfs.
 
@@ -99,10 +99,10 @@ just write-flake
 - `modules/flake-outputs.nix`: formatter, dev shell, checks, eval outputs, and installer ISO packages.
 - `modules/core/defaults.nix`: Den inputs, defaults, injections, quirks, and secret setup.
 - `modules/core/schema.nix`: host and service option contracts.
-- `modules/entities/defaults.nix`: NixOS/Home Manager constructors.
+- `modules/entities/users/bhunter.nix`: shared user metadata and user-aspect composition.
 - `lib/bootstrap.nix`: extended library, overlays, Rust platform, and local packages.
 - `lib/secrets.nix`: allowed secret paths and secret value contract.
-- `lib/checks/default.nix`: composition-check aggregation.
+- `modules/flake-outputs.nix`: flake checks and composition-contract aggregation.
 - `packages/svc/src/main.rs`: `svc` command entry point.
 - `packages/svc/default.nix`: Nix packaging and runtime PATH wrapping.
 

@@ -1,6 +1,109 @@
 { den, ... }:
 {
+  den.schema.host =
+    { lib, ... }:
+    let
+      nullable =
+        type:
+        lib.mkOption {
+          type = lib.types.nullOr type;
+          default = null;
+        };
+    in
+    {
+      options.rcloneWebdav = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            remote = lib.mkOption {
+              type = lib.types.str;
+              default = "gpix:";
+              description = "Rclone remote served over WebDAV.";
+            };
+            port = lib.mkOption {
+              type = lib.types.port;
+              default = 9000;
+              description = "Tailnet port used by the WebDAV server.";
+            };
+            configDatabaseHost = lib.mkOption {
+              type = lib.types.str;
+              default = "netcup";
+              description = "PostgreSQL host containing the shared rclone configuration.";
+            };
+            configDatabasePort = lib.mkOption {
+              type = lib.types.port;
+              default = 6432;
+              description = "PostgreSQL port containing the shared rclone configuration.";
+            };
+            extraArgs = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ ];
+              example = [
+                "--read-only"
+                "--baseurl=/media"
+              ];
+              description = "Additional arguments passed to rclone serve webdav.";
+            };
+            cors = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Allow cross-origin WebDAV requests from any origin.";
+            };
+            cacheDir = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Host directory used for the rclone VFS cache.";
+            };
+            vfs = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  dirCacheTime = nullable lib.types.str;
+                  pollInterval = nullable lib.types.str;
+                  blockNormDupes = nullable lib.types.bool;
+                  cacheMaxAge = nullable lib.types.str;
+                  cacheMaxSize = nullable lib.types.str;
+                  cacheMinFreeSpace = nullable lib.types.str;
+                  cacheMode = nullable (
+                    lib.types.enum [
+                      "off"
+                      "minimal"
+                      "writes"
+                      "full"
+                    ]
+                  );
+                  cachePollInterval = nullable lib.types.str;
+                  caseInsensitive = nullable lib.types.bool;
+                  diskSpaceTotalSize = nullable lib.types.str;
+                  fastFingerprint = nullable lib.types.bool;
+                  handleCaching = nullable lib.types.str;
+                  links = nullable lib.types.bool;
+                  metadataExtension = nullable lib.types.str;
+                  readAhead = nullable lib.types.str;
+                  readChunkSize = nullable lib.types.str;
+                  readChunkSizeLimit = nullable lib.types.str;
+                  readChunkStreams = nullable lib.types.int;
+                  readWait = nullable lib.types.str;
+                  refresh = nullable lib.types.bool;
+                  usedIsSize = nullable lib.types.bool;
+                  writeBack = nullable lib.types.str;
+                  writeWait = nullable lib.types.str;
+                };
+              };
+              default = { };
+              description = "Optional rclone VFS settings; null values are omitted.";
+            };
+          };
+        };
+        default = { };
+        description = "Host-specific rclone WebDAV settings.";
+      };
+    };
+
   den.aspects.rclone-webdav = { host, user, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+    ];
+
     nixos =
       {
         containers,

@@ -3,7 +3,6 @@
   den.aspects = {
     base.includes = [
       den.aspects.common
-      den.aspects.sops
       den.aspects.boot-policy
       den.aspects.facter
       den.aspects.security-base
@@ -24,7 +23,7 @@
     infra-host.includes = [
       den.aspects.base
       den.aspects.server
-      den.aspects.integrated-home-manager
+      den.aspects.home-manager-policy
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.requires-secrets

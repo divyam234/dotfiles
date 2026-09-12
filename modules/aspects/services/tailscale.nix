@@ -1,7 +1,23 @@
 { den, ... }:
 {
+  den.schema.host =
+    { lib, ... }:
+    {
+      options.tailscale = lib.mkOption {
+        type = lib.types.submodule {
+          options.autoconnect = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Authenticate automatically using the configured SOPS OAuth client secret.";
+          };
+        };
+        default = { };
+        description = "Host-specific Tailscale settings.";
+      };
+    };
+
   den.aspects.tailscale = {
-    includes = [ den.aspects.sops ];
+    nixosSecrets = [ "tailscale/oauth_client_secret" ];
 
     nixos =
       {

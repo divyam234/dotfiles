@@ -16,14 +16,14 @@ NixOS and Home Manager configuration for three machines, built with flakes, flak
 entity -> host aspect -> reusable aspects -> NixOS/Home Manager modules
 ```
 
-- `modules/entities/` — host, home, and user declarations
+- `modules/entities/` — data-only host, home, and user declarations
 - `hosts/` — hardware and host-specific configuration
 - `modules/aspects/` — reusable roles, features, services, and application configuration
 - `modules/core/` — Den schema and shared defaults
 - `lib/` — helpers and evaluation checks
 - `packages/svc/` — CLI and TUI for the Quadlet service stack
 
-Host composition uses direct Den `includes`. Cross-aspect data is passed through quirks and checked for duplicate names during evaluation.
+Host composition uses direct Den `includes`. Feature-specific schema is declared beside each aspect, while cross-aspect data is passed through scope-local quirks and checked during evaluation. Den's built-in policies instantiate hosts and route integrated Home Manager users.
 
 `flake.nix` is generated. Change `flake-file` declarations in the modules, then run:
 
@@ -56,7 +56,7 @@ Secrets use SOPS and Age.
 - NixOS Age key: `/var/lib/sops-nix/key.txt`
 - Home Manager Age key: `~/.config/sops/age/keys.txt`
 
-Secret declarations are centralized in `lib/secrets.nix`. Service and feature modules consume the provided `secrets` argument instead of setting `sopsFile` directly.
+The allowed secret catalog is centralized in `lib/secrets.nix`. Aspects emit `nixosSecrets` or `homeSecrets` quirks, so each configuration declares only the catalog entries it consumes. Service and feature modules use the provided `secrets` argument instead of setting `sopsFile` directly.
 
 ## Container Deployments
 

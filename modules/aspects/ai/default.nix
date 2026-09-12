@@ -2,6 +2,8 @@
 
 {
   den.aspects.ai = { host, ... }: {
+    homeSecrets = [ "openai/api_key" ];
+
     homeManager =
       {
         lib,

@@ -1,6 +1,12 @@
 { den, ... }:
 {
   den.aspects.restic = {
+    nixosSecrets = [
+      "restic/password"
+      "restic/repository"
+      "restic/rclone_conf"
+    ];
+
     nixos =
       {
         config,

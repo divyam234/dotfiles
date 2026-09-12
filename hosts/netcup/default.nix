@@ -3,7 +3,6 @@
   den.aspects.netcup = {
     includes = [
       den.aspects.infra-host
-      den.aspects.ai
 
       den.aspects.adguard
       den.aspects.camofox

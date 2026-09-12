@@ -14,6 +14,13 @@ let
 in
 {
   den.aspects.stash = { user, host, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+      "stash/secret_key"
+      "teldrive/api_key"
+    ];
+
     caddyRoutes.stash = {
       host = "stash.${host.domain}";
       access = "tailnet";
@@ -22,15 +29,11 @@ in
 
     nixos =
       {
-        config,
         containers,
         pkgs,
         secrets,
         ...
       }:
-      let
-        quadlet = config.virtualisation.quadlet;
-      in
       {
         sops.templates."stash.env" = secrets.mkTemplate {
           name = "stash.env";
@@ -38,12 +41,9 @@ in
         };
 
         virtualisation.quadlet.containers.stash = {
-          autoStart = true;
           containerConfig = {
-            name = "stash";
             image = "ghcr.io/elevatedai/stash";
             exec = "serve";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
             environments = baseRcloneEnv // {
@@ -61,7 +61,6 @@ in
               "/var/cache/rclone:/var/cache/rclone"
               "/var/cache/images:/var/cache/images"
             ];
-            autoUpdate = "registry";
           };
           unitConfig = {
             After = [
@@ -73,9 +72,6 @@ in
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /var/cache/rclone /var/cache/images";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "2G";
             CPUQuota = "400%";
           };
@@ -84,6 +80,13 @@ in
   };
 
   den.aspects.stash-worker = { user, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+      "stash/secret_key"
+      "teldrive/api_key"
+    ];
+
     nixos =
       {
         config,
@@ -102,16 +105,12 @@ in
         };
 
         virtualisation.quadlet.containers.stash-worker = {
-          autoStart = true;
           containerConfig = {
-            name = "stash-worker";
             image = "ghcr.io/elevatedai/stash";
             exec = "worker";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
             environments = baseRcloneEnv;
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
-            autoUpdate = "registry";
             stopTimeout = 60;
           };
           unitConfig = {
@@ -128,9 +127,6 @@ in
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /home/${user.userName}/downloads";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             TimeoutStopSec = "70s";
           };
         };

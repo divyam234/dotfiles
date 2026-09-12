@@ -1,6 +1,6 @@
 { inputs, den, ... }:
 {
-  den.aspects.desktop = {
+  den.aspects.desktop = { user, ... }: {
     includes = [
       den.aspects.development
       den.aspects.audio
@@ -18,7 +18,7 @@
     ];
 
     nixos =
-      { host, pkgs, ... }:
+      { pkgs, ... }:
       {
 
         networking.networkmanager.enable = true;
@@ -41,7 +41,7 @@
           blueman.enable = true;
         };
 
-        users.users.${host.user}.extraGroups = [
+        users.users.${user.userName}.extraGroups = [
           "video"
           "input"
           "render"

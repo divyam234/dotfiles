@@ -22,9 +22,7 @@
       in
       {
         virtualisation.quadlet.containers.adguard-cli = {
-          autoStart = true;
           containerConfig = {
-            name = "adguard-cli";
             image = "ghcr.io/tgdrive/adguard-cli";
             networks = [ "container:gluetun" ];
             addCapabilities = [ "NET_ADMIN" ];
@@ -34,7 +32,6 @@
               "--no-fork"
             ];
             volumes = [ "${containers.dataRoot}/adguard-cli:/root/.local/share/adguard-cli" ];
-            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.gluetun.ref ];
@@ -42,9 +39,6 @@
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/adguard-cli";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "256M";
             CPUQuota = "50%";
           };

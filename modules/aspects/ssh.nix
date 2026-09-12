@@ -1,6 +1,8 @@
 { den, ... }:
 {
   den.aspects.ssh = {
+    homeSecrets = [ "ssh/private_key" ];
+
     homeManager =
       { config, ... }:
       {

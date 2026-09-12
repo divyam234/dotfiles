@@ -1,8 +1,7 @@
 { den, ... }:
 {
-  den.aspects.audio.nixos =
-    { host, ... }:
-    {
+  den.aspects.audio = { user, ... }: {
+    nixos = {
       security.rtkit.enable = true;
 
       services.pipewire = {
@@ -13,6 +12,7 @@
         jack.enable = true;
       };
 
-      users.users.${host.user}.extraGroups = [ "audio" ];
+      users.users.${user.userName}.extraGroups = [ "audio" ];
     };
+  };
 }

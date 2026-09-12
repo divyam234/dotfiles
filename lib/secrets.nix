@@ -87,52 +87,48 @@ let
     ]
   ];
 
-  hostPaths = {
-    homelab = [ ];
-    laptop = [ ];
-    netcup = [
-      [
-        "gemini-fastapi"
-        "api_key"
-      ]
-      [
-        "gemini-fastapi"
-        "secure_1psid"
-      ]
-      [
-        "gemini-fastapi"
-        "secure_1psidts"
-      ]
-      [
-        "redis"
-        "password"
-      ]
-      [
-        "vaultwarden"
-        "admin_token"
-      ]
-      [
-        "restic"
-        "password"
-      ]
-      [
-        "restic"
-        "repository"
-      ]
-      [
-        "restic"
-        "rclone_conf"
-      ]
-      [
-        "gproxy"
-        "admin_password"
-      ]
-      [
-        "gproxy"
-        "master_key"
-      ]
-    ];
-  };
+  hostPaths = [
+    [
+      "gemini-fastapi"
+      "api_key"
+    ]
+    [
+      "gemini-fastapi"
+      "secure_1psid"
+    ]
+    [
+      "gemini-fastapi"
+      "secure_1psidts"
+    ]
+    [
+      "redis"
+      "password"
+    ]
+    [
+      "vaultwarden"
+      "admin_token"
+    ]
+    [
+      "restic"
+      "password"
+    ]
+    [
+      "restic"
+      "repository"
+    ]
+    [
+      "restic"
+      "rclone_conf"
+    ]
+    [
+      "gproxy"
+      "admin_password"
+    ]
+    [
+      "gproxy"
+      "master_key"
+    ]
+  ];
 
   isSecret = value: builtins.isAttrs value && (value.__secret or false);
 
@@ -210,13 +206,7 @@ let
     let
       hostName = if host != null then host.name else null;
       hostSopsFile = if host != null then host.secretsFile or null else null;
-      selectedHostPaths =
-        if hostName == null then
-          [ ]
-        else if builtins.hasAttr hostName hostPaths then
-          hostPaths.${hostName}
-        else
-          throw "No explicit secret contract defined for host ${hostName}. Add it to hostPaths in lib/secrets.nix.";
+      selectedHostPaths = if hostName == null then [ ] else hostPaths;
       commonTree = treeFromPaths {
         inherit config;
         source = "common";
@@ -241,6 +231,18 @@ let
         common = commonTree;
         host = hostTree;
         all = lib.pipe mergedTree [ collectLeaves ];
+        select =
+          names:
+          map (
+            name:
+            let
+              path = lib.splitString "/" name;
+            in
+            if lib.hasAttrByPath path mergedTree then
+              lib.getAttrFromPath path mergedTree
+            else
+              throw "Unknown secret contract path: ${name}"
+          ) (lib.unique names);
         declare =
           secrets:
           lib.pipe secrets [

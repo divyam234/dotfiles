@@ -1,10 +1,15 @@
 { den, ... }:
 {
   den.aspects.postgres = _: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+    ];
+
     nixos =
       {
-        config,
         containers,
+        dotfiles,
         lib,
         pkgs,
         postgresDatabases,
@@ -13,16 +18,15 @@
         ...
       }:
       let
-        quadlet = config.virtualisation.quadlet;
         databases = lib.pipe postgresDatabases [ (lib.foldl' lib.recursiveUpdate { }) ];
         schemas = lib.pipe postgresSchemas [ (lib.foldl' lib.recursiveUpdate { }) ];
         duplicateDatabaseNames = lib.pipe postgresDatabases [
           (lib.concatMap builtins.attrNames)
-          lib.denful.findDuplicates
+          dotfiles.findDuplicates
         ];
         duplicateSchemaNames = lib.pipe postgresSchemas [
           (lib.concatMap builtins.attrNames)
-          lib.denful.findDuplicates
+          dotfiles.findDuplicates
         ];
         mkIdentifier = name: ''"${lib.replaceStrings [ ''"'' ] [ ''""'' ] name}"'';
         mkLiteral = name: "'${lib.replaceStrings [ "'" ] [ "''" ] name}'";
@@ -62,22 +66,15 @@
         };
 
         virtualisation.quadlet.containers.postgres = {
-          autoStart = true;
           containerConfig = {
-            name = "postgres";
             image = "ghcr.io/tgdrive/postgres:18";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "postgres" ];
             environmentFiles = [ "${containers.secretDir}/postgres.env" ];
             volumes = [ "${containers.dataRoot}/postgres:/var/lib/postgresql" ];
             healthCmd = "pg_isready -U $POSTGRES_USER -d postgres || exit 1";
-            autoUpdate = "registry";
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 999 -g 999 ${containers.dataRoot}/postgres";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "2G";
             CPUQuota = "200%";
           };

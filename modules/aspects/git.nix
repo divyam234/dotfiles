@@ -1,7 +1,7 @@
 { den, ... }:
 {
-  den.aspects.git = {
-    includes = [ den.aspects.sops ];
+  den.aspects.git = { user, ... }: {
+    homeSecrets = [ "github/token" ];
 
     homeManager =
       {
@@ -11,6 +11,13 @@
         secrets,
         ...
       }:
+      let
+        signingKey =
+          if lib.hasPrefix "/" user.signingKey then
+            user.signingKey
+          else
+            "${config.home.homeDirectory}/${user.signingKey}";
+      in
       {
         home.packages = with pkgs; [
           git-lfs
@@ -35,14 +42,14 @@
           enable = true;
           lfs.enable = true;
           signing = {
-            key = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
+            key = signingKey;
             format = "ssh";
             signByDefault = true;
           };
           settings = {
             user = {
-              name = "Divyam";
-              email = "47589864+divyam234@users.noreply.github.com";
+              inherit (user) email;
+              name = user.gitName;
             };
             init.defaultBranch = "main";
             pull.ff = "only";

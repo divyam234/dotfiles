@@ -1,13 +1,6 @@
 { inputs, lib }:
 let
-  extendedLib = lib.extend (
-    self: _super: {
-      denful = import ./default.nix {
-        inherit inputs;
-        lib = self;
-      };
-    }
-  );
+  dotfilesLib = import ./default.nix { inherit inputs lib; };
 
   overlays = [
     inputs.rust-overlay.overlays.default
@@ -22,7 +15,7 @@ let
             rustc = rustToolchain;
           };
         in
-        extendedLib.denful.importPackages final ../packages
+        dotfilesLib.importPackages final ../packages
         // {
           svc = final.callPackage ../packages/svc { inherit rustPlatform; };
         };
@@ -30,5 +23,5 @@ let
   ];
 in
 {
-  inherit extendedLib overlays;
+  inherit dotfilesLib overlays;
 }

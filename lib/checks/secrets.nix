@@ -5,20 +5,40 @@
   netcup,
 }:
 let
-  expectedCommon = [
+  expectedLaptop = [
+    "postgres/password"
+    "postgres/user"
+    "tailscale/oauth_client_secret"
+    "teldrive/data_key"
+    "teldrive/encryption_key"
+    "teldrive/signing_key"
+    "users/bhunter/password"
+  ];
+  expectedHomelab = [
+    "cloudflare/api_token"
+    "github/token"
+    "tailscale/oauth_client_secret"
+    "users/bhunter/password"
+  ];
+  expectedNetcup = [
     "camofox/access_key"
     "camofox/admin_key"
     "camofox/api_key"
     "cloudflare/api_token"
-    "codeforge/token"
+    "gemini-fastapi/api_key"
+    "gemini-fastapi/secure_1psid"
+    "gemini-fastapi/secure_1psidts"
     "github/token"
-    "nordvpn/private_key"
+    "gproxy/admin_password"
+    "gproxy/master_key"
     "mtproxy/secret"
-    "nordvpn/token"
-    "openai/api_key"
+    "nordvpn/private_key"
     "postgres/password"
     "postgres/user"
-    "ssh/private_key"
+    "redis/password"
+    "restic/password"
+    "restic/rclone_conf"
+    "restic/repository"
     "stash/secret_key"
     "tailscale/oauth_client_secret"
     "teldrive/api_key"
@@ -26,20 +46,29 @@ let
     "teldrive/encryption_key"
     "teldrive/signing_key"
     "users/bhunter/password"
-  ];
-  expectedNetcup = expectedCommon ++ [
-    "gemini-fastapi/api_key"
-    "gemini-fastapi/secure_1psid"
-    "gemini-fastapi/secure_1psidts"
-    "gproxy/admin_password"
-    "gproxy/master_key"
-    "redis/password"
-    "restic/password"
-    "restic/rclone_conf"
-    "restic/repository"
     "vaultwarden/admin_token"
   ];
-  expectedHomelab = expectedCommon;
+  expectedLaptopHome = [
+    "github/token"
+    "nordvpn/token"
+    "openai/api_key"
+    "ssh/private_key"
+  ];
+  expectedHomelabHome = [
+    "github/token"
+    "openai/api_key"
+    "ssh/private_key"
+  ];
+  expectedNetcupHome = [
+    "camofox/access_key"
+    "camofox/admin_key"
+    "camofox/api_key"
+    "codeforge/token"
+    "github/token"
+    "openai/api_key"
+    "ssh/private_key"
+  ];
+  homelabHome = homelab.home-manager.users.bhunter;
   netcupHome = netcup.home-manager.users.bhunter;
   expectedTemplates = [
     "caddy.env"
@@ -58,13 +87,16 @@ let
     "vaultwarden.env"
   ];
 in
-assert builtins.attrNames laptop.sops.secrets == builtins.sort builtins.lessThan expectedCommon;
+assert builtins.attrNames laptop.sops.secrets == expectedLaptop;
 assert builtins.attrNames homelab.sops.secrets == builtins.sort builtins.lessThan expectedHomelab;
-assert builtins.attrNames netcup.sops.secrets == builtins.sort builtins.lessThan expectedNetcup;
+assert builtins.attrNames netcup.sops.secrets == expectedNetcup;
+assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
+assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
+assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;
 assert netcupHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert builtins.hasAttr "sops-nix" netcupHome.systemd.user.services;
-assert home.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
+assert home.sops.age.keyFile == "${home.xdg.configHome}/sops/age/keys.txt";
 assert builtins.hasAttr "sops-nix" home.systemd.user.services;
 true

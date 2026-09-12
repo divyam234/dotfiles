@@ -1,14 +1,14 @@
 { den, ... }:
 {
-  den.aspects.nordvpn = {
-    includes = [ den.aspects.sops ];
+  den.aspects.nordvpn = { user, ... }: {
+    homeSecrets = [ "nordvpn/token" ];
 
     nixos =
-      { host, pkgs, ... }:
+      { pkgs, ... }:
       {
         users = {
           groups.nordvpn = { };
-          users.${host.user}.extraGroups = [ "nordvpn" ];
+          users.${user.userName}.extraGroups = [ "nordvpn" ];
         };
 
         networking.firewall = {

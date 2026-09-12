@@ -74,24 +74,17 @@
         in
         {
           virtualisation.quadlet.containers.pgdog = {
-            autoStart = true;
             containerConfig = {
-              name = "pgdog";
               image = "ghcr.io/pgdogdev/pgdog";
-              networks = [ quadlet.networks.${containers.networkName}.ref ];
               networkAliases = [ "pgdog" ];
               publishPorts = [ "6432:6432" ];
               volumes = [ "${pgdogConfigFile}:/pgdog/pgdog.toml:ro" ];
-              autoUpdate = "registry";
             };
             unitConfig = {
               After = [ quadlet.containers.postgres.ref ];
               Requires = [ quadlet.containers.postgres.ref ];
             };
             serviceConfig = {
-              Restart = "always";
-              RestartSec = "10s";
-              NoNewPrivileges = true;
               MemoryMax = "512M";
               CPUQuota = "100%";
             };

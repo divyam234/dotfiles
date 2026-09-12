@@ -1,6 +1,11 @@
 { den, ... }:
 {
   den.aspects.forgejo = { user, host, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+    ];
+
     caddyRoutes = {
       forgejo = {
         host = "git.${host.domain}";
@@ -46,18 +51,14 @@
         };
 
         virtualisation.quadlet.containers.forgejo = {
-          autoStart = true;
           containerConfig = {
-            name = "forgejo";
             image = "codeberg.org/forgejo/forgejo:15";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "forgejo" ];
             environmentFiles = [ "${containers.secretDir}/forgejo.env" ];
             volumes = [
               "${containers.dataRoot}/forgejo:/data:rw"
               # "/etc/localtime:/etc/localtime:ro"
             ];
-            autoUpdate = "registry";
           };
           unitConfig = {
             After = [ quadlet.containers.pgdog.ref ];
@@ -65,9 +66,6 @@
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/forgejo";
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "1G";
             CPUQuota = "150%";
           };

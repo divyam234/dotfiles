@@ -3,6 +3,13 @@
   den.aspects.codeforge =
     { user, host, ... }:
     {
+      homeSecrets = [
+        "codeforge/token"
+        "camofox/access_key"
+        "camofox/admin_key"
+        "camofox/api_key"
+      ];
+
       caddyRoutes = {
         codeforge = {
           host = "codeforge.${host.domain}";

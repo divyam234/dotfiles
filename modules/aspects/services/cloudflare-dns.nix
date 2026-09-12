@@ -1,6 +1,78 @@
 { den, ... }:
 {
+  den.schema.host =
+    { config, lib, ... }:
+    let
+      addressTarget =
+        enabledByDefault:
+        lib.types.submodule {
+          options = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = enabledByDefault;
+              description = "Whether to publish this address family.";
+            };
+            source = lib.mkOption {
+              type = lib.types.enum [
+                "static"
+                "local"
+                "external"
+              ];
+              default = "external";
+              description = "Whether the address is declared or discovered at runtime.";
+            };
+            address = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Address used when source is static.";
+            };
+          };
+        };
+      staticTargetValid = target: target.source != "static" || target.address != null;
+    in
+    {
+      options.dns = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            publicTarget = {
+              ipv4 = lib.mkOption {
+                type = addressTarget true;
+                default = { };
+                description = "Public IPv4 DNS target.";
+              };
+              ipv6 = lib.mkOption {
+                type = addressTarget false;
+                default = { };
+                description = "Public IPv6 DNS target.";
+              };
+            };
+            refreshInterval = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              example = "15m";
+              description = "Periodic DNS reconciliation interval, or null for boot and configuration changes only.";
+            };
+          };
+        };
+        default = { };
+        description = "Host-specific DNS publication settings.";
+      };
+
+      config.assertions = [
+        {
+          assertion = staticTargetValid config.dns.publicTarget.ipv4;
+          message = "Static public IPv4 DNS requires an address.";
+        }
+        {
+          assertion = staticTargetValid config.dns.publicTarget.ipv6;
+          message = "Static public IPv6 DNS requires an address.";
+        }
+      ];
+    };
+
   den.aspects.cloudflare-dns = {
+    nixosSecrets = [ "cloudflare/api_token" ];
+
     nixos =
       {
         caddyRoutes,

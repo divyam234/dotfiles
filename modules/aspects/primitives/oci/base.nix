@@ -6,32 +6,29 @@
         den.aspects.oci-base
         den.aspects.container-network
         den.aspects.container-update-webhook
-        den.aspects.sops
       ];
     };
 
-    oci-runtime = {
-      nixos =
-        { host, ... }:
-        {
-          virtualisation = {
-            containers.enable = true;
-            podman = {
+    oci-runtime = { user, ... }: {
+      nixos = _: {
+        virtualisation = {
+          containers.enable = true;
+          podman = {
+            enable = true;
+            dockerCompat = true;
+            defaultNetwork.settings.dns_enabled = true;
+            autoPrune = {
               enable = true;
-              dockerCompat = true;
-              defaultNetwork.settings.dns_enabled = true;
-              autoPrune = {
-                enable = true;
-                dates = "weekly";
-                flags = [ "--all" ];
-              };
+              dates = "weekly";
+              flags = [ "--all" ];
             };
-            quadlet.enable = true;
           };
-
-          users.groups.podman = { };
-          users.users.${host.user}.extraGroups = [ "podman" ];
+          quadlet.enable = true;
         };
+
+        users.groups.podman = { };
+        users.users.${user.userName}.extraGroups = [ "podman" ];
+      };
 
       homeManager =
         { pkgs, ... }:
@@ -51,16 +48,36 @@
       includes = [ den.aspects.oci-runtime ];
 
       nixos =
-        { lib, ... }:
+        {
+          config,
+          containers,
+          lib,
+          ...
+        }:
         {
           options.virtualisation.quadlet.containers = lib.mkOption {
             type = lib.types.attrsOf (
-              lib.types.submodule {
-                config = {
-                  containerConfig.stopTimeout = lib.mkDefault 60;
-                  serviceConfig.TimeoutStopSec = lib.mkDefault "70s";
-                };
-              }
+              lib.types.submodule (
+                { name, ... }: {
+                  config = {
+                    autoStart = lib.mkDefault true;
+                    containerConfig = {
+                      name = lib.mkDefault name;
+                      networks = lib.mkDefault [
+                        config.virtualisation.quadlet.networks.${containers.networkName}.ref
+                      ];
+                      autoUpdate = lib.mkDefault "registry";
+                      stopTimeout = lib.mkDefault 60;
+                    };
+                    serviceConfig = {
+                      Restart = lib.mkDefault "always";
+                      RestartSec = lib.mkDefault "10s";
+                      NoNewPrivileges = lib.mkDefault true;
+                      TimeoutStopSec = lib.mkDefault "70s";
+                    };
+                  };
+                }
+              )
             );
           };
 

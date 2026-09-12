@@ -1,6 +1,77 @@
 { den, ... }:
 {
+  den.schema.host =
+    { lib, ... }:
+    {
+      options.teldrive = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            databaseHost = lib.mkOption {
+              type = lib.types.str;
+              default = "pgdog";
+              description = "PostgreSQL connection host used by TelDrive.";
+            };
+            port = lib.mkOption {
+              type = lib.types.nullOr lib.types.port;
+              default = null;
+              description = "Optional host port published to TelDrive's container port 8080.";
+            };
+            exposeThroughCaddy = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to publish TelDrive through this host's Caddy instance.";
+            };
+            runWorkers = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether this TelDrive instance runs background workers.";
+            };
+            useMtproxy = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether TelDrive connects to Telegram through MTProxy.";
+            };
+            download = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  bots = lib.mkOption {
+                    type = lib.types.nullOr lib.types.int;
+                    default = null;
+                  };
+                  clientPool = lib.mkOption {
+                    type = lib.types.nullOr lib.types.bool;
+                    default = true;
+                  };
+                  readBuffers = lib.mkOption {
+                    type = lib.types.nullOr lib.types.int;
+                    default = 32;
+                  };
+                  readParallel = lib.mkOption {
+                    type = lib.types.nullOr lib.types.int;
+                    default = 4;
+                  };
+                };
+              };
+              default = { };
+              description = "Optional Telegram download settings; null values are omitted.";
+            };
+          };
+        };
+        default = { };
+        description = "Host-specific TelDrive settings.";
+      };
+    };
+
   den.aspects.teldrive = { host, ... }: {
+    nixosSecrets = [
+      "postgres/user"
+      "postgres/password"
+      "teldrive/signing_key"
+      "teldrive/data_key"
+      "teldrive/encryption_key"
+    ]
+    ++ (if host.teldrive.useMtproxy then [ "mtproxy/secret" ] else [ ]);
+
     caddyRoutes =
       if host.teldrive.exposeThroughCaddy then
         {
@@ -65,15 +136,11 @@
         };
 
         virtualisation.quadlet.containers.teldrive = {
-          autoStart = true;
           containerConfig = {
-            name = "teldrive";
             image = "ghcr.io/tgdrive/teldrive:v2";
-            networks = [ quadlet.networks.${containers.networkName}.ref ];
             networkAliases = [ "teldrive" ];
             environmentFiles = [ "${containers.secretDir}/teldrive.env" ];
             publishPorts = lib.optional (cfg.port != null) "${toString cfg.port}:8080";
-            autoUpdate = "registry";
           };
           unitConfig = {
             After = databaseDependencies ++ remoteDatabaseDependencies ++ mtproxyDependencies;
@@ -81,9 +148,6 @@
             Wants = remoteDatabaseDependencies;
           };
           serviceConfig = {
-            Restart = "always";
-            RestartSec = "10s";
-            NoNewPrivileges = true;
             MemoryMax = "2G";
             CPUQuota = "200%";
           };
