@@ -109,6 +109,13 @@
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
       contracts = {
+        cache = import ../lib/checks/cache.nix {
+          inherit
+            homelab
+            laptop
+            netcup
+            ;
+        };
         containers = import ../lib/checks/containers.nix {
           inherit
             homelab

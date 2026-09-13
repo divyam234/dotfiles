@@ -58,6 +58,14 @@ Secrets use SOPS and Age.
 
 The allowed secret catalog is centralized in `lib/secrets.nix`. Aspects emit `nixosSecrets` or `homeSecrets` quirks, so each configuration declares only the catalog entries it consumes. Service and feature modules use the provided `secrets` argument instead of setting `sopsFile` directly.
 
+## Binary Cache
+
+NixOS hosts run a loopback proxy for the signed cache published from
+[divyam234/nix-cache](https://github.com/divyam234/nix-cache). The cache stores
+raw NARs in immutable GitHub Release chunks and downloads reusable 32 MiB
+blocks with validated HTTP range requests. Configuration and the trusted public
+key live in `modules/aspects/system/nix.nix`.
+
 ## Container Deployments
 
 OCI hosts expose a Tailscale-only webhook that lets an image-publishing GitHub

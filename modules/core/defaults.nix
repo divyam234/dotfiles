@@ -32,6 +32,10 @@ in
       url = "github:divyam234/nix-pkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-cache = {
+      url = "github:divyam234/nix-cache";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   imports = [ ./schema.nix ];

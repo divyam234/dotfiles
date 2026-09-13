@@ -338,6 +338,26 @@
         "type": "github"
       }
     },
+    "nix-cache": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789318086,
+        "narHash": "sha256-idggmp769td+ivR3wDZGar/aZZ+DCfcQu2qNn64OLL8=",
+        "owner": "divyam234",
+        "repo": "nix-cache",
+        "rev": "69ffe2318e3156f62e48c3ab04232db6ccac96a0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "divyam234",
+        "repo": "nix-cache",
+        "type": "github"
+      }
+    },
     "nix-pkgs": {
       "inputs": {
         "nixpkgs": [
@@ -510,6 +530,7 @@
         "home-manager": "home-manager",
         "import-tree": "import-tree",
         "lazyvim": "lazyvim",
+        "nix-cache": "nix-cache",
         "nix-pkgs": "nix-pkgs",
         "nixos-facter-modules": "nixos-facter-modules",
         "nixpkgs": "nixpkgs_2",
