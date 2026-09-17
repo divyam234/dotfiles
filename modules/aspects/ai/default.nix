@@ -34,7 +34,7 @@
           };
 
         models = {
-          openaiStrong = "openai/gpt-6-astra";
+          openaiStrong = "openai/gpt-5.6-sol";
           openaiFast = "openai/gpt-5.6-luna";
           opencode = "opencode/muse-spark-1.3-contributor-free";
         };

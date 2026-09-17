@@ -31,14 +31,12 @@
             warn-dirty = false;
             use-xdg-base-directories = true;
             substituters = [
-              "https://cache.nixos.org"
               "http://127.0.0.1:7745"
             ]
             ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
               "https://attic.xuyh0120.win/lantian"
             ];
             trusted-public-keys = [
-              "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
               "nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI="
             ]
             ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
