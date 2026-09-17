@@ -5,7 +5,6 @@ let
   overlays = [
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
-    inputs.cachyos-kernel.overlays.pinned
     (final: _prev: {
       local =
         let

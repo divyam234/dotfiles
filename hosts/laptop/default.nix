@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, inputs, ... }:
 {
   flake-file.inputs.cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
@@ -22,6 +22,7 @@
           ./disko.nix
           ./msi-ec/kmod.nix
         ];
+        nixpkgs.overlays = [ inputs.cachyos-kernel.overlays.pinned ];
         boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-x86_64-v3;
         facter.reportPath = ./facter.json;
         fileSystems."/mnt/drive" = {
