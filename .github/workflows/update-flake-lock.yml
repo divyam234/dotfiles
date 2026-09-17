@@ -28,9 +28,11 @@ jobs:
         run: nix flake update
 
       - name: Commit and push lock file
+        id: commit
         run: |
           if git diff --quiet -- flake.lock; then
             echo "flake.lock is already up to date"
+            echo "updated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -39,3 +41,15 @@ jobs:
           git add flake.lock
           git commit -m "chore: update flake inputs"
           git push origin HEAD:main
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish Nix cache
+        if: steps.commit.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NIX_CACHE_DISPATCH_TOKEN }}
+          SOURCE_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          gh api --method POST repos/divyam234/nix-cache/dispatches \
+            -f event_type=dotfiles-flake-updated \
+            -f "client_payload[sha]=$SOURCE_SHA"
