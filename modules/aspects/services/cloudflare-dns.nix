@@ -175,7 +175,7 @@
               response="$(curl --fail-with-body --silent --show-error \
                 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
                 -H 'Content-Type: application/json' \
-                "$@")"
+                "$@")" || return 1
               jq -e '.success == true' <<<"$response" >/dev/null || {
                 jq -c '.errors // .' <<<"$response" >&2
                 return 1
@@ -296,6 +296,16 @@
 
               if [ "$current" = "$desired" ]; then
                 printf 'Unchanged %s %s\n' "$type" "$name"
+              elif [ "$(jq -r '.content' <<<"$current")" != "$content" ]; then
+                cloudflare -X DELETE "$api/zones/$zone_id/dns_records/$record_id" >/dev/null || {
+                  printf 'Failed to delete %s %s for IP replacement\n' "$type" "$name" >&2
+                  exit 1
+                }
+                cloudflare -X POST --data "$payload" "$api/zones/$zone_id/dns_records" >/dev/null || {
+                  printf 'Deleted %s %s but failed to create its replacement; retry DNS sync\n' "$type" "$name" >&2
+                  exit 1
+                }
+                printf 'Replaced %s %s\n' "$type" "$name"
               else
                 cloudflare -X PUT --data "$payload" "$api/zones/$zone_id/dns_records/$record_id" >/dev/null
                 printf 'Updated %s %s\n' "$type" "$name"
