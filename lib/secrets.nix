@@ -128,6 +128,18 @@ let
       "gproxy"
       "master_key"
     ]
+    [
+      "gatehouse"
+      "admin_email"
+    ]
+    [
+      "gatehouse"
+      "admin_password"
+    ]
+    [
+      "gatehouse"
+      "better_auth_secret"
+    ]
   ];
 
   isSecret = value: builtins.isAttrs value && (value.__secret or false);

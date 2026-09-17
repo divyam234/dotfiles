@@ -23,7 +23,9 @@ in
 
     caddyRoutes.stash = {
       host = "stash.${host.domain}";
-      access = "tailnet";
+      access = "public";
+      proxied = true;
+      auth = true;
       upstreams = [ "stash:8080" ];
     };
 

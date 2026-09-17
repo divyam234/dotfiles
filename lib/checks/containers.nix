@@ -10,6 +10,7 @@ let
     "caddy"
     "camofox-browser"
     "forgejo"
+    "gatehouse"
     "gemini-fastapi"
     "gluetun"
     "gproxy"

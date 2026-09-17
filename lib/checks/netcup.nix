@@ -37,6 +37,13 @@ assert lib.hasInfix ''iifname "eth0" ct status dnat drop'' containerIngress;
 assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
+assert lib.hasInfix "auth.${domain}" caddyfile;
+assert lib.hasInfix "stash.${domain}" caddyfile;
+assert lib.hasInfix "reverse_proxy gatehouse:8080" caddyfile;
+assert lib.hasInfix "rewrite /api/verify?application=default-app" caddyfile;
+assert lib.hasInfix
+  "redir https://auth.${domain}/login?redirect=https://{http.request.host}{http.request.uri} 302"
+  caddyfile;
 assert builtins.elem {
   name = "git.${domain}";
   proxied = false;
@@ -51,6 +58,18 @@ assert builtins.elem {
 } dnsManifest.records;
 assert builtins.elem {
   name = "codeforge.${domain}";
+  proxied = true;
+  target = "public-ipv4";
+  type = "A";
+} dnsManifest.records;
+assert builtins.elem {
+  name = "auth.${domain}";
+  proxied = true;
+  target = "public-ipv4";
+  type = "A";
+} dnsManifest.records;
+assert builtins.elem {
+  name = "stash.${domain}";
   proxied = true;
   target = "public-ipv4";
   type = "A";
