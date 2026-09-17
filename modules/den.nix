@@ -3,6 +3,7 @@
   flake-file.inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     den.url = "github:denful/den";
+    gen.url = "github:sini/gen";
     import-tree.url = "github:vic/import-tree";
     flake-file.url = "github:vic/flake-file";
     flake-parts = {
