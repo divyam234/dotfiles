@@ -150,7 +150,7 @@ in
           package = pkgs.niri;
         };
 
-        programs.noctalia-greeter = {
+        services.displayManager.noctalia-greeter = {
           enable = true;
           package = pkgs.noctalia-greeter;
 
