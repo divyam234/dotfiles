@@ -55,7 +55,7 @@
             general = {
               host = "0.0.0.0";
               port = 6432;
-              default_pool_size = 40;
+              default_pool_size = 100;
               pooler_mode = "transaction";
               passthrough_auth = "enabled_plain";
               pub_sub_channel_size = 4096;
