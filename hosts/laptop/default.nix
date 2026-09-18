@@ -9,8 +9,6 @@
       den.aspects.btrfs
       den.aspects.oci-base
       den.aspects.container-network
-      den.aspects.rclone-webdav
-      den.aspects.teldrive
     ];
 
     nixos =
