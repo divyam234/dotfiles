@@ -71,18 +71,22 @@ fn services_for_names<'a>(services: &'a [Service], names: &[String]) -> Result<V
 }
 
 fn print_man() {
-    use std::io::Write;
     let man = clap_mangen::Man::new(Cli::command());
     let mut buffer = Vec::new();
     man.render(&mut buffer).expect("man page renders");
     let text = String::from_utf8(buffer).expect("man page is UTF-8");
-    // Piping to `head` closes stdout early; that is normal Unix behavior,
-    // not a crash.
-    if let Err(error) = write!(std::io::stdout(), "{text}") {
-        if error.kind() != std::io::ErrorKind::BrokenPipe {
-            eprintln!("svc: error: failed to write man page: {error:#}");
-            std::process::exit(EXIT_ERROR.into());
-        }
+    write_generated(&text, "man page");
+}
+
+/// Write generated output to stdout; a closed pipe (`| head`) is normal
+/// Unix behavior, not a crash.
+fn write_generated(text: &str, what: &str) {
+    use std::io::Write as _;
+    if let Err(error) = write!(std::io::stdout(), "{text}")
+        && error.kind() != std::io::ErrorKind::BrokenPipe
+    {
+        eprintln!("svc: error: failed to write {what}: {error:#}");
+        std::process::exit(EXIT_ERROR.into());
     }
 }
 
@@ -139,13 +143,7 @@ end"#
         );
     }
     // Piping to `head` closes stdout early; that is normal, not a crash.
-    use std::io::Write as _;
-    if let Err(error) = write!(std::io::stdout(), "{output}") {
-        if error.kind() != std::io::ErrorKind::BrokenPipe {
-            eprintln!("svc: error: failed to write completions: {error:#}");
-            std::process::exit(EXIT_ERROR.into());
-        }
-    }
+    write_generated(&output, "completions");
 }
 
 fn confirm_update(names: &[String], yes: bool) -> Result<()> {

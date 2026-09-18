@@ -97,7 +97,10 @@ pub fn normalize_startup(value: &str) -> String {
             "auto".into()
         }
         "disabled" => "manual".into(),
-        "" => "unknown".into(),
+        // systemd reports "bad" when the state cannot be determined (e.g.
+        // Quadlet-generated units whose symlinks it cannot resolve); that is
+        // "unknown", not a startup mode.
+        "" | "bad" => "unknown".into(),
         other => other.into(),
     }
 }
@@ -126,4 +129,19 @@ pub struct OutdatedEntry {
     pub service: String,
     pub image: Option<String>,
     pub status: Freshness,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn startup_states_normalize() {
+        assert_eq!(normalize_startup("enabled"), "auto");
+        assert_eq!(normalize_startup("generated"), "auto");
+        assert_eq!(normalize_startup("disabled"), "manual");
+        // Quadlet symlink loops surface as "bad": unknown, not a mode.
+        assert_eq!(normalize_startup("bad"), "unknown");
+        assert_eq!(normalize_startup(""), "unknown");
+    }
 }
