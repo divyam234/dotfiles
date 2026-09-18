@@ -9,7 +9,7 @@
 
 rustPlatform.buildRustPackage {
   pname = "svc";
-  version = "0.1.0";
+  version = (lib.importTOML ./Cargo.toml).package.version;
   src = lib.cleanSourceWith {
     src = ./.;
     filter = path: _type: baseNameOf path != "target";
@@ -22,7 +22,11 @@ rustPlatform.buildRustPackage {
   ];
   postInstall = ''
     installShellCompletion --cmd svc \
-      --fish <($out/bin/svc completions fish)
+      --bash <($out/bin/svc completions bash) \
+      --fish <($out/bin/svc completions fish) \
+      --zsh <($out/bin/svc completions zsh)
+    $out/bin/svc man > svc.1
+    installManPage svc.1
 
     wrapProgram $out/bin/svc \
       --prefix PATH : ${

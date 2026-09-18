@@ -1,31 +1,116 @@
-use std::process::{Command, ExitStatus};
+use std::{
+    process::{Command, ExitStatus},
+    thread,
+    time::{Duration, Instant},
+};
 
 use anyhow::{Context, Result, anyhow, bail};
 
-use crate::{model::Service, privilege, systemd};
+use crate::{
+    model::{Freshness, Service},
+    privilege, systemd,
+};
 
-fn run_status(mut command: Command) -> Result<ExitStatus> {
-    let rendered = format!("{command:?}");
-    command.status().with_context(|| format!("run {rendered}"))
+/// Shared execution context for every external command.
+#[derive(Debug, Clone, Copy)]
+pub struct ExecOptions {
+    /// Pass `-n` to sudo so workers never block on a password prompt.
+    pub non_interactive: bool,
+    /// Print mutating commands instead of executing them.
+    pub dry_run: bool,
+    /// Per-command timeout for systemctl/podman invocations.
+    pub timeout: Duration,
 }
 
-fn run_output(mut command: Command) -> Result<String> {
+impl ExecOptions {
+    pub fn new(non_interactive: bool, dry_run: bool, timeout: Duration) -> Self {
+        Self {
+            non_interactive,
+            dry_run,
+            timeout,
+        }
+    }
+
+    /// Foreground CLI execution: sudo may prompt.
+    pub fn cli(dry_run: bool, timeout: Duration) -> Self {
+        Self::new(false, dry_run, timeout)
+    }
+
+    /// Background worker execution: sudo must not prompt.
+    pub fn worker(dry_run: bool, timeout: Duration) -> Self {
+        Self::new(true, dry_run, timeout)
+    }
+}
+
+impl Default for ExecOptions {
+    fn default() -> Self {
+        Self::new(false, false, Duration::from_secs(120))
+    }
+}
+
+fn spawn_timed(mut command: Command) -> Result<std::process::Child> {
     let rendered = format!("{command:?}");
-    let output = command
-        .output()
+    command.spawn().with_context(|| format!("run {rendered}"))
+}
+
+fn wait_timed(child: &mut std::process::Child, rendered: &str, timeout: Duration) -> Result<()> {
+    let start = Instant::now();
+    loop {
+        match child.try_wait().context("poll child process")? {
+            Some(_) => return Ok(()),
+            None if start.elapsed() >= timeout => {
+                let _ = child.kill();
+                let _ = child.wait();
+                bail!("{rendered} timed out after {}s", timeout.as_secs());
+            }
+            None => thread::sleep(Duration::from_millis(50)),
+        }
+    }
+}
+
+fn run_status(command: Command, timeout: Duration) -> Result<ExitStatus> {
+    let rendered = format!("{command:?}");
+    let mut child = spawn_timed(command)?;
+    wait_timed(&mut child, &rendered, timeout)?;
+    child.wait().with_context(|| format!("run {rendered}"))
+}
+
+fn run_output(command: Command, timeout: Duration) -> Result<String> {
+    use std::process::Stdio;
+    let rendered = format!("{command:?}");
+    let mut child = spawn_timed({
+        let mut command = command;
+        command.stdout(Stdio::piped()).stderr(Stdio::piped());
+        command
+    })?;
+    wait_timed(&mut child, &rendered, timeout)?;
+    let output = child
+        .wait_with_output()
         .with_context(|| format!("run {rendered}"))?;
     if !output.status.success() {
-        bail!("{rendered} failed");
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        if stderr.is_empty() {
+            bail!("{rendered} failed");
+        }
+        bail!("{rendered} failed: {stderr}");
     }
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
 
-pub fn systemctl_action(action: &str, service: &Service, non_interactive: bool) -> Result<()> {
-    let mut command = privilege::command("systemctl", non_interactive);
+fn dry_run_print(command: Command) {
+    println!("svc: dry-run: {command:?}");
+}
+
+pub fn systemctl_action(action: &str, service: &Service, opts: ExecOptions) -> Result<()> {
+    let mut command = privilege::command("systemctl", opts.non_interactive);
     command.args([action, &service.unit]);
-    let status = run_status(command)?;
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    let status = run_status(command, opts.timeout)?;
     if !status.success() {
-        if non_interactive {
+        if opts.non_interactive {
             bail!(
                 "systemctl {action} {} failed; sudo authentication may need refreshing",
                 service.unit
@@ -36,32 +121,37 @@ pub fn systemctl_action(action: &str, service: &Service, non_interactive: bool) 
     Ok(())
 }
 
-pub fn pull_service(service: &Service, non_interactive: bool) -> Result<()> {
+pub fn pull_service(service: &Service, opts: ExecOptions) -> Result<()> {
     let image = service
         .image
         .as_deref()
         .ok_or_else(|| anyhow!("{} has no Image= entry", service.name))?;
-    pull_image_ref(image, non_interactive)
+    pull_image_ref(image, opts)
 }
 
-fn pull_image_ref(image: &str, non_interactive: bool) -> Result<()> {
-    let mut command = privilege::command("podman", non_interactive);
+fn pull_image_ref(image: &str, opts: ExecOptions) -> Result<()> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args(["pull", image]);
-    let status = run_status(command)?;
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    let status = run_status(command, opts.timeout)?;
     if !status.success() {
         bail!("podman pull failed for {image}");
     }
     Ok(())
 }
 
-fn container_image_id(container_name: &str, non_interactive: bool) -> Result<String> {
-    let mut command = privilege::command("podman", non_interactive);
+fn container_image_id(container_name: &str, opts: ExecOptions) -> Result<String> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args(["inspect", "--format", "{{.Image}}", container_name]);
-    run_output(command).with_context(|| format!("get current image ID for {container_name}"))
+    run_output(command, opts.timeout)
+        .with_context(|| format!("get current image ID for {container_name}"))
 }
 
-fn containers_using_image(image_id: &str, non_interactive: bool) -> Result<Vec<String>> {
-    let mut command = privilege::command("podman", non_interactive);
+fn containers_using_image(image_id: &str, opts: ExecOptions) -> Result<Vec<String>> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args([
         "ps",
         "-a",
@@ -70,43 +160,57 @@ fn containers_using_image(image_id: &str, non_interactive: bool) -> Result<Vec<S
         "--format",
         "{{.Names}}",
     ]);
-    let output =
-        run_output(command).with_context(|| format!("list containers using {image_id}"))?;
+    let output = run_output(command, opts.timeout)
+        .with_context(|| format!("list containers using {image_id}"))?;
     Ok(output.lines().map(str::to_owned).collect())
 }
 
-fn image_update_available(service: &Service, non_interactive: bool) -> Result<bool> {
-    let mut command = privilege::command("podman", non_interactive);
+/// Check the registry for a newer image.
+///
+/// Returns `Ok(None)` when the service is not configured for registry
+/// auto-update; callers decide whether that is fatal.
+fn image_update_available(service: &Service, opts: ExecOptions) -> Result<Option<bool>> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args([
         "auto-update",
         "--dry-run",
         "--format",
         "{{.ContainerName}}\t{{.Updated}}",
     ]);
-    let output = run_output(command).context("check registry for image updates")?;
+    let output = run_output(command, opts.timeout).context("check registry for image updates")?;
     let status = output
         .lines()
         .filter_map(|line| line.split_once('\t'))
-        .find_map(|(name, status)| (name == service.container_name).then_some(status))
-        .ok_or_else(|| {
-            anyhow!(
-                "{} is not configured for registry auto-update",
-                service.name
-            )
-        })?;
+        .find_map(|(name, status)| (name == service.container_name).then_some(status));
 
+    let Some(status) = status else {
+        return Ok(None);
+    };
     match status {
-        "pending" => Ok(true),
-        "false" => Ok(false),
+        "pending" => Ok(Some(true)),
+        "false" => Ok(Some(false)),
         "failed" => bail!("registry update check failed for {}", service.name),
         status => bail!("unexpected update status '{status}' for {}", service.name),
     }
 }
 
-fn remove_image(image_id: &str, non_interactive: bool) -> Result<()> {
-    let mut command = privilege::command("podman", non_interactive);
+/// Registry freshness for `outdated`: never fatal for unsupported services.
+pub fn check_updates(service: &Service, opts: ExecOptions) -> Result<Freshness> {
+    match image_update_available(service, opts)? {
+        Some(true) => Ok(Freshness::Pending),
+        Some(false) => Ok(Freshness::Current),
+        None => Ok(Freshness::Unsupported),
+    }
+}
+
+fn remove_image(image_id: &str, opts: ExecOptions) -> Result<()> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args(["image", "rm", image_id]);
-    let status = run_status(command)?;
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    let status = run_status(command, opts.timeout)?;
     if !status.success() {
         bail!("podman image rm failed for {image_id}");
     }
@@ -122,9 +226,26 @@ enum UpdateStep {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum UpdateOutcome {
+pub enum UpdateOutcome {
     Updated,
     AlreadyCurrent,
+}
+
+/// Per-service result of [`update_services`]; presentation lives with callers
+/// so the dashboard can render reports without touching stdout.
+#[derive(Debug, Clone)]
+pub struct UpdateReport {
+    pub name: String,
+    pub outcome: UpdateOutcome,
+}
+
+impl UpdateReport {
+    pub fn describe(&self) -> &'static str {
+        match self.outcome {
+            UpdateOutcome::Updated => "update complete",
+            UpdateOutcome::AlreadyCurrent => "already up to date",
+        }
+    }
 }
 
 fn image_group_members<'a>(
@@ -204,31 +325,35 @@ fn run_group_update(
     Ok(UpdateOutcome::Updated)
 }
 
-pub fn update_services(all: &[Service], targets: &[&Service], non_interactive: bool) -> Result<()> {
+pub fn update_services(
+    all: &[Service],
+    targets: &[&Service],
+    opts: ExecOptions,
+) -> Result<Vec<UpdateReport>> {
     let by_container: Vec<(String, &Service)> = all
         .iter()
         .map(|service| (service.container_name.clone(), service))
         .collect();
 
     let mut handled_images: Vec<String> = Vec::new();
+    let mut reports = Vec::new();
     for target in targets {
-        let image_id = container_image_id(&target.container_name, non_interactive)?;
+        let image_id = container_image_id(&target.container_name, opts)?;
         if handled_images.contains(&image_id) {
             continue;
         }
         handled_images.push(image_id);
 
-        let members = image_group_members(all, target, |container| {
-            container_image_id(container, non_interactive)
-        });
+        let members =
+            image_group_members(all, target, |container| container_image_id(container, opts));
         if members.len() > 1 {
             let others: Vec<&str> = members
                 .iter()
                 .map(|service| service.name.as_str())
                 .filter(|name| *name != target.name)
                 .collect();
-            eprintln!(
-                "svc: {}: sharing image with {}; updating as a group",
+            tracing::info!(
+                "{}: sharing image with {}; updating as a group",
                 target.name,
                 others.join(", ")
             );
@@ -258,62 +383,108 @@ pub fn update_services(all: &[Service], targets: &[&Service], non_interactive: b
         let outcome = run_group_update(
             &target.name,
             &member_names,
-            || container_image_id(&target.container_name, non_interactive),
+            || container_image_id(&target.container_name, opts),
             || {
                 let mut pending = false;
                 for member in &members {
-                    if image_update_available(member, non_interactive)? {
-                        pending = true;
+                    match image_update_available(member, opts)? {
+                        Some(true) => pending = true,
+                        Some(false) => {}
+                        None => bail!("{} is not configured for registry auto-update", member.name),
                     }
                 }
                 Ok(pending)
             },
             |old_image| {
-                let users = containers_using_image(old_image, non_interactive)?;
+                let users = containers_using_image(old_image, opts)?;
                 Ok(!users
                     .iter()
                     .any(|container| !member_containers.contains(container)))
             },
             |step, image_id| match step {
                 UpdateStep::Stop(name) => {
-                    eprintln!("svc: {name}: new image found; stopping service");
-                    systemctl_action("stop", find(&name)?, non_interactive)
+                    tracing::info!("{name}: new image found; stopping service");
+                    systemctl_action("stop", find(&name)?, opts)
                 }
                 UpdateStep::Pull => {
                     for image in &image_refs {
-                        eprintln!("svc: {}: pulling {}", target.name, image);
-                        pull_image_ref(image, non_interactive)?;
+                        tracing::info!("{}: pulling {}", target.name, image);
+                        pull_image_ref(image, opts)?;
                     }
                     Ok(())
                 }
                 UpdateStep::RemoveOldImage => {
-                    eprintln!("svc: {}: removing old image", target.name);
-                    remove_image(image_id.expect("old image ID"), non_interactive)
+                    tracing::info!("{}: removing old image", target.name);
+                    remove_image(image_id.expect("old image ID"), opts)
                 }
                 UpdateStep::Start(name) => {
-                    eprintln!("svc: {name}: starting service");
-                    systemctl_action("start", find(&name)?, non_interactive)
+                    tracing::info!("{name}: starting service");
+                    systemctl_action("start", find(&name)?, opts)
                 }
             },
         )?;
 
         for member in &members {
-            match outcome {
-                UpdateOutcome::Updated => println!("svc: {}: update complete", member.name),
-                UpdateOutcome::AlreadyCurrent => {
-                    println!("svc: {}: already up to date", member.name)
-                }
-            }
+            reports.push(UpdateReport {
+                name: member.name.clone(),
+                outcome,
+            });
         }
+    }
+    Ok(reports)
+}
+
+pub fn daemon_reload(opts: ExecOptions) -> Result<()> {
+    let mut command = privilege::command("systemctl", opts.non_interactive);
+    command.arg("daemon-reload");
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    let status = run_status(command, opts.timeout)?;
+    if !status.success() {
+        bail!("systemctl daemon-reload failed");
     }
     Ok(())
 }
 
-pub fn show_status(service: &Service) -> Result<()> {
-    let status = Command::new("systemctl")
-        .args(["status", &service.unit, "--no-pager"])
+pub fn container_exec(service: &Service, args: &[String], opts: ExecOptions) -> Result<()> {
+    use std::io::IsTerminal;
+    let mut command = privilege::command("podman", opts.non_interactive);
+    command.arg("exec");
+    if std::io::stdin().is_terminal() {
+        command.args(["-it"]);
+    }
+    command.arg(&service.container_name);
+    command.args(args);
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    // May be interactive: run without a timeout.
+    let rendered = format!("{command:?}");
+    let status = command
         .status()
-        .context("run systemctl status")?;
+        .with_context(|| format!("run {rendered}"))?;
+    if !status.success() {
+        bail!("exec failed for {}", service.container_name);
+    }
+    Ok(())
+}
+
+pub fn show_status(service: &Service, opts: ExecOptions) -> Result<()> {
+    let mut command = Command::new("systemctl");
+    command.args(["status", &service.unit, "--no-pager"]);
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    // `systemctl status` streams directly; wait with a timeout instead of
+    // blocking forever on a wedged systemd.
+    let rendered = format!("{command:?}");
+    let mut child = spawn_timed(command)?;
+    wait_timed(&mut child, &rendered, opts.timeout)?;
+    let status = child.wait().context("run systemctl status")?;
     if !systemd::status_is_acceptable(status.code()) {
         bail!(
             "systemctl status {} failed with {:?}",
@@ -325,6 +496,7 @@ pub fn show_status(service: &Service) -> Result<()> {
 }
 
 pub fn follow_logs(service: &Service, lines: usize) -> Result<()> {
+    // Intentionally untimed: `-f` follows forever by design.
     let status = Command::new("journalctl")
         .args(["-u", &service.unit, "-n", &lines.to_string(), "-f"])
         .status()
@@ -335,32 +507,22 @@ pub fn follow_logs(service: &Service, lines: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn container_shell(service: &Service, shell: &str, non_interactive: bool) -> Result<()> {
-    let mut command = privilege::command("podman", non_interactive);
+pub fn container_shell(service: &Service, shell: &str, opts: ExecOptions) -> Result<()> {
+    let mut command = privilege::command("podman", opts.non_interactive);
     command.args(["exec", "-it", &service.container_name, shell]);
-    let status = run_status(command)?;
+    if opts.dry_run {
+        dry_run_print(command);
+        return Ok(());
+    }
+    // Interactive session: no timeout.
+    let rendered = format!("{command:?}");
+    let status = command
+        .status()
+        .with_context(|| format!("run {rendered}"))?;
     if !status.success() {
         bail!("shell failed for {}", service.container_name);
     }
     Ok(())
-}
-
-pub fn tail_logs(service: &Service, lines: usize) -> String {
-    Command::new("journalctl")
-        .args([
-            "-u",
-            &service.unit,
-            "-n",
-            &lines.to_string(),
-            "--no-pager",
-            "-o",
-            "cat",
-        ])
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .map(|output| String::from_utf8_lossy(&output.stdout).into_owned())
-        .unwrap_or_else(|| "No logs available.".into())
 }
 
 #[cfg(test)]
@@ -610,5 +772,47 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(error.root_cause().to_string(), "registry unreachable");
+    }
+
+    #[test]
+    fn dry_run_mutations_succeed_without_executing() {
+        let opts = ExecOptions::new(false, true, Duration::from_secs(1));
+        // No such unit/binary needs to exist: dry-run returns before spawning.
+        let target = service("ghost", "systemd-ghost", Some("img:latest"));
+        systemctl_action("restart", &target, opts).unwrap();
+        pull_service(&target, opts).unwrap();
+        remove_image("sha256:never", opts).unwrap();
+        container_shell(&target, "sh", opts).unwrap();
+        show_status(&target, opts).unwrap();
+    }
+
+    #[test]
+    fn slow_command_times_out() {
+        let mut command = std::process::Command::new("sleep");
+        command.arg("30");
+        let error = run_status(command, Duration::from_millis(200)).unwrap_err();
+        assert!(error.to_string().contains("timed out"), "{error:#}");
+    }
+
+    #[test]
+    fn failing_command_reports_stderr() {
+        let mut command = std::process::Command::new("sh");
+        command.args(["-c", "echo oops >&2; exit 1"]);
+        let error = run_output(command, Duration::from_secs(5)).unwrap_err();
+        assert!(error.to_string().contains("oops"), "{error:#}");
+    }
+
+    #[test]
+    fn update_report_describes_outcomes() {
+        let updated = UpdateReport {
+            name: "a".into(),
+            outcome: UpdateOutcome::Updated,
+        };
+        let current = UpdateReport {
+            name: "b".into(),
+            outcome: UpdateOutcome::AlreadyCurrent,
+        };
+        assert_eq!(updated.describe(), "update complete");
+        assert_eq!(current.describe(), "already up to date");
     }
 }

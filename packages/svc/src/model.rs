@@ -101,3 +101,29 @@ pub fn normalize_startup(value: &str) -> String {
         other => other.into(),
     }
 }
+
+/// Registry freshness of a service's image.
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Freshness {
+    Pending,
+    Current,
+    Unsupported,
+}
+
+impl Freshness {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Pending => "update available",
+            Self::Current => "up to date",
+            Self::Unsupported => "no auto-update",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OutdatedEntry {
+    pub service: String,
+    pub image: Option<String>,
+    pub status: Freshness,
+}

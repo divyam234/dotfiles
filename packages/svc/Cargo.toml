@@ -1,6 +1,6 @@
 [package]
 name = "svc"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 description = "Quadlet service CLI and terminal dashboard"
@@ -9,11 +9,16 @@ description = "Quadlet service CLI and terminal dashboard"
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
+clap_mangen = "0.2"
 crossterm = "0.29"
 libc = "0.2"
 ratatui = "0.29"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 tempfile = "3"
+assert_cmd = "2"
+predicates = "3"

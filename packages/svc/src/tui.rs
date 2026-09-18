@@ -1,12 +1,13 @@
 use std::{
-    io::{self, IsTerminal},
+    io::{self, BufRead, IsTerminal},
     path::PathBuf,
+    process::{Child, Command, Stdio},
     sync::mpsc::{self, Receiver, TryRecvError},
     thread,
     time::{Duration, Instant},
 };
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use crossterm::{
     event::{
         self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind,
@@ -20,12 +21,13 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState, Wrap},
+    widgets::{Block, Borders, Cell, Clear, Paragraph, Row, Table, TableState, Wrap},
 };
 
 use crate::{
     model::{Service, ServiceState},
-    operations, privilege, quadlet, systemd,
+    operations::{self, ExecOptions, UpdateReport},
+    privilege, quadlet, systemd,
 };
 
 type Backend = CrosstermBackend<io::Stdout>;
@@ -79,36 +81,135 @@ struct ActionResult {
     result: std::result::Result<(), String>,
 }
 
+#[derive(Debug, Clone)]
+struct UpdateDone {
+    result: std::result::Result<Vec<UpdateReport>, String>,
+}
+
+#[derive(Debug, Clone)]
+enum WorkDone {
+    Action(ActionResult),
+    Update(UpdateDone),
+}
+
+#[derive(Debug, Clone)]
+struct PendingConfirm {
+    action: String,
+    service: String,
+}
+
+/// Maximum retained log lines per service in the dashboard.
+const LOG_LINE_CAP: usize = 2000;
+
+fn push_log_line(logs: &mut String, line: &str) {
+    logs.push_str(line);
+    logs.push('\n');
+    let count = logs.lines().count();
+    if count > LOG_LINE_CAP
+        && let Some(index) = logs
+            .match_indices('\n')
+            .nth(count - LOG_LINE_CAP - 1)
+            .map(|(index, _)| index + 1)
+    {
+        logs.drain(..index);
+    }
+}
+
+/// A `journalctl -f` follower streaming lines to the UI thread.
+///
+/// Dropping kills the child, so switching selection never leaks followers.
+struct LogStream {
+    child: Child,
+    rx: Receiver<Option<String>>,
+}
+
+impl LogStream {
+    fn spawn(unit: &str) -> Result<Self> {
+        let mut child = Command::new("journalctl")
+            .args(["-u", unit, "-n", "200", "-f", "-o", "cat", "--no-pager"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .context("start journalctl follower")?;
+        let stdout = child.stdout.take().context("capture journalctl output")?;
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            for line in std::io::BufReader::new(stdout).lines() {
+                match line {
+                    Ok(line) => {
+                        if tx.send(Some(line)).is_err() {
+                            break;
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+            let _ = tx.send(None);
+        });
+        Ok(Self { child, rx })
+    }
+}
+
+impl Drop for LogStream {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
 pub struct App {
     dir: PathBuf,
+    dry_run: bool,
+    timeout: Duration,
+    refresh_interval: Duration,
     services: Vec<Service>,
     selected_name: Option<String>,
     table_state: TableState,
     focus: Focus,
     logs: String,
+    log_stream: Option<LogStream>,
     log_scroll: u16,
     log_view_height: u16,
     follow_logs: bool,
     message: String,
+    confirm: Option<PendingConfirm>,
+    filter: String,
+    filtering: bool,
+    show_help: bool,
+    paused: bool,
     global_error: Option<String>,
-    action_rx: Option<Receiver<ActionResult>>,
+    action_rx: Option<Receiver<WorkDone>>,
     action_in_progress: Option<(String, String)>,
     last_refresh: Instant,
 }
 
 impl App {
-    pub fn new(dir: PathBuf) -> Result<Self> {
+    pub fn new(
+        dir: PathBuf,
+        dry_run: bool,
+        timeout: Duration,
+        refresh_interval: Duration,
+    ) -> Result<Self> {
         let mut app = Self {
             dir,
+            dry_run,
+            timeout,
+            refresh_interval,
             services: Vec::new(),
             selected_name: None,
             table_state: TableState::default(),
             focus: Focus::Services,
             logs: String::new(),
+            log_stream: None,
             log_scroll: 0,
             log_view_height: 1,
             follow_logs: true,
             message: String::new(),
+            confirm: None,
+            filter: String::new(),
+            filtering: false,
+            show_help: false,
+            paused: false,
             global_error: None,
             action_rx: None,
             action_in_progress: None,
@@ -118,54 +219,121 @@ impl App {
         Ok(app)
     }
 
-    fn selected_index(&self) -> Option<usize> {
-        self.selected_name.as_ref().and_then(|name| {
-            self.services
-                .iter()
-                .position(|service| &service.name == name)
-        })
+    fn matches_filter(&self, service: &Service) -> bool {
+        if self.filter.is_empty() {
+            return true;
+        }
+        let query = self.filter.to_lowercase();
+        service.name.to_lowercase().contains(&query)
+            || service.container_name.to_lowercase().contains(&query)
+            || service
+                .image
+                .as_deref()
+                .unwrap_or_default()
+                .to_lowercase()
+                .contains(&query)
+            || service.state.label().to_lowercase().contains(&query)
+    }
+
+    fn visible_services(&self) -> Vec<&Service> {
+        self.services
+            .iter()
+            .filter(|service| self.matches_filter(service))
+            .collect()
     }
 
     fn sync_selection(&mut self) {
-        if self.services.is_empty() {
+        let names: Vec<String> = self
+            .visible_services()
+            .iter()
+            .map(|service| service.name.clone())
+            .collect();
+        if names.is_empty() {
             self.selected_name = None;
             self.table_state.select(None);
             return;
         }
-        let index = self.selected_index().unwrap_or(0);
-        self.selected_name = Some(self.services[index].name.clone());
+        let index = self
+            .selected_name
+            .as_deref()
+            .and_then(|name| names.iter().position(|candidate| candidate == name))
+            .unwrap_or(0);
+        self.selected_name = Some(names[index].clone());
         self.table_state.select(Some(index));
     }
 
+    /// Re-resolve the selection after the list changes; restart log
+    /// streaming only when the selected service actually changed.
+    fn reselect(&mut self) {
+        let before = self.selected_name.clone();
+        self.sync_selection();
+        if self.selected_name != before {
+            self.follow_logs = true;
+            self.restart_log_stream();
+        }
+    }
+
     fn selected_service(&self) -> Option<&Service> {
-        self.selected_index()
-            .and_then(|index| self.services.get(index))
+        let name = self.selected_name.as_ref()?;
+        self.services.iter().find(|service| &service.name == name)
     }
 
     fn refresh(&mut self) {
-        let previous = self.selected_name.clone();
+        // State refresh never restarts log streaming; the follower keeps
+        // tailing the selected unit across refreshes.
         match quadlet::discover(&self.dir) {
             Ok(mut services) => {
                 self.global_error = systemd::refresh_services(&mut services)
                     .err()
                     .map(|error| error.to_string());
                 self.services = services;
-                self.selected_name = previous;
-                self.sync_selection();
-                self.refresh_logs();
+                self.reselect();
                 self.last_refresh = Instant::now();
             }
             Err(error) => self.global_error = Some(error.to_string()),
         }
     }
 
-    fn refresh_logs(&mut self) {
-        self.logs = self
-            .selected_service()
-            .map(|service| operations::tail_logs(service, 200))
-            .unwrap_or_else(|| "No service selected.".into());
-        if self.follow_logs {
-            self.scroll_logs_to_latest();
+    fn restart_log_stream(&mut self) {
+        // Dropping the previous stream kills its journalctl child.
+        self.log_stream = None;
+        self.logs.clear();
+        self.log_scroll = 0;
+        let Some(service) = self.selected_service() else {
+            self.logs = "No service selected.".into();
+            return;
+        };
+        match LogStream::spawn(&service.unit) {
+            Ok(stream) => self.log_stream = Some(stream),
+            Err(_) => self.logs = "No logs available.".into(),
+        }
+    }
+
+    fn poll_logs(&mut self) {
+        let mut batch = Vec::new();
+        let mut ended = false;
+        if let Some(stream) = self.log_stream.as_ref() {
+            loop {
+                match stream.rx.try_recv() {
+                    Ok(Some(line)) => batch.push(line),
+                    Ok(None) | Err(TryRecvError::Disconnected) => {
+                        ended = true;
+                        break;
+                    }
+                    Err(TryRecvError::Empty) => break,
+                }
+            }
+        }
+        for line in batch {
+            push_log_line(&mut self.logs, &line);
+        }
+        if ended {
+            self.log_stream = None;
+            if self.logs.is_empty() {
+                self.logs = "No logs available.".into();
+            }
+        } else if self.follow_logs {
+            self.log_scroll = self.max_log_scroll();
         } else {
             self.log_scroll = self.log_scroll.min(self.max_log_scroll());
         }
@@ -199,18 +367,74 @@ impl App {
     }
 
     fn move_selection(&mut self, delta: isize) {
-        if self.services.is_empty() {
+        let visible: Vec<String> = self
+            .visible_services()
+            .iter()
+            .map(|service| service.name.clone())
+            .collect();
+        if visible.is_empty() {
             return;
         }
-        let current = self.selected_index().unwrap_or(0) as isize;
-        let next = (current + delta).rem_euclid(self.services.len() as isize) as usize;
-        self.selected_name = Some(self.services[next].name.clone());
+        let current = self
+            .selected_name
+            .as_deref()
+            .and_then(|name| visible.iter().position(|candidate| candidate == name))
+            .unwrap_or(0) as isize;
+        let next = (current + delta).rem_euclid(visible.len() as isize) as usize;
+        self.selected_name = Some(visible[next].clone());
         self.sync_selection();
         self.follow_logs = true;
-        self.refresh_logs();
+        self.restart_log_stream();
     }
 
-    fn start_action(&mut self, action: &str) {
+    fn request_action(&mut self, action: &str) {
+        if self.action_in_progress.is_some() {
+            self.message = "an action is already running".into();
+            return;
+        }
+        let Some(service) = self.selected_service() else {
+            return;
+        };
+        if action == "start" {
+            self.start_action(action);
+            return;
+        }
+        // stop/restart are destructive: require confirmation first.
+        self.confirm = Some(PendingConfirm {
+            action: action.to_owned(),
+            service: service.name.clone(),
+        });
+    }
+
+    fn confirm_pending(&mut self, accept: bool) {
+        let Some(pending) = self.confirm.take() else {
+            return;
+        };
+        if !accept {
+            self.message = format!("{} {} cancelled", pending.action, pending.service);
+            return;
+        }
+        if self
+            .services
+            .iter()
+            .any(|service| service.name == pending.service)
+        {
+            self.selected_name = Some(pending.service.clone());
+            self.sync_selection();
+            if pending.action == "update" {
+                self.start_update();
+            } else {
+                self.start_action(&pending.action);
+            }
+        } else {
+            self.message = format!("{} is no longer available", pending.service);
+        }
+    }
+
+    fn start_work<F>(&mut self, action: &str, op: F)
+    where
+        F: FnOnce(&Service, ExecOptions) -> Result<()> + Send + 'static,
+    {
         if self.action_in_progress.is_some() {
             self.message = "an action is already running".into();
             return;
@@ -220,18 +444,62 @@ impl App {
         };
         let action = action.to_owned();
         let service_name = service.name.clone();
+        if self.dry_run {
+            self.message = format!("dry-run: {action} {service_name} (no changes made)");
+            return;
+        }
+        let timeout = self.timeout;
         let (tx, rx) = mpsc::channel();
         self.action_in_progress = Some((service_name.clone(), action.clone()));
         self.message = format!("{action} in progress for {service_name}");
         self.action_rx = Some(rx);
         thread::spawn(move || {
-            let result = operations::systemctl_action(&action, &service, true)
+            let result = op(&service, ExecOptions::worker(false, timeout))
                 .map_err(|error| error.to_string());
-            let _ = tx.send(ActionResult {
+            let _ = tx.send(WorkDone::Action(ActionResult {
                 service: service_name,
                 action,
                 result,
-            });
+            }));
+        });
+    }
+
+    fn start_action(&mut self, action: &str) {
+        let owned = action.to_owned();
+        self.start_work(action, move |service, opts| {
+            operations::systemctl_action(&owned, service, opts)
+        });
+    }
+
+    fn start_pull(&mut self) {
+        self.start_work("pull", operations::pull_service);
+    }
+
+    fn start_update(&mut self) {
+        if self.action_in_progress.is_some() {
+            self.message = "an action is already running".into();
+            return;
+        }
+        let Some(target) = self.selected_service().cloned() else {
+            return;
+        };
+        if self.dry_run {
+            self.message = format!("dry-run: update {} (no changes made)", target.name);
+            return;
+        }
+        let label = target.name.clone();
+        let all = self.services.clone();
+        let timeout = self.timeout;
+        let (tx, rx) = mpsc::channel();
+        self.action_in_progress = Some((label.clone(), "update".into()));
+        self.message = format!("update in progress for {label}");
+        self.action_rx = Some(rx);
+        thread::spawn(move || {
+            let opts = ExecOptions::worker(false, timeout);
+            let target_ref = &target;
+            let result = operations::update_services(&all, &[target_ref], opts)
+                .map_err(|error| error.to_string());
+            let _ = tx.send(WorkDone::Update(UpdateDone { result }));
         });
     }
 
@@ -240,9 +508,22 @@ impl App {
             return;
         };
         match rx.try_recv() {
-            Ok(result) => {
+            Ok(WorkDone::Action(result)) => {
                 self.message = match result.result {
                     Ok(()) => format!("{} completed for {}", result.action, result.service),
+                    Err(error) => error,
+                };
+                self.action_in_progress = None;
+                self.action_rx = None;
+                self.refresh();
+            }
+            Ok(WorkDone::Update(done)) => {
+                self.message = match done.result {
+                    Ok(reports) => reports
+                        .iter()
+                        .map(|report| format!("{}: {}", report.name, report.describe()))
+                        .collect::<Vec<_>>()
+                        .join("; "),
                     Err(error) => error,
                 };
                 self.action_in_progress = None;
@@ -259,44 +540,142 @@ impl App {
     }
 }
 
-pub fn run(dir: PathBuf) -> Result<()> {
+pub fn run(
+    dir: PathBuf,
+    dry_run: bool,
+    timeout: Duration,
+    refresh_interval: Duration,
+) -> Result<()> {
     if !io::stdout().is_terminal() {
         bail!("interactive UI requires a terminal; use `svc list` for non-interactive output");
     }
     privilege::warm_credentials()?;
     let mut session = TerminalSession::enter()?;
-    let mut app = App::new(dir)?;
+    let mut app = App::new(dir, dry_run, timeout, refresh_interval)?;
     loop {
         app.poll_action();
+        app.poll_logs();
         session.terminal.draw(|frame| draw(frame, &mut app))?;
         if event::poll(Duration::from_millis(200))? {
             match event::read()? {
-                Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => break,
-                    KeyCode::Tab | KeyCode::BackTab => app.cycle_focus(),
-                    KeyCode::Down | KeyCode::Char('j') => match app.focus {
-                        Focus::Services => app.move_selection(1),
-                        Focus::Logs => app.scroll_logs(1),
-                    },
-                    KeyCode::Up | KeyCode::Char('k') => match app.focus {
-                        Focus::Services => app.move_selection(-1),
-                        Focus::Logs => app.scroll_logs(-1),
-                    },
-                    KeyCode::PageDown if app.focus == Focus::Logs => app.scroll_logs(10),
-                    KeyCode::PageUp if app.focus == Focus::Logs => app.scroll_logs(-10),
-                    KeyCode::Home if app.focus == Focus::Logs => {
-                        app.log_scroll = 0;
-                        app.follow_logs = false;
+                Event::Key(key) if key.kind == KeyEventKind::Press => {
+                    if app.show_help {
+                        match key.code {
+                            KeyCode::Char('q') | KeyCode::Esc | KeyCode::Char('?') => {
+                                app.show_help = false;
+                            }
+                            _ => {}
+                        }
+                    } else if app.filtering {
+                        match key.code {
+                            KeyCode::Esc => {
+                                app.filter.clear();
+                                app.filtering = false;
+                                app.reselect();
+                            }
+                            KeyCode::Enter => {
+                                app.filtering = false;
+                                app.reselect();
+                            }
+                            KeyCode::Backspace => {
+                                app.filter.pop();
+                                app.reselect();
+                            }
+                            KeyCode::Char(c) if !c.is_control() => {
+                                app.filter.push(c);
+                                app.reselect();
+                            }
+                            _ => {}
+                        }
+                    } else {
+                        match key.code {
+                            KeyCode::Char('q') => break,
+                            KeyCode::Esc if app.confirm.is_some() => app.confirm_pending(false),
+                            KeyCode::Esc => break,
+                            KeyCode::Char('y') | KeyCode::Char('Y') if app.confirm.is_some() => {
+                                app.confirm_pending(true)
+                            }
+                            KeyCode::Char('n') | KeyCode::Char('N') if app.confirm.is_some() => {
+                                app.confirm_pending(false)
+                            }
+                            KeyCode::Tab | KeyCode::BackTab => app.cycle_focus(),
+                            KeyCode::Down | KeyCode::Char('j') => match app.focus {
+                                Focus::Services => app.move_selection(1),
+                                Focus::Logs => app.scroll_logs(1),
+                            },
+                            KeyCode::Up | KeyCode::Char('k') => match app.focus {
+                                Focus::Services => app.move_selection(-1),
+                                Focus::Logs => app.scroll_logs(-1),
+                            },
+                            KeyCode::PageDown if app.focus == Focus::Logs => app.scroll_logs(10),
+                            KeyCode::PageUp if app.focus == Focus::Logs => app.scroll_logs(-10),
+                            KeyCode::Home if app.focus == Focus::Logs => {
+                                app.log_scroll = 0;
+                                app.follow_logs = false;
+                            }
+                            KeyCode::End if app.focus == Focus::Logs => app.scroll_logs_to_latest(),
+                            KeyCode::Char('s')
+                                if app.focus == Focus::Services && app.confirm.is_none() =>
+                            {
+                                app.start_action("start")
+                            }
+                            KeyCode::Char('x')
+                                if app.focus == Focus::Services && app.confirm.is_none() =>
+                            {
+                                app.request_action("stop")
+                            }
+                            KeyCode::Char('r')
+                                if app.focus == Focus::Services && app.confirm.is_none() =>
+                            {
+                                app.request_action("restart")
+                            }
+                            KeyCode::Char('U')
+                                if app.focus == Focus::Services && app.confirm.is_none() =>
+                            {
+                                app.request_action("update")
+                            }
+                            KeyCode::Char('P')
+                                if app.focus == Focus::Services && app.confirm.is_none() =>
+                            {
+                                app.start_pull()
+                            }
+                            KeyCode::Char('!') if app.confirm.is_none() => {
+                                if let Some(service) = app.selected_service().cloned() {
+                                    // Leave the alternate screen so the shell
+                                    // runs in a real terminal, then re-enter.
+                                    drop(session);
+                                    let opts = ExecOptions::cli(app.dry_run, app.timeout);
+                                    if let Err(error) =
+                                        operations::container_shell(&service, "sh", opts)
+                                    {
+                                        app.message = format!("shell failed: {error:#}");
+                                    }
+                                    session = TerminalSession::enter()?;
+                                    app.refresh();
+                                }
+                            }
+                            KeyCode::Char('/') if app.confirm.is_none() => {
+                                app.filtering = true;
+                            }
+                            KeyCode::Char('?') => {
+                                app.show_help = true;
+                            }
+                            KeyCode::Char(' ') => {
+                                app.paused = !app.paused;
+                                app.message = if app.paused {
+                                    "auto-refresh paused".into()
+                                } else {
+                                    "auto-refresh resumed".into()
+                                };
+                            }
+                            KeyCode::Char('R') => {
+                                app.refresh();
+                                app.restart_log_stream();
+                            }
+                            _ => {}
+                        }
                     }
-                    KeyCode::End if app.focus == Focus::Logs => app.scroll_logs_to_latest(),
-                    KeyCode::Char('s') if app.focus == Focus::Services => app.start_action("start"),
-                    KeyCode::Char('x') if app.focus == Focus::Services => app.start_action("stop"),
-                    KeyCode::Char('r') if app.focus == Focus::Services => {
-                        app.start_action("restart")
-                    }
-                    KeyCode::Char('R') => app.refresh(),
-                    _ => {}
-                },
+                }
                 Event::Mouse(mouse) => match mouse.kind {
                     MouseEventKind::ScrollDown => match app.focus {
                         Focus::Services => app.move_selection(1),
@@ -311,7 +690,9 @@ pub fn run(dir: PathBuf) -> Result<()> {
                 _ => {}
             }
         }
-        if app.last_refresh.elapsed() >= Duration::from_secs(5) && app.action_in_progress.is_none()
+        if !app.paused
+            && app.last_refresh.elapsed() >= app.refresh_interval
+            && app.action_in_progress.is_none()
         {
             app.refresh();
         }
@@ -361,6 +742,11 @@ fn draw(frame: &mut ratatui::Frame<'_>, app: &mut App) {
                     Color::Red
                 }),
             ),
+            Span::raw("  "),
+            Span::styled(
+                if app.paused { "paused" } else { "" },
+                Style::default().fg(Color::Yellow),
+            ),
         ]))
         .block(Block::default().borders(Borders::ALL)),
         outer[0],
@@ -376,25 +762,102 @@ fn draw(frame: &mut ratatui::Frame<'_>, app: &mut App) {
         .as_ref()
         .map(|(service, action)| format!("{action} {service}…  "))
         .unwrap_or_default();
-    frame.render_widget(
-        Paragraph::new(Line::from(vec![
+    let footer: Line = if let Some(pending) = &app.confirm {
+        Line::from(vec![
+            Span::styled(
+                format!(" {} {}? ", pending.action, pending.service),
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" y confirm · n/Esc cancel "),
+            Span::styled(&app.message, Style::default().fg(Color::DarkGray)),
+        ])
+    } else if app.filtering {
+        Line::from(vec![
+            Span::styled(
+                format!(" /{} ", app.filter),
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" typing · Enter keep · Esc clear "),
+            Span::styled(&app.message, Style::default().fg(Color::DarkGray)),
+        ])
+    } else {
+        Line::from(vec![
             Span::styled(
                 " Tab ",
                 Style::default()
                     .fg(Color::Cyan)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("focus  ↑/↓ or j/k move/scroll  PgUp/PgDn logs  s start  x stop  r restart  R refresh  q quit  "),
+            Span::raw(
+                "focus  j/k move  s start  x stop  r restart  U update  P pull  ! shell  / filter  space pause  ? help  q quit  ",
+            ),
             Span::styled(action, Style::default().fg(Color::Yellow)),
             Span::styled(&app.message, Style::default().fg(Color::DarkGray)),
-        ]))
-        .block(Block::default().borders(Borders::ALL)),
+        ])
+    };
+    frame.render_widget(
+        Paragraph::new(footer).block(Block::default().borders(Borders::ALL)),
         outer[2],
     );
+    if app.show_help {
+        let area = centered_rect(56, 72, frame.area());
+        frame.render_widget(Clear, area);
+        frame.render_widget(
+            Paragraph::new(HELP_TEXT).block(
+                Block::default()
+                    .title(" Help · q/Esc/? to close ")
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
+            ),
+            area,
+        );
+    }
+}
+
+const HELP_TEXT: &str = "\
+j/k, ↑/↓ ......... move selection / scroll logs
+Tab ............... switch services/logs focus
+PgUp/PgDn,Home,End  scroll logs
+s ................. start service
+x ................. stop service (confirms)
+r ................. restart service (confirms)
+U ................. update service image (confirms)
+P ................. pull service image
+! ................. open shell in container
+/ ................. filter services (Enter keep, Esc clear)
+space ............. pause/resume auto-refresh
+R ................. refresh now
+? ................. this help
+q ................. quit";
+
+fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
+    let vertical = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(area);
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(vertical[1])[1]
 }
 
 fn draw_services(frame: &mut ratatui::Frame<'_>, area: Rect, app: &mut App) {
-    let rows = app.services.iter().map(|service| {
+    let visible = app.visible_services();
+    let rows = visible.iter().map(|service| {
         Row::new(vec![
             Cell::from(service.name.clone()),
             Cell::from(service.state.label()).style(Style::default().fg(service.state.color())),
@@ -425,7 +888,11 @@ fn draw_services(frame: &mut ratatui::Frame<'_>, area: Rect, app: &mut App) {
     .highlight_symbol("▶ ")
     .block(
         Block::default()
-            .title(" Services ")
+            .title(format!(
+                " Services {}/{} ",
+                visible.len(),
+                app.services.len()
+            ))
             .borders(Borders::ALL)
             .border_style(border_style),
     );
@@ -516,24 +983,39 @@ mod tests {
         )
     }
 
-    #[test]
-    fn selection_survives_reordering_by_name() {
+    fn test_app(services: Vec<Service>, selected: Option<&str>) -> App {
         let mut app = App {
             dir: PathBuf::new(),
-            services: vec![service("a"), service("b")],
-            selected_name: Some("b".into()),
+            dry_run: true,
+            timeout: Duration::from_secs(5),
+            refresh_interval: Duration::from_secs(5),
+            services,
+            selected_name: selected.map(str::to_owned),
             table_state: TableState::default(),
             focus: Focus::Services,
             logs: String::new(),
+            log_stream: None,
             log_scroll: 0,
             log_view_height: 10,
             follow_logs: true,
             message: String::new(),
+            confirm: None,
+            filter: String::new(),
+            filtering: false,
+            show_help: false,
+            paused: false,
             global_error: None,
             action_rx: None,
             action_in_progress: None,
             last_refresh: Instant::now(),
         };
+        app.sync_selection();
+        app
+    }
+
+    #[test]
+    fn selection_survives_reordering_by_name() {
+        let mut app = test_app(vec![service("a"), service("b")], Some("b"));
         app.services = vec![service("b"), service("c")];
         app.sync_selection();
         assert_eq!(app.selected_name.as_deref(), Some("b"));
@@ -542,25 +1024,12 @@ mod tests {
 
     #[test]
     fn tab_cycles_focus_and_logs_scroll() {
-        let mut app = App {
-            dir: PathBuf::new(),
-            services: vec![service("a")],
-            selected_name: Some("a".into()),
-            table_state: TableState::default(),
-            focus: Focus::Services,
-            logs: (1..=30)
-                .map(|line| format!("line {line}"))
-                .collect::<Vec<_>>()
-                .join("\n"),
-            log_scroll: 0,
-            log_view_height: 10,
-            follow_logs: false,
-            message: String::new(),
-            global_error: None,
-            action_rx: None,
-            action_in_progress: None,
-            last_refresh: Instant::now(),
-        };
+        let mut app = test_app(vec![service("a")], Some("a"));
+        app.logs = (1..=30)
+            .map(|line| format!("line {line}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        app.follow_logs = false;
         app.cycle_focus();
         assert_eq!(app.focus, Focus::Logs);
         app.scroll_logs(10);
@@ -570,5 +1039,66 @@ mod tests {
         assert_eq!(app.log_scroll, 7);
         app.cycle_focus();
         assert_eq!(app.focus, Focus::Services);
+    }
+
+    #[test]
+    fn filter_narrows_visible_services() {
+        let mut app = test_app(
+            vec![service("forgejo"), service("postgres"), service("caddy")],
+            Some("forgejo"),
+        );
+        assert_eq!(app.visible_services().len(), 3);
+        app.filter = "post".into();
+        app.reselect();
+        assert_eq!(app.selected_name.as_deref(), Some("postgres"));
+        assert_eq!(app.visible_services().len(), 1);
+        app.filter = "zzz".into();
+        app.reselect();
+        assert_eq!(app.selected_name, None);
+        assert_eq!(app.table_state.selected(), None);
+    }
+
+    #[test]
+    fn filter_matches_image_and_state_case_insensitively() {
+        let mut imaged = service("web");
+        imaged.image = Some("ghcr.io/Example/App:1".into());
+        let app = test_app(vec![imaged], Some("web"));
+        assert!(app.matches_filter(&app.services[0]));
+        let mut queried = app;
+        queried.filter = "example".into();
+        assert!(queried.matches_filter(&queried.services[0]));
+        queried.filter = "RUNNING".into();
+        // State label is "○ stopped"; RUNNING must not match.
+        assert!(!queried.matches_filter(&queried.services[0]));
+    }
+
+    #[test]
+    fn stop_requires_confirmation_and_dry_run_skips_spawn() {
+        let mut app = test_app(vec![service("a")], Some("a"));
+        app.request_action("stop");
+        assert!(app.confirm.is_some());
+        assert_eq!(app.action_in_progress, None);
+        app.confirm_pending(true);
+        assert!(app.confirm.is_none());
+        assert!(app.action_in_progress.is_none());
+        assert!(app.message.contains("dry-run"));
+    }
+
+    #[test]
+    fn start_runs_without_confirmation() {
+        let mut app = test_app(vec![service("a")], Some("a"));
+        app.request_action("start");
+        assert!(app.confirm.is_none());
+        assert!(app.message.contains("dry-run"));
+    }
+
+    #[test]
+    fn log_buffer_is_capped() {
+        let mut logs = String::new();
+        for index in 0..LOG_LINE_CAP + 100 {
+            push_log_line(&mut logs, &format!("line {index}"));
+        }
+        assert_eq!(logs.lines().count(), LOG_LINE_CAP);
+        assert!(logs.lines().next().unwrap().starts_with("line 100"));
     }
 }

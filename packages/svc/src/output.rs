@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::model::{Service, ServiceState};
+use crate::model::{OutdatedEntry, Service, ServiceState};
 
 pub fn print_services(services: &[Service], json: bool, global_error: Option<&str>) -> Result<()> {
     if json {
@@ -42,5 +42,50 @@ pub fn print_services(services: &[Service], json: bool, global_error: Option<&st
         running,
         failed
     );
+    Ok(())
+}
+
+/// Print the outcome of a multi-service mutation and report how many failed.
+///
+/// Returns the failure count so callers can map it to an exit code.
+pub fn print_action_summary(action: &str, total: usize, failures: &[String]) -> usize {
+    let failed = failures.len();
+    let succeeded = total.saturating_sub(failed);
+    if failed == 0 {
+        println!("svc: {action}: {succeeded}/{total} succeeded");
+    } else {
+        eprintln!(
+            "svc: {action}: {succeeded}/{total} succeeded; failed: {}",
+            failures.join(", ")
+        );
+    }
+    failed
+}
+
+pub fn print_outdated(entries: &[OutdatedEntry], json: bool) -> Result<()> {
+    use crate::model::Freshness;
+    if json {
+        println!("{}", serde_json::to_string_pretty(entries)?);
+        return Ok(());
+    }
+    if entries.is_empty() {
+        println!("No Quadlet services discovered.");
+        return Ok(());
+    }
+    println!("{:<22} {:<16} IMAGE", "SERVICE", "STATUS");
+    println!("{}", "─".repeat(90));
+    for entry in entries {
+        println!(
+            "{:<22} {:<16} {}",
+            entry.service,
+            entry.status.label(),
+            entry.image.as_deref().unwrap_or("—")
+        );
+    }
+    let pending = entries
+        .iter()
+        .filter(|entry| entry.status == Freshness::Pending)
+        .count();
+    println!("\n{pending} service(s) with updates available");
     Ok(())
 }
