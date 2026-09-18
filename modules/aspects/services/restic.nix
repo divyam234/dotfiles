@@ -28,6 +28,12 @@
             containers.dataRoot
             postgresDumpDir
           ];
+          # Live PGDATA is crash-unsafe to back up raw and duplicates the
+          # pg_dumpall dump above; skip it to save ~2G per snapshot.
+          exclude = [
+            "${containers.dataRoot}/postgres"
+            "*.log"
+          ];
           passwordFile = secrets.restic.password.path;
           repositoryFile = secrets.restic.repository.path;
           rcloneConfigFile = secrets.restic.rclone_conf.path;
