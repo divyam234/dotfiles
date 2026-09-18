@@ -12,7 +12,7 @@
     homeManager =
       { lib, pkgs, ... }:
       {
-        programs.bunGlobalCli.packages = lib.mkAfter [ "@openchamber/web@1.23.2" ];
+        programs.bunGlobalCli.packages = lib.mkAfter [ "@openchamber/web" ];
 
         systemd.user.services = {
           opencode = {
