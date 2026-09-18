@@ -39,7 +39,7 @@ assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
 assert lib.hasInfix "stash.${domain}" caddyfile;
-assert lib.hasInfix "reverse_proxy gatehouse:8080" caddyfile;
+assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
 assert lib.hasInfix "rewrite /api/verify?application=default-app" caddyfile;
 assert lib.hasInfix
   "redir https://auth.${domain}/login?redirect=https://{http.request.host}{http.request.uri} 302"

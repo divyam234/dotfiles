@@ -80,7 +80,7 @@
           debug = false;
           extraGlobalConfig = [ ];
           layer4Routes = lib.flatten caddyLayer4Routes;
-          authUpstream = "gatehouse:8080";
+          authUpstream = "gateauth:8080";
           authLoginUrl = "https://auth.${host.domain}/login";
         };
       in

@@ -1,19 +1,19 @@
 { den, ... }:
 {
-  den.aspects.gatehouse = { host, ... }: {
+  den.aspects.gateauth = { host, ... }: {
     nixosSecrets = [
-      "gatehouse/admin_email"
-      "gatehouse/admin_password"
-      "gatehouse/better_auth_secret"
+      "gateauth/admin_email"
+      "gateauth/admin_password"
+      "gateauth/better_auth_secret"
       "postgres/user"
       "postgres/password"
     ];
 
-    caddyRoutes.gatehouse = {
+    caddyRoutes.gateauth = {
       host = "auth.${host.domain}";
       access = "public";
       proxied = true;
-      upstreams = [ "gatehouse:8080" ];
+      upstreams = [ "gateauth:8080" ];
     };
 
     nixos =
@@ -27,15 +27,15 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."gatehouse.env" = secrets.mkTemplate {
-          name = "gatehouse.env";
+        sops.templates."gateauth.env" = secrets.mkTemplate {
+          name = "gateauth.env";
           content = ''
             NODE_ENV=production
             PORT=8080
-            APP_NAME=Gatehouse
-            BETTER_AUTH_SECRET=${secrets.gatehouse.better_auth_secret}
+            APP_NAME=Gateauth
+            BETTER_AUTH_SECRET=${secrets.gateauth.better_auth_secret}
             BETTER_AUTH_URL=https://auth.${host.domain}
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres:5432/postgres
+            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
             DATABASE_POOL_MAX=20
             RUN_MIGRATIONS=true
             TRUST_PROXY_HEADERS=true
@@ -46,8 +46,8 @@
             REQUIRE_EMAIL_VERIFICATION=false
             ENABLE_HIBP=true
             ALLOW_DEVELOPMENT_MAIL_LOG=false
-            SEED_ADMIN_EMAIL=${secrets.gatehouse.admin_email}
-            SEED_ADMIN_PASSWORD=${secrets.gatehouse.admin_password}
+            SEED_ADMIN_EMAIL=${secrets.gateauth.admin_email}
+            SEED_ADMIN_PASSWORD=${secrets.gateauth.admin_password}
             SEED_DEFAULT_APPLICATION=true
             DEFAULT_APPLICATION_HOST=stash.${host.domain}
             DEFAULT_APPLICATION_UPSTREAM=http://stash:8080
@@ -55,19 +55,15 @@
         };
 
         virtualisation.quadlet.containers = {
-          gatehouse = {
+          gateauth = {
             containerConfig = {
-              image = "ghcr.io/divyam234/gatehouse:latest";
-              networkAliases = [ "gatehouse" ];
-              environmentFiles = [ "${containers.secretDir}/gatehouse.env" ];
+              image = "ghcr.io/divyam234/gateauth:latest";
+              networkAliases = [ "gateauth" ];
+              environmentFiles = [ "${containers.secretDir}/gateauth.env" ];
             };
             unitConfig = {
-              After = [
-                quadlet.containers.postgres.ref
-              ];
-              Requires = [
-                quadlet.containers.postgres.ref
-              ];
+              After = [ quadlet.containers.pgdog.ref ];
+              Requires = [ quadlet.containers.pgdog.ref ];
             };
             serviceConfig = {
               MemoryMax = "1G";
@@ -76,8 +72,8 @@
           };
 
           caddy.unitConfig = {
-            After = [ quadlet.containers.gatehouse.ref ];
-            Wants = [ quadlet.containers.gatehouse.ref ];
+            After = [ quadlet.containers.gateauth.ref ];
+            Wants = [ quadlet.containers.gateauth.ref ];
           };
         };
       };

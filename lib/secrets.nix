@@ -129,15 +129,15 @@ let
       "master_key"
     ]
     [
-      "gatehouse"
+      "gateauth"
       "admin_email"
     ]
     [
-      "gatehouse"
+      "gateauth"
       "admin_password"
     ]
     [
-      "gatehouse"
+      "gateauth"
       "better_auth_secret"
     ]
   ];
