@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           baobab
+          dbeaver-bin
           easyeffects
           foliate
           gnome-disk-utility
