@@ -292,11 +292,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1789793139,
-        "narHash": "sha256-vg1qwdG7WbjnE8SIqcYkh/3WAbhJJ2zPZgkpFuuYXyY=",
+        "lastModified": 1789843984,
+        "narHash": "sha256-btEaEb3RqxLAzVnOSMAy2u+DGlxsJAsaM8P6R29Xdyo=",
         "owner": "sini",
         "repo": "gen",
-        "rev": "c7b71228fb5dc51645dd3749f7480c0d64ed261f",
+        "rev": "2d0db94535a7a81775cd5853ca871309e30869df",
         "type": "github"
       },
       "original": {
@@ -1775,11 +1775,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789831551,
-        "narHash": "sha256-QjqseQSfQy45QpRJGxdU6QIYvbVkU9WBQz7si5wuBsk=",
+        "lastModified": 1789846349,
+        "narHash": "sha256-eH50Zo/imSBjgKWG7k9yigWTEfQpOVsOduS225fH6Dk=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "f343453ab956250aa64f0f3e6b05aeca9e3aee36",
+        "rev": "bd9103dd4d830a8a30515d8a17c42d08c0a2e1d9",
         "type": "github"
       },
       "original": {
