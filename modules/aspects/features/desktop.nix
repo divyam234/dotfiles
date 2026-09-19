@@ -23,10 +23,8 @@
 
         networking.networkmanager.enable = true;
         hardware.bluetooth.enable = true;
-        hardware.logitech.wireless = {
-          enable = true;
-          enableGraphical = true;
-        };
+        hardware.logitech.wireless.enable = true;
+        programs.solaar.enable = true;
         security.polkit.enable = true;
         security.soteria.enable = true;
         programs.dconf.enable = true;

@@ -6,12 +6,7 @@
 }:
 let
   expectedLaptop = [
-    "postgres/password"
-    "postgres/user"
     "tailscale/oauth_client_secret"
-    "teldrive/data_key"
-    "teldrive/encryption_key"
-    "teldrive/signing_key"
     "users/bhunter/password"
   ];
   expectedHomelab = [
@@ -25,13 +20,13 @@ let
     "camofox/admin_key"
     "camofox/api_key"
     "cloudflare/api_token"
+    "gateauth/admin_email"
+    "gateauth/admin_password"
+    "gateauth/better_auth_secret"
     "gemini-fastapi/api_key"
     "gemini-fastapi/secure_1psid"
     "gemini-fastapi/secure_1psidts"
     "github/token"
-    "gateauth/admin_email"
-    "gateauth/admin_password"
-    "gateauth/better_auth_secret"
     "gproxy/admin_password"
     "gproxy/master_key"
     "mtproxy/secret"

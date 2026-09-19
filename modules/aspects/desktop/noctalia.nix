@@ -1,10 +1,6 @@
-{ inputs, den, ... }:
+{ den, ... }:
 {
-  flake-file.inputs.noctalia = {
-    url = "github:noctalia-dev/noctalia";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
+  # programs.noctalia is provided by home-manager upstream; no flake input needed.
   den.aspects.noctalia = {
 
     homeManager =
@@ -15,8 +11,6 @@
         ...
       }:
       {
-        imports = [ inputs.noctalia.homeModules.default ];
-
         programs.noctalia = {
           enable = true;
           package = pkgs.noctalia;

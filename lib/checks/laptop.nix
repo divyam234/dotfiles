@@ -14,7 +14,12 @@ let
   );
 in
 assert
-  laptop.services.displayManager.noctalia-greeter.greeter-args == "--session niri --user ${userName}";
+  laptop.services.displayManager.noctalia-greeter.extraArgs == [
+    "--session"
+    "niri"
+    "--user"
+    userName
+  ];
 assert builtins.length groups == builtins.length uniqueGroups;
 assert builtins.hasAttr "niri/config.kdl" home.xdg.configFile;
 assert contains ''
