@@ -1,0 +1,22 @@
+name: Dispatch Nix cache
+
+on:
+  push:
+    branches: [main]
+    paths: [flake.lock]
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Nix cache
+        env:
+          GH_TOKEN: ${{ secrets.NIX_CACHE_DISPATCH_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          gh api --method POST repos/divyam234/nix-cache/dispatches \
+            -f event_type=dotfiles-flake-updated \
+            -f "client_payload[sha]=$SOURCE_SHA"
