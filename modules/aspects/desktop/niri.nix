@@ -121,8 +121,6 @@ in
           };
 
           settings = {
-            # Complete declarative palette with scheme "Synced" wins over
-            # mutable sync.toml (legacy appearance.json is no longer read).
             appearance = {
               scheme = "Synced";
               password_style = "random";

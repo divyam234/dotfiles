@@ -1,6 +1,5 @@
 { den, ... }:
 {
-  # programs.noctalia is provided by home-manager upstream; no flake input needed.
   den.aspects.noctalia = {
 
     homeManager =

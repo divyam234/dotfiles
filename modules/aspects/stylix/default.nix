@@ -79,6 +79,8 @@
             size = 24;
           };
 
+          targets.rofi.enable = false;
+
           icons = {
             enable = true;
             package = pkgs.papirus-icon-theme;
