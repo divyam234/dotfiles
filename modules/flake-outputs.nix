@@ -163,6 +163,7 @@
       packages =
         den.lib.nh.denPackages { fromFlake = true; } pkgs
         // lib.optionalAttrs (system == "x86_64-linux") {
+          nix-cache-proxy = inputs.nix-cache.packages.${system}.default;
           homelab-installer-iso = mkInstallerIso {
             name = "homelab";
             diskoConfig = ../hosts/homelab/disko.nix;

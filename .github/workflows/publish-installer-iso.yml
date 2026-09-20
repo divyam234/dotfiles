@@ -1,0 +1,127 @@
+name: Publish installer ISO
+
+on:
+  workflow_dispatch:
+    inputs:
+      machine:
+        description: Machine configuration to build
+        required: true
+        type: choice
+        options:
+          - ideapad
+          - laptop
+          - homelab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-installer-iso-${{ inputs.machine }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build and publish ${{ inputs.machine }} ISO
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      MACHINE: ${{ inputs.machine }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Build installer ISO
+        run: |
+          set -euo pipefail
+
+          proxy="$(nix build --no-link --print-out-paths .#nix-cache-proxy)"
+          cache_dir="$RUNNER_TEMP/nix-cache-proxy"
+          mkdir -p "$cache_dir/blocks"
+
+          "$proxy/bin/nix-cache" serve \
+            --index-url https://github.com/divyam234/nix-cache/releases/latest/download/index.json \
+            --index-cache "$cache_dir/index.json" \
+            --asset-url-prefix https://github.com/divyam234/nix-cache/releases/download/ \
+            --public-key 'nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI=' \
+            --block-cache "$cache_dir/blocks" \
+            --block-size 33554432 \
+            --max-cache-size 4294967296 \
+            --max-downloads 8 \
+            >"$cache_dir/proxy.log" 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+
+          ready=false
+          for _ in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:7745/nix-cache-info >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ "$ready" != true ]]; then
+            cat "$cache_dir/proxy.log"
+            exit 1
+          fi
+
+          nix build ".#${MACHINE}-installer-iso" \
+            --out-link result \
+            --option extra-substituters 'http://127.0.0.1:7745 https://attic.xuyh0120.win/lantian' \
+            --option extra-trusted-public-keys 'nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI= lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc='
+
+      - name: Download rclone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          release="$({
+            gh api --paginate 'repos/divyam234/nix-pkgs/releases?per_page=100' \
+              --jq '.[] | select(.tag_name | startswith("rclone-v"))'
+          } | jq --slurp 'sort_by(.published_at) | last')"
+          test "$release" != null
+
+          asset="$(
+            jq --compact-output '
+              [.assets[] | select(
+                .name | test("^rclone-v[0-9]+\\.[0-9]+\\.[0-9]+-linux-amd64\\.tar\\.gz$")
+              )] | first
+            ' <<<"$release"
+          )"
+          test "$asset" != null
+
+          archive="$RUNNER_TEMP/$(jq --raw-output '.name' <<<"$asset")"
+          download_url="$(jq --raw-output '.browser_download_url' <<<"$asset")"
+          digest="$(jq --raw-output '.digest' <<<"$asset")"
+          if [[ "$digest" != sha256:* ]]; then
+            echo "The selected rclone asset has no SHA-256 digest" >&2
+            exit 1
+          fi
+
+          destination="$RUNNER_TEMP/rclone"
+          curl --fail --location "$download_url" --output "$archive"
+          printf '%s  %s\n' "${digest#sha256:}" "$archive" | sha256sum --check
+          mkdir -p "$destination"
+          tar --extract --gzip --file "$archive" --directory "$destination" --strip-components=1
+          test -x "$destination/rclone"
+
+      - name: Publish installer ISO
+        env:
+          RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          set -euo pipefail
+
+          test -n "${RCLONE_CONFIG:-}"
+          iso="result/iso/${MACHINE}-installer.iso"
+          test -f "$iso"
+
+          "$RUNNER_TEMP/rclone/rclone" copyto \
+            "$iso" \
+            "gpix:iso/${MACHINE}-installer.iso" \
+            --progress \
+            --stats-one-line
