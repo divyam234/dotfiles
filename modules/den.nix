@@ -3,7 +3,10 @@
   flake-file.inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     den.url = "github:denful/den";
-    gen.url = "github:sini/gen";
+    gen = {
+      url = "github:sini/gen";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     import-tree.url = "github:vic/import-tree";
     flake-file.url = "github:vic/flake-file";
     flake-parts = {

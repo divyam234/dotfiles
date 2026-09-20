@@ -11,6 +11,7 @@
       den.aspects.brave
       den.aspects.niri
       den.aspects.noctalia
+      den.aspects.sonora
       den.aspects.ghostty
       den.aspects.zed
       den.aspects.sublime

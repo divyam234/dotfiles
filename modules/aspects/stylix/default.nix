@@ -4,10 +4,6 @@
     url = "github:nix-community/stylix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  flake-file.inputs.tinted-schemes = {
-    url = "github:tinted-theming/schemes";
-    flake = false;
-  };
 
   den.aspects.stylix = {
     nixos = {
