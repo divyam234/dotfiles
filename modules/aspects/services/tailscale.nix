@@ -84,16 +84,19 @@
             description = "Automatic connection to Tailscale";
             after = [
               "network-online.target"
-              "tailscale.service"
+              "tailscaled.service"
             ];
             wants = [
               "network-online.target"
-              "tailscale.service"
+              "tailscaled.service"
             ];
             wantedBy = [ "multi-user.target" ];
+            unitConfig.StartLimitIntervalSec = 0;
             serviceConfig = {
               Type = "oneshot";
               RemainAfterExit = true;
+              Restart = "on-failure";
+              RestartSec = "30s";
             };
             script = ''
               if ${cfg.package}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -e '.BackendState == "Running"' >/dev/null; then

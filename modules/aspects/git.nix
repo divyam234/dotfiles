@@ -25,19 +25,29 @@
           gh
         ];
 
-        home.activation.ghToken = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            token_file="${secrets.github.token.path}"
-            if [ -f "$token_file" ]; then
-              token=$(cat "$token_file" | tr -d '[:space:]')
-              mkdir -p "${config.xdg.configHome}/gh"
-              cat > "${config.xdg.configHome}/gh/hosts.yml" <<EOF
-          github.com:
-              oauth_token: $token
-              git_protocol: ssh
-          EOF
-              chmod 600 "${config.xdg.configHome}/gh/hosts.yml"
-            fi
-        '';
+        systemd.user.services.gh-auth = {
+          Unit = {
+            Description = "Generate GitHub CLI authentication";
+            After = [ "sops-nix.service" ];
+            Requires = [ "sops-nix.service" ];
+          };
+          Service = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = pkgs.writeShellScript "gh-auth" ''
+                token_file="${secrets.github.token.path}"
+                token="$(${pkgs.coreutils}/bin/tr -d '[:space:]' < "$token_file")"
+                ${pkgs.coreutils}/bin/install -d -m 700 "${config.xdg.configHome}/gh"
+                ${pkgs.coreutils}/bin/cat > "${config.xdg.configHome}/gh/hosts.yml" <<EOF
+              github.com:
+                  oauth_token: $token
+                  git_protocol: ssh
+              EOF
+                ${pkgs.coreutils}/bin/chmod 600 "${config.xdg.configHome}/gh/hosts.yml"
+            '';
+          };
+          Install.WantedBy = [ "default.target" ];
+        };
         programs.git = {
           enable = true;
           lfs.enable = true;
