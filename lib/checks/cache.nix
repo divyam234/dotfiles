@@ -1,11 +1,13 @@
 {
   homelab,
+  ideapad,
   laptop,
   netcup,
 }:
 let
   hosts = [
     laptop
+    ideapad
     homelab
     netcup
   ];
@@ -19,9 +21,11 @@ in
 assert all (host: has substituter host.nix.settings.substituters);
 assert all (host: has publicKey host.nix.settings.trusted-public-keys);
 assert has lantianSubstituter laptop.nix.settings.substituters;
+assert has lantianSubstituter ideapad.nix.settings.substituters;
 assert has lantianSubstituter homelab.nix.settings.substituters;
 assert !has lantianSubstituter netcup.nix.settings.substituters;
 assert has lantianPublicKey laptop.nix.settings.trusted-public-keys;
+assert has lantianPublicKey ideapad.nix.settings.trusted-public-keys;
 assert has lantianPublicKey homelab.nix.settings.trusted-public-keys;
 assert !has lantianPublicKey netcup.nix.settings.trusted-public-keys;
 assert all (host: builtins.hasAttr "nix-cache-proxy" host.systemd.services);

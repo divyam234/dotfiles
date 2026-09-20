@@ -1,5 +1,6 @@
 {
   homelab,
+  ideapad,
   laptop,
   lib,
   netcup,
@@ -46,6 +47,7 @@ assert hasUpdateServices netcup;
 assert hasUpdateServices homelab;
 assert hasContainerPolicy netcup;
 assert hasContainerPolicy laptop;
+assert hasContainerPolicy ideapad;
 assert hasContainerPolicy homelab;
 assert netcup.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
 assert homelab.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";

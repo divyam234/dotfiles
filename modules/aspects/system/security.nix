@@ -4,6 +4,7 @@
     security-base = {
       nixos = _: {
         security = {
+          pki.certificateFiles = [ ./certificates/adguard.pem ];
           rtkit.enable = true;
         };
         services.openssh = {

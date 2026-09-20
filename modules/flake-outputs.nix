@@ -106,12 +106,14 @@
         installer.config.system.build.isoImage;
       netcup = self.nixosConfigurations.netcup.config;
       homelab = self.nixosConfigurations.homelab.config;
+      ideapad = self.nixosConfigurations.ideapad.config;
       laptop = self.nixosConfigurations.laptop.config;
       home = self.homeConfigurations."bhunter@laptop".config;
       contracts = {
         cache = import ../lib/checks/cache.nix {
           inherit
             homelab
+            ideapad
             laptop
             netcup
             ;
@@ -119,18 +121,29 @@
         containers = import ../lib/checks/containers.nix {
           inherit
             homelab
+            ideapad
             laptop
             lib
             netcup
             ;
         };
         homelab = import ../lib/checks/homelab.nix { inherit homelab; };
+        ideapad = import ../lib/checks/ideapad.nix { inherit ideapad; };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
         netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
+        security = import ../lib/checks/security.nix {
+          inherit
+            homelab
+            ideapad
+            laptop
+            netcup
+            ;
+        };
         secrets = import ../lib/checks/secrets.nix {
           inherit
             home
             homelab
+            ideapad
             laptop
             netcup
             ;
@@ -153,6 +166,10 @@
           homelab-installer-iso = mkInstallerIso {
             name = "homelab";
             diskoConfig = ../hosts/homelab/disko.nix;
+          };
+          ideapad-installer-iso = mkInstallerIso {
+            name = "ideapad";
+            diskoConfig = ../hosts/ideapad/disko.nix;
           };
           laptop-installer-iso = mkInstallerIso {
             name = "laptop";
@@ -231,6 +248,7 @@
       // contractChecks
       // lib.optionalAttrs (system == "x86_64-linux") {
         homelab-nixos-eval = self.nixosConfigurations.homelab.config.system.build.toplevel;
+        ideapad-nixos-eval = self.nixosConfigurations.ideapad.config.system.build.toplevel;
         laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;
         laptop-hm-eval = self.homeConfigurations."bhunter@laptop".activationPackage;
       }

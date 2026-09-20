@@ -1,41 +1,35 @@
-{ den, inputs, ... }:
+{ den, ... }:
 {
-  flake-file.inputs.cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
-
   den.aspects.laptop = {
     includes = [
       den.aspects.base
       den.aspects.workstation
+      den.aspects.cachyos-kernel
       den.aspects.btrfs
       den.aspects.oci-base
       den.aspects.container-network
     ];
 
-    nixos =
-      { pkgs, ... }:
-      {
-        imports = [
-          ./graphics.nix
-          ./networking.nix
-          ./disko.nix
-          ./msi-ec/kmod.nix
+    nixos = {
+      imports = [
+        ./graphics.nix
+        ./networking.nix
+        ./disko.nix
+        ./msi-ec/kmod.nix
+      ];
+      facter.reportPath = ./facter.json;
+      fileSystems."/mnt/drive" = {
+        device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
+        fsType = "ext4";
+        options = [
+          "nofail"
+          "x-systemd.automount"
+          "x-gvfs-show"
+          "noatime"
         ];
-        nixpkgs.overlays = [ inputs.cachyos-kernel.overlays.pinned ];
-        boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-x86_64-v3;
-        facter.reportPath = ./facter.json;
-        fileSystems."/mnt/drive" = {
-          device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
-          fsType = "ext4";
-          options = [
-            "nofail"
-            "x-systemd.automount"
-            "x-gvfs-show"
-            "noatime"
-          ];
-        };
-        security.pki.certificateFiles = [ ./adguard.pem ];
-        system.stateVersion = "26.05";
       };
+      system.stateVersion = "26.05";
+    };
   };
 
 }

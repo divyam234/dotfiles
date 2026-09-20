@@ -1,6 +1,7 @@
 {
   home,
   homelab,
+  ideapad,
   laptop,
   netcup,
 }:
@@ -67,6 +68,7 @@ let
     "ssh/private_key"
   ];
   homelabHome = homelab.home-manager.users.bhunter;
+  ideapadHome = ideapad.home-manager.users.bhunter;
   netcupHome = netcup.home-manager.users.bhunter;
   expectedTemplates = [
     "caddy.env"
@@ -87,15 +89,19 @@ let
   ];
 in
 assert builtins.attrNames laptop.sops.secrets == expectedLaptop;
+assert builtins.attrNames ideapad.sops.secrets == expectedLaptop;
 assert builtins.attrNames homelab.sops.secrets == builtins.sort builtins.lessThan expectedHomelab;
 assert builtins.attrNames netcup.sops.secrets == expectedNetcup;
 assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
+assert builtins.attrNames ideapadHome.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;
 assert netcupHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
+assert ideapadHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert builtins.hasAttr "sops-nix" netcupHome.systemd.user.services;
+assert builtins.hasAttr "sops-nix" ideapadHome.systemd.user.services;
 assert home.sops.age.keyFile == "${home.xdg.configHome}/sops/age/keys.txt";
 assert builtins.hasAttr "sops-nix" home.systemd.user.services;
 true

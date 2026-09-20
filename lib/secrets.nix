@@ -218,7 +218,7 @@ let
     let
       hostName = if host != null then host.name else null;
       hostSopsFile = if host != null then host.secretsFile or null else null;
-      selectedHostPaths = if hostName == null then [ ] else hostPaths;
+      selectedHostPaths = if hostName == null || hostSopsFile == null then [ ] else hostPaths;
       commonTree = treeFromPaths {
         inherit config;
         source = "common";
@@ -228,8 +228,6 @@ let
       hostTree =
         if selectedHostPaths == [ ] then
           { }
-        else if hostSopsFile == null then
-          throw "Host ${hostName} declares host secrets but has no secretsFile. Set host.secretsFile or add hostPaths entry in lib/secrets.nix."
         else
           treeFromPaths {
             inherit config;
@@ -252,6 +250,8 @@ let
             in
             if lib.hasAttrByPath path mergedTree then
               lib.getAttrFromPath path mergedTree
+            else if hostName != null && hostSopsFile == null && builtins.elem path hostPaths then
+              throw "Host ${hostName} requested host secret ${name} but has no secretsFile."
             else
               throw "Unknown secret contract path: ${name}"
           ) (lib.unique names);
