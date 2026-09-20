@@ -52,6 +52,7 @@
           enable32Bit = true;
           extraPackages = [ pkgs.intel-media-driver ];
         };
+        hardware.i2c.enable = true;
 
         networking.useDHCP = lib.mkDefault true;
         system.stateVersion = "26.05";

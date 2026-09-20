@@ -18,6 +18,7 @@
         ./msi-ec/kmod.nix
       ];
       facter.reportPath = ./facter.json;
+      hardware.i2c.enable = true;
       fileSystems."/mnt/drive" = {
         device = "/dev/disk/by-id/ata-ST1000LM048-2E7172_WL18LWDC-part1";
         fsType = "ext4";
@@ -29,6 +30,10 @@
         ];
       };
       system.stateVersion = "26.05";
+    };
+
+    homeManager = { pkgs, ... }: {
+      home.packages = [ pkgs.mcontrolcenter ];
     };
   };
 

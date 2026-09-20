@@ -17,6 +17,10 @@
           systemd.enable = false;
 
           settings = {
+            brightness = {
+              enable_ddcutil = true;
+              monitor."HDMI-A-1".backend = "ddcutil";
+            };
             bar.default = {
               background_opacity = 0.7;
               capsule = true;

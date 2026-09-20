@@ -1,6 +1,5 @@
 _: {
   den.hosts.x86_64-linux.laptop = {
-    secretsFile = ../../../hosts/laptop/secrets.yaml;
     outputs = [
       {
         name = "eDP-1";
