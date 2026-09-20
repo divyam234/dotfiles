@@ -72,6 +72,15 @@
         NetworkPredictionOptions = 2;
         SearchSuggestEnabled = false;
 
+        # Default search provider (DuckDuckGo, matching Brave's built-in entry).
+        DefaultSearchProviderEnabled = true;
+        DefaultSearchProviderName = "DuckDuckGo";
+        DefaultSearchProviderKeyword = ":d";
+        DefaultSearchProviderSearchURL = "https://duckduckgo.com/?q={searchTerms}&t=brave";
+        DefaultSearchProviderSuggestURL = "https://ac.duckduckgo.com/ac/?q={searchTerms}&type=list";
+        DefaultSearchProviderIconURL = "https://duckduckgo.com/favicon.ico";
+        DefaultSearchProviderEncodings = [ "UTF-8" ];
+
         # Keep Standard Safe Browsing, but disable extra reporting/scanning paths.
         DisableSafeBrowsingProceedAnyway = true;
         SafeBrowsingDeepScanningEnabled = false;
