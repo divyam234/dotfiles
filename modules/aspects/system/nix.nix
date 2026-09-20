@@ -32,15 +32,9 @@
             use-xdg-base-directories = true;
             substituters = [
               "http://127.0.0.1:7745"
-            ]
-            ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
-              "https://attic.xuyh0120.win/lantian"
             ];
             trusted-public-keys = [
               "nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI="
-            ]
-            ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
-              "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
             ];
           };
           gc = {
