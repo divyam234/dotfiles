@@ -22,7 +22,6 @@
         config,
         containers,
         pkgs,
-        user,
         secrets,
         ...
       }:
@@ -35,7 +34,8 @@
           content = ''
             GPROXY_HOST=0.0.0.0
             GPROXY_PORT=8787
-            GPROXY_PERSISTENCE=db
+            GPROXY_DATA_DIR=/app/data
+            GPROXY_PERSISTENCE=postgres
             GPROXY_DSN=postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres:5432/postgres?application_name=gproxy&options=-c%20search_path%3Dgproxy
             GPROXY_ADMIN_PASSWORD=${secrets.gproxy.admin_password}
             GPROXY_MASTER_KEY=${secrets.gproxy.master_key}
@@ -44,7 +44,7 @@
 
         virtualisation.quadlet.containers.gproxy = {
           containerConfig = {
-            image = "ghcr.io/leenhawk/gproxy:latest";
+            image = "ghcr.io/leenhawk/gproxy:v3.0.20-musl";
             networkAliases = [ "gproxy" ];
             environmentFiles = [ "${containers.secretDir}/gproxy.env" ];
             volumes = [ "${containers.dataRoot}/gproxy:/app/data" ];
@@ -60,7 +60,7 @@
             ];
           };
           serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gproxy";
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o 65532 -g 65532 ${containers.dataRoot}/gproxy";
             MemoryMax = "512M";
             CPUQuota = "100%";
           };
