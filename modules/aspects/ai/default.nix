@@ -17,6 +17,7 @@
         json = pkgs.formats.json { };
 
         gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
+        zenBaseUrl = "https://zen.${host.domain}/zen/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
 
         mkAgent =
@@ -50,6 +51,10 @@
             task = false;
           };
           provider = {
+            opencode.options = {
+              apiKey = "public";
+              baseURL = zenBaseUrl;
+            };
             openai = {
               npm = "@ai-sdk/openai";
               options = {

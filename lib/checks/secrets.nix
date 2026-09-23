@@ -32,6 +32,8 @@ let
     "gproxy/master_key"
     "mtproxy/secret"
     "nordvpn/private_key"
+    "nordvpn/service_password"
+    "nordvpn/service_username"
     "postgres/password"
     "postgres/user"
     "redis/password"
@@ -86,6 +88,7 @@ let
     "stash.env"
     "teldrive.env"
     "vaultwarden.env"
+    "zenproxy.env"
   ];
 in
 assert builtins.attrNames laptop.sops.secrets == expectedLaptop;

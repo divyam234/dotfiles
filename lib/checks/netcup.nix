@@ -13,6 +13,17 @@ in
 assert builtins.hasAttr userName netcup.home-manager.users;
 assert builtins.hasAttr hostName netcup.services.restic.backups;
 assert builtins.hasAttr "ghcr-auth" netcup.systemd.services;
+assert builtins.hasAttr "zenproxy" netcup.systemd.services;
+assert netcup.systemd.services.zenproxy.serviceConfig.DynamicUser;
+assert
+  netcup.systemd.services.zenproxy.serviceConfig.EnvironmentFile
+  == netcup.sops.templates."zenproxy.env".path;
+assert netcup.sops.templates."zenproxy.env".restartUnits == [ "zenproxy.service" ];
+assert
+  userHome.programs.opencode.settings.provider.opencode.options == {
+    apiKey = "public";
+    baseURL = "https://zen.${domain}/zen/v1";
+  };
 assert builtins.hasAttr "ghcr-auth" userHome.systemd.user.services;
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
 assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
@@ -21,6 +32,7 @@ assert builtins.hasAttr "codeforge.env" userHome.sops.templates;
 assert builtins.elem "/var/cache/caddy:/var/cache/caddy"
   netcup.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem 53 netcup.networking.firewall.interfaces."br-svc".allowedUDPPorts;
+assert builtins.elem 39174 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
 assert netcup.networking.nftables.enable;
 assert
   netcup.virtualisation.quadlet.containers.gluetun.containerConfig.publishPorts == [
@@ -37,15 +49,23 @@ assert lib.hasInfix ''iifname "eth0" ct status dnat drop'' containerIngress;
 assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
+assert lib.hasInfix "zen.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
 assert lib.hasInfix "stash.${domain}" caddyfile;
 assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
+assert lib.hasInfix "reverse_proxy host.containers.internal:39174" caddyfile;
 assert lib.hasInfix "rewrite /api/verify?application=default-app" caddyfile;
 assert lib.hasInfix
   "redir https://auth.${domain}/login?redirect=https://{http.request.host}{http.request.uri} 302"
   caddyfile;
 assert builtins.elem {
   name = "git.${domain}";
+  proxied = false;
+  target = "tailscale-ipv4";
+  type = "A";
+} dnsManifest.records;
+assert builtins.elem {
+  name = "zen.${domain}";
   proxied = false;
   target = "tailscale-ipv4";
   type = "A";

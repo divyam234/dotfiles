@@ -26,6 +26,14 @@ let
       "token"
     ]
     [
+      "nordvpn"
+      "service_username"
+    ]
+    [
+      "nordvpn"
+      "service_password"
+    ]
+    [
       "github"
       "token"
     ]
