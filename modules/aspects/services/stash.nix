@@ -3,14 +3,8 @@ let
   stashEnv = secrets: ''
     STASH_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
     STASH_SECRET_KEY=${secrets.stash.secret_key}
-    RCLONE_CONFIG_TDRIVE_API_KEY=${secrets.teldrive.api_key}
+    RCLONE_CONFIG=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres?schema=rclone&init_schema=false
   '';
-
-  baseRcloneEnv = {
-    RCLONE_CONFIG_TDRIVE_TYPE = "teldrive";
-    RCLONE_CONFIG_TDRIVE_HASH_ENABLED = "false";
-    RCLONE_CONFIG_TDRIVE_API_HOST = "http://teldrive:8080";
-  };
 in
 {
   den.aspects.stash = { user, host, ... }: {
@@ -18,7 +12,6 @@ in
       "postgres/user"
       "postgres/password"
       "stash/secret_key"
-      "teldrive/api_key"
     ];
 
     caddyRoutes.stash = {
@@ -48,7 +41,7 @@ in
             exec = "serve";
             networkAliases = [ "stash" ];
             environmentFiles = [ "${containers.secretDir}/stash.env" ];
-            environments = baseRcloneEnv // {
+            environments = {
               RCLONE_CACHE_DIR = "/var/cache/rclone";
               RCLONE_VFS_CACHE_MODE = "full";
               RCLONE_VFS_CACHE_MAX_AGE = "8670h";
@@ -86,7 +79,6 @@ in
       "postgres/user"
       "postgres/password"
       "stash/secret_key"
-      "teldrive/api_key"
     ];
 
     nixos =
@@ -111,7 +103,6 @@ in
             image = "ghcr.io/elevatedai/stash";
             exec = "worker";
             environmentFiles = [ "${containers.secretDir}/stash-worker.env" ];
-            environments = baseRcloneEnv;
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
             stopTimeout = 60;
           };
