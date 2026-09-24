@@ -1,6 +1,7 @@
 { den, ... }:
 {
   den.aspects.openchamber = { host, user, ... }: {
+    homeSecrets = [ "opencode/server_password" ];
     caddyRoutes = {
       openchamber = {
         host = "ai.${host.domain}";
@@ -42,6 +43,7 @@
 
             Service = {
               Type = "simple";
+              EnvironmentFile = "%h/.config/opencode/opencode.env";
               ExecStart = "%h/.bun/bin/openchamber serve --port 39173 --host 0.0.0.0 --foreground";
               Environment = [
                 "OPENCODE_HOST=http://localhost:4095"

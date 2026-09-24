@@ -93,6 +93,10 @@ let
       "openai"
       "api_key"
     ]
+    [
+      "opencode"
+      "server_password"
+    ]
   ];
 
   hostPaths = [

@@ -2,7 +2,10 @@
 
 {
   den.aspects.ai = { host, ... }: {
-    homeSecrets = [ "openai/api_key" ];
+    homeSecrets = [
+      "openai/api_key"
+      "opencode/server_password"
+    ];
 
     homeManager =
       {
@@ -17,7 +20,6 @@
         json = pkgs.formats.json { };
 
         gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
-        zenBaseUrl = "https://zen.${host.domain}/zen/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
 
         mkAgent =
@@ -42,35 +44,34 @@
 
         opencodeConfig = {
           "$schema" = "https://opencode.ai/config.json";
-          autoupdate = false;
+          update = "disable";
           compaction = {
             auto = true;
-            prune = true;
           };
-          tools = {
-            task = false;
-          };
-          provider = {
-            opencode.options = {
-              apiKey = "public";
-              baseURL = zenBaseUrl;
-            };
+          permissions = [
+            {
+              action = "subagent";
+              resource = "*";
+              effect = "deny";
+            }
+          ];
+          providers = {
             openai = {
-              npm = "@ai-sdk/openai";
-              options = {
+              package = "aisdk:@ai-sdk/openai";
+              settings = {
                 baseURL = gproxyBaseUrl;
                 apiKey = "{env:OPENAI_API_KEY}";
               };
             };
           };
 
-          plugin = [
+          plugins = [
             "oh-my-opencode-slim"
           ];
 
-          agent = {
-            explore.disable = true;
-            general.disable = true;
+          agents = {
+            explore.disabled = true;
+            general.disabled = true;
           };
         };
 
@@ -169,6 +170,13 @@
           #   type = "zellij";
           # };
         };
+        cliConfig = {
+          "$schema" = "https://opencode.ai/v2/cli.json";
+          theme = {
+            name = "stylix";
+            mode = "system";
+          };
+        };
       in
       {
         programs = {
@@ -213,6 +221,7 @@
           mode = "0400";
           content = ''
             OPENAI_API_KEY=${secrets.openai.api_key}
+            OPENCODE_SERVER_PASSWORD=${secrets.opencode.server_password}
           '';
         };
 
@@ -220,6 +229,8 @@
 
         home.file.".config/opencode/oh-my-opencode-slim.json".source =
           json.generate "oh-my-opencode-slim.json" omoSlimConfig;
+
+        xdg.configFile."opencode/cli.json".text = builtins.toJSON cliConfig;
       };
   };
 }

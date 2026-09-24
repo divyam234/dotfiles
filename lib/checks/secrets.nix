@@ -32,8 +32,6 @@ let
     "gproxy/master_key"
     "mtproxy/secret"
     "nordvpn/private_key"
-    "nordvpn/service_password"
-    "nordvpn/service_username"
     "postgres/password"
     "postgres/user"
     "redis/password"
@@ -53,11 +51,19 @@ let
     "github/token"
     "nordvpn/token"
     "openai/api_key"
+    "opencode/server_password"
+    "ssh/private_key"
+  ];
+  expectedIdeapadHome = [
+    "github/token"
+    "nordvpn/token"
+    "openai/api_key"
     "ssh/private_key"
   ];
   expectedHomelabHome = [
     "github/token"
     "openai/api_key"
+    "opencode/server_password"
     "ssh/private_key"
   ];
   expectedNetcupHome = [
@@ -67,6 +73,7 @@ let
     "codeforge/token"
     "github/token"
     "openai/api_key"
+    "opencode/server_password"
     "ssh/private_key"
   ];
   homelabHome = homelab.home-manager.users.bhunter;
@@ -88,7 +95,6 @@ let
     "stash.env"
     "teldrive.env"
     "vaultwarden.env"
-    "zenproxy.env"
   ];
 in
 assert builtins.attrNames laptop.sops.secrets == expectedLaptop;
@@ -97,7 +103,7 @@ assert builtins.attrNames homelab.sops.secrets == builtins.sort builtins.lessTha
 assert builtins.attrNames netcup.sops.secrets == expectedNetcup;
 assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
-assert builtins.attrNames ideapadHome.sops.secrets == expectedLaptopHome;
+assert builtins.attrNames ideapadHome.sops.secrets == expectedIdeapadHome;
 assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;

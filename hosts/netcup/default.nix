@@ -23,7 +23,6 @@
       den.aspects.stash
       den.aspects.teldrive
       den.aspects.vaultwarden
-      den.aspects.zenproxy
     ];
 
     nixos =
