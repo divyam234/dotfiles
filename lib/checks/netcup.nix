@@ -18,9 +18,15 @@ assert (builtins.fromJSON userHome.xdg.configFile."opencode/cli.json".text).them
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
 assert builtins.hasAttr "openchamber" userHome.systemd.user.services;
 assert
-  userHome.systemd.user.services.openchamber.Service.EnvironmentFile
-  == "%h/.config/opencode/opencode.env";
+  userHome.systemd.user.services.openchamber.Service.EnvironmentFile == [
+    "%h/.config/opencode/opencode.env"
+    "%h/.config/opencode/opencode-server.env"
+  ];
+assert
+  userHome.systemd.user.services.opencode.Service.EnvironmentFile
+  == userHome.systemd.user.services.openchamber.Service.EnvironmentFile;
 assert builtins.hasAttr "opencode.env" userHome.sops.templates;
+assert builtins.hasAttr "opencode-server.env" userHome.sops.templates;
 assert builtins.hasAttr "ghcr-auth" userHome.systemd.user.services;
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
 assert builtins.hasAttr "codeforge" userHome.systemd.user.services;

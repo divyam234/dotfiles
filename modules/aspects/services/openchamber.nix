@@ -11,9 +11,24 @@
     };
 
     homeManager =
-      { lib, pkgs, ... }:
+      {
+        lib,
+        pkgs,
+        config,
+        secrets,
+        ...
+      }:
       {
         programs.bunGlobalCli.packages = lib.mkAfter [ "@openchamber/web" ];
+
+        sops.templates."opencode-server.env" = secrets.mkTemplate {
+          name = "opencode-server.env";
+          path = "${config.xdg.configHome}/opencode/opencode-server.env";
+          mode = "0400";
+          content = ''
+            OPENCODE_SERVER_PASSWORD=${secrets.opencode.server_password}
+          '';
+        };
 
         systemd.user.services = {
           opencode = {
@@ -23,7 +38,10 @@
 
             Service = {
               Type = "simple";
-              EnvironmentFile = "%h/.config/opencode/opencode.env";
+              EnvironmentFile = [
+                "%h/.config/opencode/opencode.env"
+                "%h/.config/opencode/opencode-server.env"
+              ];
               ExecStart = "${pkgs.opencode}/bin/opencode serve --port 4095";
               Restart = "on-failure";
               RestartSec = "5s";
@@ -43,7 +61,10 @@
 
             Service = {
               Type = "simple";
-              EnvironmentFile = "%h/.config/opencode/opencode.env";
+              EnvironmentFile = [
+                "%h/.config/opencode/opencode.env"
+                "%h/.config/opencode/opencode-server.env"
+              ];
               ExecStart = "%h/.bun/bin/openchamber serve --port 39173 --host 0.0.0.0 --foreground";
               Environment = [
                 "OPENCODE_HOST=http://localhost:4095"

@@ -2,10 +2,7 @@
 
 {
   den.aspects.ai = { host, ... }: {
-    homeSecrets = [
-      "openai/api_key"
-      "opencode/server_password"
-    ];
+    homeSecrets = [ "openai/api_key" ];
 
     homeManager =
       {
@@ -221,7 +218,6 @@
           mode = "0400";
           content = ''
             OPENAI_API_KEY=${secrets.openai.api_key}
-            OPENCODE_SERVER_PASSWORD=${secrets.opencode.server_password}
           '';
         };
 

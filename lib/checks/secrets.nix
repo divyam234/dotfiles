@@ -51,7 +51,6 @@ let
     "github/token"
     "nordvpn/token"
     "openai/api_key"
-    "opencode/server_password"
     "ssh/private_key"
   ];
   expectedIdeapadHome = [
@@ -63,7 +62,6 @@ let
   expectedHomelabHome = [
     "github/token"
     "openai/api_key"
-    "opencode/server_password"
     "ssh/private_key"
   ];
   expectedNetcupHome = [
