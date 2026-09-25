@@ -8,6 +8,7 @@
       den.aspects.home-manager-policy
       den.aspects.oci-base
       den.aspects.container-network
+      den.aspects.spotifyd
     ];
 
     nixos =
