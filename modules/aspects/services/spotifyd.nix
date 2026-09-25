@@ -8,6 +8,7 @@
         allowedUDPPorts = [ 5353 ];
       };
       systemd.tmpfiles.rules = [
+        "d /mnt/drive/spotifyd 0750 ${user.userName} users -"
         "d /mnt/drive/spotifyd/cache 0750 ${user.userName} users -"
       ];
       systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor = [ "/mnt/drive" ];

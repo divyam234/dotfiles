@@ -8,6 +8,7 @@
         allowedUDPPorts = [ 5353 ];
       };
       systemd.tmpfiles.rules = [
+        "d /mnt/drive/librespot 0750 ${user.userName} users -"
         "d /mnt/drive/librespot/cache 0750 ${user.userName} users -"
       ];
       systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor = [ "/mnt/drive" ];
