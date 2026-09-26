@@ -40,6 +40,9 @@
       in
       {
         home.packages = [ rclonep ];
+        programs.fish.interactiveShellInit = ''
+          complete -c rclonep -w rclone
+        '';
       };
   };
 }
