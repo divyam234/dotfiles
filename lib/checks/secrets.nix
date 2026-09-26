@@ -126,7 +126,6 @@ assert builtins.all
     homeConfig.programs.fastfetch.enable
     && homeConfig.programs.fastfetch.settings.logo.source == "nixos_small"
     && hasPackage "fastfetch" homeConfig
-    && hasPackage "fetch-img" homeConfig
   )
   [
     home
