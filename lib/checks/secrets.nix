@@ -40,7 +40,6 @@ let
     "restic/repository"
     "stash/secret_key"
     "tailscale/oauth_client_secret"
-    "teldrive/api_key"
     "teldrive/data_key"
     "teldrive/encryption_key"
     "teldrive/signing_key"
@@ -51,17 +50,23 @@ let
     "github/token"
     "nordvpn/token"
     "openai/api_key"
+    "postgres/password"
+    "postgres/user"
     "ssh/private_key"
   ];
   expectedIdeapadHome = [
     "github/token"
     "nordvpn/token"
     "openai/api_key"
+    "postgres/password"
+    "postgres/user"
     "ssh/private_key"
   ];
   expectedHomelabHome = [
     "github/token"
     "openai/api_key"
+    "postgres/password"
+    "postgres/user"
     "ssh/private_key"
   ];
   expectedNetcupHome = [
@@ -72,11 +77,16 @@ let
     "github/token"
     "openai/api_key"
     "opencode/server_password"
+    "postgres/password"
+    "postgres/user"
     "ssh/private_key"
   ];
   homelabHome = homelab.home-manager.users.bhunter;
   ideapadHome = ideapad.home-manager.users.bhunter;
   netcupHome = netcup.home-manager.users.bhunter;
+  hasPackage =
+    name: homeConfig:
+    builtins.any (package: (package.pname or package.name) == name) homeConfig.home.packages;
   expectedTemplates = [
     "caddy.env"
     "camofox.env"
@@ -103,6 +113,13 @@ assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
 assert builtins.attrNames ideapadHome.sops.secrets == expectedIdeapadHome;
 assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
+assert builtins.all (homeConfig: hasPackage "rclone" homeConfig && hasPackage "rclonep" homeConfig)
+  [
+    home
+    ideapadHome
+    homelabHome
+    netcupHome
+  ];
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;
 assert netcupHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";

@@ -17,37 +17,25 @@
             user.signingKey
           else
             "${config.home.homeDirectory}/${user.signingKey}";
+        ghWithToken = pkgs.writeShellScriptBin "gh" ''
+          token_file=${lib.escapeShellArg secrets.github.token.path}
+          if [ -r "$token_file" ]; then
+            token="$(${pkgs.coreutils}/bin/tr -d '[:space:]' < "$token_file")"
+            if [ -n "$token" ]; then
+              export GH_TOKEN="$token"
+            fi
+            unset token
+          fi
+          exec ${lib.getExe pkgs.gh} "$@"
+        '';
       in
       {
         home.packages = with pkgs; [
           git-lfs
           lazygit
-          gh
+          ghWithToken
         ];
 
-        systemd.user.services.gh-auth = {
-          Unit = {
-            Description = "Generate GitHub CLI authentication";
-            After = [ "sops-nix.service" ];
-            Requires = [ "sops-nix.service" ];
-          };
-          Service = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = pkgs.writeShellScript "gh-auth" ''
-                token_file="${secrets.github.token.path}"
-                token="$(${pkgs.coreutils}/bin/tr -d '[:space:]' < "$token_file")"
-                ${pkgs.coreutils}/bin/install -d -m 700 "${config.xdg.configHome}/gh"
-                ${pkgs.coreutils}/bin/cat > "${config.xdg.configHome}/gh/hosts.yml" <<EOF
-              github.com:
-                  oauth_token: $token
-                  git_protocol: ssh
-              EOF
-                ${pkgs.coreutils}/bin/chmod 600 "${config.xdg.configHome}/gh/hosts.yml"
-            '';
-          };
-          Install.WantedBy = [ "default.target" ];
-        };
         programs.git = {
           enable = true;
           lfs.enable = true;
