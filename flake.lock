@@ -91,16 +91,15 @@
     },
     "den": {
       "locked": {
-        "lastModified": 1790421703,
-        "narHash": "sha256-aG6FwmWDOltSpvnPwQDmGSLmoIv6YzufZoOHRYzJRxs=",
-        "owner": "divyam234",
+        "lastModified": 1790435976,
+        "narHash": "sha256-GlnesLYf5MeB7/SgRMiUIli6uljlo6UawN0Pod0r9i8=",
+        "owner": "denful",
         "repo": "den",
-        "rev": "acb6ead5214464093461938fdaecbcc7bd3b722a",
+        "rev": "71dff3a807f6a5313496957c4e186c9de07865b3",
         "type": "github"
       },
       "original": {
-        "owner": "divyam234",
-        "ref": "fix/wsl-optional-input",
+        "owner": "denful",
         "repo": "den",
         "type": "github"
       }

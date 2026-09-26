@@ -12,7 +12,7 @@
 
   inputs = {
     cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
-    den.url = "github:divyam234/den/fix/wsl-optional-input";
+    den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
