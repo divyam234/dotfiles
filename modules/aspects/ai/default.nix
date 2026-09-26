@@ -173,6 +173,9 @@
             name = "stylix";
             mode = "system";
           };
+          session = {
+            sidebar = "hide";
+          };
         };
       in
       {
@@ -226,7 +229,10 @@
         home.file.".config/opencode/oh-my-opencode-slim.json".source =
           json.generate "oh-my-opencode-slim.json" omoSlimConfig;
 
-        xdg.configFile."opencode/cli.json".text = builtins.toJSON cliConfig;
+        xdg.configFile."opencode/cli.json" = {
+          text = builtins.toJSON cliConfig;
+          force = true;
+        };
       };
   };
 }
