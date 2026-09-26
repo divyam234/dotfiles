@@ -19,7 +19,7 @@
           if host.name == "netcup" then
             "127.0.0.1:6432/postgres?schema=rclone&init_schema=false"
           else
-            "postgres.buunter.tech:443/postgres?schema=rclone&init_schema=false&sslnegotiation=direct";
+            "postgres.${host.domain}:443/postgres?schema=rclone&init_schema=false&sslnegotiation=direct";
         rclonep = pkgs.writeShellScriptBin "rclonep" ''
           user_file=${lib.escapeShellArg secrets.postgres.user.path}
           password_file=${lib.escapeShellArg secrets.postgres.password.path}
