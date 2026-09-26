@@ -1014,11 +1014,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790420070,
-        "narHash": "sha256-RTjGv1j63i/r9Rx1kSuOu5rW2cRbqGJJFTzQDfRdBps=",
+        "lastModified": 1790434096,
+        "narHash": "sha256-wTdjCsUjr4pQhRRe2KB9z0UApC+Ef/4sdQOrFyQFtnc=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "b643472c5633da58528d84e1682c0bd685ffa6fb",
+        "rev": "d4808afc0116d4743e693490307b724145e48494",
         "type": "github"
       },
       "original": {

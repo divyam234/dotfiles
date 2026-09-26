@@ -12,6 +12,7 @@
       den.aspects.gateauth
       den.aspects.gluetun
       den.aspects.gproxy
+      den.aspects.ida-mcp
       den.aspects.openchamber
       den.aspects.mtproxy
       den.aspects.pgdog

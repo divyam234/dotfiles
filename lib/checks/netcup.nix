@@ -16,6 +16,16 @@ assert builtins.hasAttr "ghcr-auth" netcup.systemd.services;
 assert builtins.hasAttr "opencode/cli.json" userHome.xdg.configFile;
 assert (builtins.fromJSON userHome.xdg.configFile."opencode/cli.json".text).theme.name == "stylix";
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
+assert builtins.hasAttr "ida-mcp" userHome.systemd.user.services;
+assert
+  userHome.programs.opencode.settings.mcp.servers.ida == {
+    type = "remote";
+    url = "https://ida.${domain}/mcp";
+    disabled = true;
+  };
+assert builtins.elem 8745 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
+assert !(builtins.elem 8745 netcup.networking.firewall.allowedTCPPorts);
+assert lib.hasInfix "ida.${domain}" caddyfile;
 assert builtins.hasAttr "openchamber" userHome.systemd.user.services;
 assert
   userHome.systemd.user.services.openchamber.Service.EnvironmentFile == [

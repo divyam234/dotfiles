@@ -62,6 +62,12 @@
             };
           };
 
+          mcp.servers.ida = {
+            type = "remote";
+            url = "https://ida.${host.domain}/mcp";
+            disabled = true;
+          };
+
           plugins = [
             "oh-my-opencode-slim"
           ];
