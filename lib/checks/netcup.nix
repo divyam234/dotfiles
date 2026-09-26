@@ -17,6 +17,10 @@ assert builtins.hasAttr "opencode/cli.json" userHome.xdg.configFile;
 assert (builtins.fromJSON userHome.xdg.configFile."opencode/cli.json".text).theme.name == "stylix";
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
 assert builtins.hasAttr "ida-mcp" userHome.systemd.user.services;
+assert userHome.systemd.user.services.ida-mcp.Service ? ExecStartPre;
+assert lib.hasInfix "python3.14" (
+  builtins.head userHome.systemd.user.services.ida-mcp.Service.ExecStart
+);
 assert
   userHome.programs.opencode.settings.mcp.servers.ida == {
     type = "remote";

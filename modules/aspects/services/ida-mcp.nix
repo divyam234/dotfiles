@@ -11,6 +11,9 @@
       { pkgs, ... }:
       let
         idaDir = "${pkgs.ida-pro}/opt/ida-pro-${pkgs.ida-pro.version}";
+        acceptEula = pkgs.writeShellScript "ida-accept-eula" ''
+          exec ${pkgs.python314}/bin/python3.14 -c 'import idapro, ida_registry; ida_registry.reg_write_int("EULA 90", 1)'
+        '';
       in
       {
         systemd.user.services.ida-mcp = {
@@ -22,7 +25,8 @@
               "PYTHONPATH=${idaDir}/idalib/python"
               "LD_LIBRARY_PATH=${pkgs.ida-pro}/lib"
             ];
-            ExecStart = "${pkgs.uv}/bin/uvx --python ${pkgs.python313}/bin/python3.13 --from git+https://github.com/mrexodia/ida-pro-mcp@fab3505ee2405ef4e87dcd370418ea7d661f5bdf idalib-mcp --host 0.0.0.0 --port 8745";
+            ExecStartPre = acceptEula;
+            ExecStart = "${pkgs.uv}/bin/uvx --python ${pkgs.python314}/bin/python3.14 --from git+https://github.com/mrexodia/ida-pro-mcp@fab3505ee2405ef4e87dcd370418ea7d661f5bdf idalib-mcp --host 0.0.0.0 --port 8745";
             Restart = "on-failure";
             RestartSec = "5s";
           };
