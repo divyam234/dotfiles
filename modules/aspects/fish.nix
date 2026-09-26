@@ -39,6 +39,7 @@
               gl = "git log --oneline --graph --decorate";
               lg = "lazygit";
               nfu = "nix flake update";
+              ncache-restart = "sudo systemctl restart nix-cache-proxy.service";
               oc = "opencode";
               zj = "zellij";
               ".." = "cd ..";
