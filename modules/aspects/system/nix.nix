@@ -62,9 +62,6 @@
                 --index-cache /var/cache/nix-cache-proxy/index.json \
                 --asset-url-prefix https://github.com/divyam234/nix-cache/releases/download/ \
                 --public-key nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI= \
-                --block-cache /var/cache/nix-cache-proxy/blocks \
-                --block-size 33554432 \
-                --max-cache-size 21474836480 \
                 --max-downloads 8
             '';
             LockPersonality = true;

@@ -27,7 +27,7 @@ assert all (host: host.systemd.services.nix-cache-proxy.wantedBy == [ "multi-use
 assert all (host: host.systemd.services.nix-cache-proxy.serviceConfig.DynamicUser);
 assert all (
   host:
-  builtins.match ".*nix-cache serve.*--block-size 33554432.*--max-downloads 8.*" host.systemd.services.nix-cache-proxy.serviceConfig.ExecStart
+  builtins.match ".*nix-cache serve.*--index-cache /var/cache/nix-cache-proxy/index.json.*--max-downloads 8.*" host.systemd.services.nix-cache-proxy.serviceConfig.ExecStart
   != null
 );
 true

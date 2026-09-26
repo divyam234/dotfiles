@@ -40,16 +40,13 @@ jobs:
 
           proxy="$(nix build --no-link --print-out-paths .#nix-cache-proxy)"
           cache_dir="$RUNNER_TEMP/nix-cache-proxy"
-          mkdir -p "$cache_dir/blocks"
+          mkdir -p "$cache_dir"
 
           "$proxy/bin/nix-cache" serve \
             --index-url https://github.com/divyam234/nix-cache/releases/latest/download/index.json \
             --index-cache "$cache_dir/index.json" \
             --asset-url-prefix https://github.com/divyam234/nix-cache/releases/download/ \
             --public-key 'nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI=' \
-            --block-cache "$cache_dir/blocks" \
-            --block-size 33554432 \
-            --max-cache-size 4294967296 \
             --max-downloads 8 \
             >"$cache_dir/proxy.log" 2>&1 &
           proxy_pid=$!

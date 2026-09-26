@@ -1018,11 +1018,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789628984,
-        "narHash": "sha256-ePYPLlkO+Krw+wuWjfprvmeT/+89/FxN0RNKhnyp4H0=",
+        "lastModified": 1790451916,
+        "narHash": "sha256-hWSzU8Jr3vV9KFWqeCsItWD0i2l8mWkN7hSPzNSjWmg=",
         "owner": "divyam234",
         "repo": "nix-cache",
-        "rev": "94a3ebb6608bf62d6178f78d7d56162820ac8730",
+        "rev": "3f38135d6ed43e3c91fc13ebf7c6846e024543c6",
         "type": "github"
       },
       "original": {
