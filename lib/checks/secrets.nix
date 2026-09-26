@@ -120,6 +120,20 @@ assert builtins.all (homeConfig: hasPackage "rclone" homeConfig && hasPackage "r
     homelabHome
     netcupHome
   ];
+assert builtins.all
+  (
+    homeConfig:
+    homeConfig.programs.fastfetch.enable
+    && homeConfig.programs.fastfetch.settings.logo.source == "nixos_small"
+    && hasPackage "fastfetch" homeConfig
+    && hasPackage "fetch-img" homeConfig
+  )
+  [
+    home
+    ideapadHome
+    homelabHome
+    netcupHome
+  ];
 assert
   builtins.attrNames netcup.sops.templates == builtins.sort builtins.lessThan expectedTemplates;
 assert netcupHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";

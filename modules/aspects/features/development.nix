@@ -7,6 +7,7 @@
       den.aspects.zellij
       den.aspects.neovim
       den.aspects.modern-unix
+      den.aspects.fastfetch
       den.aspects.devtools
       den.aspects.container-tools
       den.aspects.database-tools

@@ -13,7 +13,6 @@
           dysk
           eza
           fd
-          fastfetch
           ffmpeg
           file
           gdb
