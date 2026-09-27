@@ -62,11 +62,21 @@ assert netcup.virtualisation.quadlet.containers.postgres.containerConfig.publish
 assert lib.hasInfix ''iifname "eth0" ct status dnat tcp dport { 80, 443 } accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat udp dport 443 accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat drop'' containerIngress;
+assert builtins.hasAttr "camoflare" netcup.systemd.services;
+assert lib.hasInfix "camoflare" netcup.systemd.services.camoflare.serviceConfig.ExecStart;
+assert
+  netcup.systemd.services.camoflare.serviceConfig.EnvironmentFile
+  == "/run/secrets/container-env/camoflare.env";
+assert builtins.elem "camofox-browser.service" netcup.systemd.services.camoflare.after;
+assert builtins.elem 8191 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
+assert !(builtins.elem 8191 netcup.networking.firewall.allowedTCPPorts);
 assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
 assert lib.hasInfix "stash.${domain}" caddyfile;
+assert lib.hasInfix "streamweave.${domain}" caddyfile;
+assert lib.hasInfix "reverse_proxy streamweave:8080" caddyfile;
 assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
 assert lib.hasInfix "rewrite /api/verify?application=default-app" caddyfile;
 assert lib.hasInfix

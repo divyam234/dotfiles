@@ -54,6 +54,10 @@ let
       "api_key"
     ]
     [
+      "camofox"
+      "vnc_password"
+    ]
+    [
       "stash"
       "secret_key"
     ]
@@ -131,6 +135,14 @@ let
     [
       "restic"
       "rclone_conf"
+    ]
+    [
+      "streamweave"
+      "admin_token"
+    ]
+    [
+      "streamweave"
+      "master_key"
     ]
     [
       "gproxy"

@@ -20,6 +20,7 @@ let
     "camofox/access_key"
     "camofox/admin_key"
     "camofox/api_key"
+    "camofox/vnc_password"
     "cloudflare/api_token"
     "gateauth/admin_email"
     "gateauth/admin_password"
@@ -39,6 +40,8 @@ let
     "restic/rclone_conf"
     "restic/repository"
     "stash/secret_key"
+    "streamweave/admin_token"
+    "streamweave/master_key"
     "tailscale/oauth_client_secret"
     "teldrive/data_key"
     "teldrive/encryption_key"
@@ -89,6 +92,7 @@ let
     builtins.any (package: (package.pname or package.name) == name) homeConfig.home.packages;
   expectedTemplates = [
     "caddy.env"
+    "camoflare.env"
     "camofox.env"
     "cloudflare-dns.env"
     "forgejo.env"
@@ -101,6 +105,7 @@ let
     "redis.env"
     "stash-worker.env"
     "stash.env"
+    "streamweave.env"
     "teldrive.env"
     "vaultwarden.env"
   ];

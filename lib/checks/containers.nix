@@ -19,6 +19,7 @@ let
     "postgres"
     "redis"
     "siyuan"
+    "streamweave"
     "vaultwarden"
   ];
   names = builtins.attrNames netcup.virtualisation.quadlet.containers;
@@ -49,6 +50,14 @@ assert hasContainerPolicy netcup;
 assert hasContainerPolicy laptop;
 assert hasContainerPolicy ideapad;
 assert hasContainerPolicy homelab;
+assert
+  netcup.virtualisation.quadlet.containers.streamweave.containerConfig.image
+  == "ghcr.io/divyam234/streamweave:latest";
+assert netcup.virtualisation.quadlet.containers.streamweave.containerConfig.publishPorts == [ ];
+assert builtins.elem "postgres-provision.service"
+  netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
+assert builtins.elem netcup.virtualisation.quadlet.containers.pgdog.ref
+  netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
 assert netcup.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
 assert homelab.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;
@@ -64,6 +73,9 @@ assert
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
   == "0.0.0.0";
+assert
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.ENABLE_VNC
+  == "1";
 assert
   netcup.virtualisation.quadlet.containers.adguard-cli.containerConfig.networks
   == [ "container:gluetun" ];

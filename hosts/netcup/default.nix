@@ -5,6 +5,7 @@
       den.aspects.infra-host
 
       den.aspects.adguard
+      den.aspects.camoflare
       den.aspects.camofox
       den.aspects.codeforge
       den.aspects.forgejo
@@ -22,6 +23,7 @@
       den.aspects.siyuan
       den.aspects.stash-worker
       den.aspects.stash
+      den.aspects.streamweave
       den.aspects.teldrive
       den.aspects.vaultwarden
     ];

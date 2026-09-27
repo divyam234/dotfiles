@@ -5,6 +5,7 @@
       "camofox/access_key"
       "camofox/admin_key"
       "camofox/api_key"
+      "camofox/vnc_password"
     ];
 
     nixos =
@@ -21,6 +22,7 @@
             CAMOFOX_ACCESS_KEY=${secrets.camofox.access_key}
             CAMOFOX_ADMIN_KEY=${secrets.camofox.admin_key}
             CAMOFOX_API_KEY=${secrets.camofox.api_key}
+            VNC_PASSWORD=${secrets.camofox.vnc_password}
           '';
         };
 
@@ -34,6 +36,7 @@
               CAMOFOX_BIND_HOST = "0.0.0.0";
               CAMOFOX_PORT = "9377";
               MAX_OLD_SPACE_SIZE = "2048";
+              ENABLE_VNC = "1";
             };
             publishPorts = [ "9377:9377" ];
             volumes = [ "${containers.dataRoot}/camofox:/root/.camofox" ];
