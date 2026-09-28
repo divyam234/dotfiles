@@ -110,7 +110,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"brave-browser$"# title=r#"(?i)^picture.?in.?picture$"#
+    match app-id=r#"brave-browser$"# title=r#"(?i)picture.?in.?picture"#
     open-floating true
 }
 
@@ -153,7 +153,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"brave-browser$"# title=r#"(?i)^picture.?in.?picture$"#
+    match app-id=r#"brave-browser$"# title=r#"(?i)picture.?in.?picture"#
     opacity 1.0
 }
 window-rule {
