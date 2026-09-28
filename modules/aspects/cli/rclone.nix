@@ -34,7 +34,7 @@
         '';
       in
       {
-        home.packages = [ rclone ];
+        home.packages = [ (lib.hiPrio rclone) ];
       };
   };
 }
