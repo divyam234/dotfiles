@@ -118,7 +118,7 @@ assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
 assert builtins.attrNames ideapadHome.sops.secrets == expectedIdeapadHome;
 assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
-assert builtins.all (homeConfig: hasPackage "rclone" homeConfig && hasPackage "rclonep" homeConfig)
+assert builtins.all (homeConfig: hasPackage "rclone" homeConfig)
   [
     home
     ideapadHome

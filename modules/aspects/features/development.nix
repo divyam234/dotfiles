@@ -12,7 +12,7 @@
       den.aspects.container-tools
       den.aspects.database-tools
       den.aspects.network-tools
-      den.aspects.rclonep
+      den.aspects.rclone
       den.aspects.bun
       den.aspects.ai
     ];

@@ -43,11 +43,7 @@
       let
         cfg = host.rcloneWebdav;
         rcloneEnv = "${config.xdg.configHome}/rclone/rclone-webdav.env";
-        endpoint =
-          if host.name == "netcup" then
-            "127.0.0.1:6432/postgres?schema=rclone&init_schema=false"
-          else
-            "postgres.${host.domain}:443/postgres?schema=rclone&init_schema=false&sslnegotiation=direct";
+        endpoint = "netcup:6432/postgres?schema=rclone&init_schema=false";
       in
       {
         imports = [ inputs.nix-pkgs.homeManagerModules.rclone ];

@@ -20,7 +20,6 @@
           net-tools
           nmap
           openssl
-          rclone
           rsync
           socat
           tcpdump
