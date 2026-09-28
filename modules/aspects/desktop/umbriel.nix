@@ -365,17 +365,6 @@ in
                 };
               }
               {
-                match.app_id = "brave-browser$";
-                match.title = "[Pp]icture.?[Ii]n.?[Pp]icture";
-                default_floating = true;
-                default_maximize = false;
-                default_position = {
-                  x = 20;
-                  y = 20;
-                  anchor = "bottom_right";
-                };
-              }
-              {
                 match.app_id = "^(gnome-calculator|galculator|blueman-manager|org[.]gnome[.]Nautilus|xdg-desktop-portal)$";
                 default_floating = true;
               }
