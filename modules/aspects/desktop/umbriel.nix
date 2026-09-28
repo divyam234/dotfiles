@@ -100,10 +100,7 @@ in
               border_width = 2;
               outer_border_width = 0;
               corner_radius = 10;
-              blur = {
-                enabled = true;
-                radius = 3;
-              };
+              blur.enabled = false;
               shadow = {
                 enabled = true;
                 softness = 30;
@@ -351,10 +348,6 @@ in
 
             window_rule = [
               {
-                blur = true;
-                blur_optimized = false;
-              }
-              {
                 match.app_id = "^dev[.]noctalia[.]Noctalia[.]Settings$";
                 default_floating = true;
               }
@@ -401,16 +394,6 @@ in
               {
                 match.app_id = "^vlc$";
                 opacity = 1.0;
-              }
-            ];
-
-            layer_rule = [
-              {
-                match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|desktop-widget-[^\"]*)$";
-                blur = true;
-                blur_ignore_alpha = 0.5;
-                blur_popups = true;
-                blur_optimized = false;
               }
             ];
           };
