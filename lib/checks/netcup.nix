@@ -112,4 +112,5 @@ assert builtins.elem {
   target = "public-ipv4";
   type = "A";
 } dnsManifest.records;
+assert !(builtins.hasAttr "rclone-serve-webdav" userHome.systemd.user.services);
 true

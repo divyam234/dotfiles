@@ -33,4 +33,5 @@ assert contains "position x=0 y=0";
 assert contains "position x=1536 y=0";
 assert home.programs.bunGlobalCli.cachePruneScopes == [ "@oh-my-pi" ];
 assert !(builtins.hasAttr "container-update-webhook" laptop.systemd.services);
+assert !(builtins.hasAttr "rclone-serve-webdav" home.systemd.user.services);
 true

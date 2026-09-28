@@ -19,4 +19,11 @@ assert contains "scale 1.250000";
 assert userHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert builtins.elem "tailscaled.service" ideapad.systemd.services.tailscale-autoconnect.after;
 assert ideapad.systemd.services.tailscale-autoconnect.serviceConfig.Restart == "on-failure";
+assert builtins.hasAttr "rclone-serve-webdav" userHome.systemd.user.services;
+assert builtins.elem "RCLONE_CACHE_DIR=/mnt/drive/rclone"
+  userHome.systemd.user.services.rclone-serve-webdav.Service.Environment;
+assert builtins.elem "RCLONE_VFS_CACHE_MODE=full"
+  userHome.systemd.user.services.rclone-serve-webdav.Service.Environment;
+assert userHome.systemd.user.services.rclone-serve-webdav.Unit.RequiresMountsFor == [ "/mnt/drive/rclone" ];
+assert builtins.hasAttr "rclone-webdav.env" userHome.sops.templates;
 true

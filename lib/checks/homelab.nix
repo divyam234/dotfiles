@@ -19,4 +19,5 @@ assert builtins.elem 5353 homelab.networking.firewall.allowedUDPPorts;
 assert builtins.elem "/mnt/drive"
   homelab.systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor;
 assert homelab.users.users.bhunter.linger;
+assert !(builtins.hasAttr "rclone-serve-webdav" userHome.systemd.user.services);
 true
