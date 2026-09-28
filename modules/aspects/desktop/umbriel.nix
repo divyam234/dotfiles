@@ -375,15 +375,6 @@ in
                 };
               }
               {
-                match.app_id = "^org[.]gnome[.]";
-                border_width = 0;
-                corner_radius = 12;
-              }
-              {
-                match.app_id = "^(org[.]wezfurlong[.]wezterm|Alacritty|zen|com[.]mitchellh[.]ghostty|kitty)$";
-                border_width = 0;
-              }
-              {
                 match.app_id = "^(gnome-calculator|galculator|blueman-manager|org[.]gnome[.]Nautilus|xdg-desktop-portal)$";
                 default_floating = true;
               }
