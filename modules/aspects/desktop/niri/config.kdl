@@ -151,6 +151,11 @@ window-rule {
     opacity 0.9
     exclude app-id="vlc"
 }
+
+window-rule {
+    match app-id=r#"brave-browser$"# title=r#"(?i)^picture.?in.?picture$"#
+    opacity 1.0
+}
 window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
