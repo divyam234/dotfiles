@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           aria2
+          bind.dnsutils
           hydra
           cloudflared
           curl
