@@ -90,6 +90,15 @@
                 echo "Already logged in to NordVPN."
               fi
 
+              # Tailnet (MagicDNS) names must resolve while the VPN is up,
+              # and the rclone postgres endpoint uses the tailnet name too.
+              if "$nordvpn" settings 2>/dev/null | "$grep" -q "100.100.100.100"; then
+                echo "NordVPN DNS already points at MagicDNS, skipping."
+              else
+                echo "Pointing NordVPN DNS at MagicDNS..."
+                "$nordvpn" set dns 100.100.100.100 103.86.96.100 103.86.99.100 || true
+              fi
+
               if "$nordvpn" settings 2>/dev/null | "$grep" -q "LAN Discovery: enabled"; then
                 echo "NordVPN settings already applied, skipping."
                 exit 0
