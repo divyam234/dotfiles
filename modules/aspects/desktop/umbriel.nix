@@ -119,7 +119,7 @@ in
               border = {
                 focused = "#${colors.base0D}FF";
                 unfocused = "#${colors.base03}FF";
-                outer = "#${colorsHash.base00}FF";
+                outer = "${colorsHash.base00}FF";
               };
             };
 
@@ -368,7 +368,7 @@ in
               }
               {
                 match.app_id = "brave-browser$";
-                match.title = "(?i)picture.?in.?picture";
+                match.title = "[Pp]icture.?[Ii]n.?[Pp]icture";
                 default_floating = true;
                 default_maximize = false;
                 default_position = {
