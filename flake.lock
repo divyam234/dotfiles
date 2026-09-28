@@ -1174,7 +1174,8 @@
         "sonora": "sonora",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
-        "tinted-sublime-text": "tinted-sublime-text"
+        "tinted-sublime-text": "tinted-sublime-text",
+        "umbriel": "umbriel"
       }
     },
     "rust-overlay": {
@@ -1381,6 +1382,48 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "base16-zed",
+        "type": "github"
+      }
+    },
+    "umbriel": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "xdg-desktop-portal-umbriel": "xdg-desktop-portal-umbriel"
+      },
+      "locked": {
+        "lastModified": 1790564528,
+        "narHash": "sha256-E+QW8j4B5qWJd74q9oYcFzaS2MBD0q+gVeiW1C+USXA=",
+        "owner": "noctalia-dev",
+        "repo": "umbriel",
+        "rev": "2c683caf4bccc1850c57dfa8b9eaf16e4b3d3fa3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "umbriel",
+        "type": "github"
+      }
+    },
+    "xdg-desktop-portal-umbriel": {
+      "inputs": {
+        "nixpkgs": [
+          "umbriel",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790459405,
+        "narHash": "sha256-xDnu9icpormkETOo8Vn2Qr7Jkrz9ZqRf/jOhqADeeyg=",
+        "owner": "noctalia-dev",
+        "repo": "xdg-desktop-portal-umbriel",
+        "rev": "d6bd72cabd83e3084fb2f2e24898d8ffa4a8c24f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "xdg-desktop-portal-umbriel",
         "type": "github"
       }
     }

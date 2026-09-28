@@ -13,6 +13,9 @@ assert ideapad.hardware.graphics.enable;
 assert ideapad.hardware.graphics.enable32Bit;
 assert ideapad.boot.kernelPackages.kernel.pname == "linux-cachyos-latest-x86_64-v3";
 assert builtins.hasAttr "niri/config.kdl" userHome.xdg.configFile;
+assert builtins.hasAttr "umbriel/config.toml" userHome.xdg.configFile;
+assert userHome.programs.umbriel.enable;
+assert userHome.programs.umbriel.settings.output."eDP-1".mode == "1920x1080@60.052";
 assert !(builtins.hasAttr "gh-auth" userHome.systemd.user.services);
 assert contains ''output "eDP-1" {'';
 assert contains "scale 1.250000";
@@ -24,6 +27,8 @@ assert builtins.elem "RCLONE_CACHE_DIR=/mnt/drive/rclone"
   userHome.systemd.user.services.rclone-serve-webdav.Service.Environment;
 assert builtins.elem "RCLONE_VFS_CACHE_MODE=full"
   userHome.systemd.user.services.rclone-serve-webdav.Service.Environment;
-assert userHome.systemd.user.services.rclone-serve-webdav.Unit.RequiresMountsFor == [ "/mnt/drive/rclone" ];
+assert
+  userHome.systemd.user.services.rclone-serve-webdav.Unit.RequiresMountsFor
+  == [ "/mnt/drive/rclone" ];
 assert builtins.hasAttr "rclone-webdav.env" userHome.sops.templates;
 true

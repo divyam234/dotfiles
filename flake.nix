@@ -69,5 +69,9 @@
       url = "github:tinted-theming/tinted-sublime-text";
       flake = false;
     };
+    umbriel = {
+      url = "github:noctalia-dev/umbriel";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }
