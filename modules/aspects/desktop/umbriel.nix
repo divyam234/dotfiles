@@ -395,6 +395,11 @@ in
                 match.app_id = "^vlc$";
                 opacity = 1.0;
               }
+              {
+                match.app_id = "brave-browser$";
+                match.title = "[Pp]icture.?[Ii]n.?[Pp]icture";
+                opacity = 1.0;
+              }
             ];
           };
         };
