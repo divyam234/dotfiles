@@ -350,6 +350,10 @@ in
               {
                 match.app_id = "^dev[.]noctalia[.]Noctalia[.]Settings$";
                 default_floating = true;
+                default_floating_size = {
+                  width = 0.7;
+                  height = 0.85;
+                };
               }
               {
                 match.app_id = "^dev[.]noctalia[.]Noctalia$";
