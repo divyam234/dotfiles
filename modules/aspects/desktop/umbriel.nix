@@ -32,7 +32,6 @@ in
       {
         config,
         host,
-        pkgs,
         ...
       }:
       let
@@ -70,7 +69,6 @@ in
 
         programs.umbriel = {
           enable = true;
-          package = lib.mkDefault inputs.umbriel.packages.${pkgs.stdenv.hostPlatform.system}.default;
           settings = {
             general = {
               autostart = [ "noctalia" ];
