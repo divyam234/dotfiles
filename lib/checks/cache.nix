@@ -20,6 +20,9 @@ let
 in
 assert all (host: has substituter host.nix.settings.substituters);
 assert all (host: has publicKey host.nix.settings.trusted-public-keys);
+assert all (host: host.services.nix-cache.enable);
+assert all (host: host.services.nix-cache.port == 7745);
+assert all (host: host.services.nix-cache.refreshInterval == "1h");
 assert all (host: !has lantianSubstituter host.nix.settings.substituters);
 assert all (host: !has lantianPublicKey host.nix.settings.trusted-public-keys);
 assert all (host: builtins.hasAttr "nix-cache-proxy" host.systemd.services);
@@ -27,7 +30,7 @@ assert all (host: host.systemd.services.nix-cache-proxy.wantedBy == [ "multi-use
 assert all (host: host.systemd.services.nix-cache-proxy.serviceConfig.DynamicUser);
 assert all (
   host:
-  builtins.match ".*nix-cache serve.*--index-cache /var/cache/nix-cache-proxy/index.json.*--max-downloads 8.*" host.systemd.services.nix-cache-proxy.serviceConfig.ExecStart
+  builtins.match ".*nix-cache serve --listen 127.0.0.1:7745.*--index-cache /var/cache/nix-cache-proxy/index.json.*--refresh-interval 1h.*" host.systemd.services.nix-cache-proxy.serviceConfig.ExecStart
   != null
 );
 true
