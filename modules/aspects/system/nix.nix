@@ -16,9 +16,9 @@
 
         nix = {
           channel.enable = false;
-          nixPath = [ "nixpkgs=flake:nixpkgs" ];
           registry.nixpkgs.flake = inputs.nixpkgs;
           settings = {
+            nix-path = [ "nixpkgs=flake:nixpkgs" ];
             experimental-features = [
               "nix-command"
               "flakes"

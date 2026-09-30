@@ -34,8 +34,8 @@
           };
 
         models = {
-          openaiStrong = "openai/gpt-5.6-sol";
-          openaiFast = "openai/gpt-5.6-luna";
+          openaiStrong = "openai/gpt-6-sol";
+          openaiFast = "openai/gpt-6-luna";
           opencode = "opencode/muse-spark-1.3-contributor-free";
         };
 
@@ -101,9 +101,8 @@
                 model = models.openaiFast;
                 variant = "low";
                 mcps = [
-                  "websearch"
                   "context7"
-                  "grep_app"
+                  "gh_grep"
                 ];
               };
 
@@ -118,8 +117,8 @@
               };
 
               fixer = mkAgent {
-                model = models.openaiStrong;
-                variant = "medium";
+                model = models.openaiFast;
+                variant = "high";
               };
             };
 
