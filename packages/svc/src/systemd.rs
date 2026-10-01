@@ -1,8 +1,11 @@
-use std::{collections::HashMap, process::Command};
+use std::{collections::HashMap, process::Command, time::Duration};
 
-use anyhow::{Context, Result, bail};
+use anyhow::Result;
 
-use crate::model::{Service, ServiceState, normalize_startup};
+use crate::{
+    model::{Service, ServiceState, normalize_startup},
+    operations,
+};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct UnitProperties {
@@ -13,7 +16,7 @@ pub struct UnitProperties {
     pub load_state: String,
 }
 
-pub fn refresh_services(services: &mut [Service]) -> Result<()> {
+pub fn refresh_services(services: &mut [Service], timeout: Duration) -> Result<()> {
     if services.is_empty() {
         return Ok(());
     }
@@ -30,16 +33,17 @@ pub fn refresh_services(services: &mut [Service]) -> Result<()> {
         "--property=LoadState",
         "--no-pager",
     ]);
-    let output = command.output().context("run batched systemctl show")?;
-    if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).trim().to_owned();
-        for service in services {
-            service.state = ServiceState::Unavailable;
-            service.query_error = Some(error.clone());
+    let output = match operations::run_output(command, timeout) {
+        Ok(output) => output,
+        Err(error) => {
+            for service in services {
+                service.state = ServiceState::Unavailable;
+                service.query_error = Some(format!("{error:#}"));
+            }
+            return Err(error);
         }
-        bail!("systemctl show failed: {error}");
-    }
-    let properties = parse_show_output(&String::from_utf8_lossy(&output.stdout));
+    };
+    let properties = parse_show_output(&output);
     apply_properties(services, &properties);
     Ok(())
 }

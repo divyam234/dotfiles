@@ -283,7 +283,7 @@ impl App {
         // tailing the selected unit across refreshes.
         match quadlet::discover(&self.dir) {
             Ok(mut services) => {
-                self.global_error = systemd::refresh_services(&mut services)
+                self.global_error = systemd::refresh_services(&mut services, self.timeout)
                     .err()
                     .map(|error| error.to_string());
                 self.services = services;

@@ -113,6 +113,30 @@ fn list_shows_discovered_services() {
 }
 
 #[test]
+fn stalled_systemctl_show_marks_services_unavailable() {
+    let harness = harness();
+    write_stub(
+        &harness.bin,
+        "systemctl",
+        "#!/bin/sh\nif [ \"$1\" = show ]; then sleep 5; fi\n",
+    );
+    let assert = svc(&harness)
+        .args(["--timeout", "1", "--json", "list"])
+        .assert()
+        .success();
+    let services: serde_json::Value = serde_json::from_slice(&assert.get_output().stdout).unwrap();
+    for service in services.as_array().unwrap() {
+        assert_eq!(service["state"], "unavailable");
+        assert!(
+            service["query_error"]
+                .as_str()
+                .unwrap()
+                .contains("timed out")
+        );
+    }
+}
+
+#[test]
 fn list_failed_only_filters_to_attention() {
     let harness = harness();
     svc(&harness)

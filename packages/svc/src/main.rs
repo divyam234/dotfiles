@@ -45,9 +45,12 @@ fn init_tracing(verbose: u8) {
         .try_init();
 }
 
-fn load_services(dir: &std::path::Path) -> Result<(Vec<Service>, Option<String>)> {
+fn load_services(
+    dir: &std::path::Path,
+    timeout: Duration,
+) -> Result<(Vec<Service>, Option<String>)> {
     let mut services = quadlet::discover(dir)?;
-    let error = systemd::refresh_services(&mut services)
+    let error = systemd::refresh_services(&mut services, timeout)
         .err()
         .map(|error| error.to_string());
     Ok((services, error))
@@ -202,6 +205,7 @@ fn needs_attention(service: &Service) -> bool {
 
 fn run_list(
     quadlet_dir: &std::path::Path,
+    timeout: Duration,
     json: bool,
     failed_only: bool,
     watch: Option<u64>,
@@ -210,7 +214,7 @@ fn run_list(
     loop {
         // State is reloaded on every tick; discovery is cheap and
         // `systemctl show` is a single batched call.
-        let (services, global_error) = load_services(quadlet_dir)?;
+        let (services, global_error) = load_services(quadlet_dir, timeout)?;
         let view: Vec<Service> = services
             .into_iter()
             .filter(|service| !failed_only || needs_attention(service))
@@ -316,7 +320,7 @@ fn run(cli: Cli) -> Result<ExitCode> {
         _ => {}
     }
 
-    let (services, global_error) = load_services(&cli.quadlet_dir)?;
+    let (services, global_error) = load_services(&cli.quadlet_dir, opts.timeout)?;
     let command = cli.command.expect("handled UI above");
     let code = match command {
         Commands::Ui => unreachable!(),
@@ -324,7 +328,7 @@ fn run(cli: Cli) -> Result<ExitCode> {
             unreachable!()
         }
         Commands::List { failed_only, watch } => {
-            run_list(&cli.quadlet_dir, cli.json, failed_only, watch)?
+            run_list(&cli.quadlet_dir, opts.timeout, cli.json, failed_only, watch)?
         }
         Commands::Status { service: None } => {
             output::print_services(&services, cli.json, global_error.as_deref())?;

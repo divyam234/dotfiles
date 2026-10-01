@@ -49,6 +49,9 @@ impl Default for ExecOptions {
 }
 
 fn spawn_timed(mut command: Command) -> Result<std::process::Child> {
+    use std::os::unix::process::CommandExt;
+    // Isolate subprocesses so a timeout also closes pipes inherited by children.
+    command.process_group(0);
     let rendered = format!("{command:?}");
     command.spawn().with_context(|| format!("run {rendered}"))
 }
@@ -59,6 +62,8 @@ fn wait_timed(child: &mut std::process::Child, rendered: &str, timeout: Duration
         match child.try_wait().context("poll child process")? {
             Some(_) => return Ok(()),
             None if start.elapsed() >= timeout => {
+                // SAFETY: the still-running child leads its own process group.
+                unsafe { libc::kill(-(child.id() as i32), libc::SIGKILL) };
                 let _ = child.kill();
                 let _ = child.wait();
                 bail!("{rendered} timed out after {}s", timeout.as_secs());
@@ -75,26 +80,40 @@ fn run_status(command: Command, timeout: Duration) -> Result<ExitStatus> {
     child.wait().with_context(|| format!("run {rendered}"))
 }
 
-fn run_output(command: Command, timeout: Duration) -> Result<String> {
-    use std::process::Stdio;
+pub(crate) fn run_output(command: Command, timeout: Duration) -> Result<String> {
+    use std::{io::Read, process::Stdio};
     let rendered = format!("{command:?}");
     let mut child = spawn_timed({
         let mut command = command;
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
         command
     })?;
-    wait_timed(&mut child, &rendered, timeout)?;
-    let output = child
-        .wait_with_output()
-        .with_context(|| format!("run {rendered}"))?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+    let stdout = child.stdout.take().context("capture child stdout")?;
+    let stderr = child.stderr.take().context("capture child stderr")?;
+    let read = |mut pipe: Box<dyn Read + Send>| -> std::io::Result<Vec<u8>> {
+        let mut bytes = Vec::new();
+        pipe.read_to_end(&mut bytes)?;
+        Ok(bytes)
+    };
+    let stdout_reader = thread::spawn(move || read(Box::new(stdout)));
+    let stderr_reader = thread::spawn(move || read(Box::new(stderr)));
+    let waited = wait_timed(&mut child, &rendered, timeout);
+    let stdout = stdout_reader
+        .join()
+        .map_err(|_| anyhow!("stdout reader panicked"))??;
+    let stderr = stderr_reader
+        .join()
+        .map_err(|_| anyhow!("stderr reader panicked"))??;
+    waited?;
+    let status = child.wait().with_context(|| format!("run {rendered}"))?;
+    if !status.success() {
+        let stderr = String::from_utf8_lossy(&stderr).trim().to_owned();
         if stderr.is_empty() {
             bail!("{rendered} failed");
         }
         bail!("{rendered} failed: {stderr}");
     }
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+    Ok(String::from_utf8_lossy(&stdout).trim().to_owned())
 }
 
 fn dry_run_print(command: Command) {
@@ -284,8 +303,25 @@ fn run_group_update(
         return Ok(UpdateOutcome::AlreadyCurrent);
     }
 
+    let mut stopped: Vec<String> = Vec::new();
     for name in members.iter().rev() {
-        run(UpdateStep::Stop(name.clone()), None)?;
+        if let Err(stop_error) = run(UpdateStep::Stop(name.clone()), None) {
+            let mut recovery_errors = Vec::new();
+            for stopped_name in stopped.iter().rev() {
+                if let Err(error) = run(UpdateStep::Start(stopped_name.clone()), None) {
+                    recovery_errors.push(format!("{stopped_name}: {error:#}"));
+                }
+            }
+            return if recovery_errors.is_empty() {
+                Err(stop_error)
+            } else {
+                Err(stop_error.context(format!(
+                    "also failed to restart stopped services: {}",
+                    recovery_errors.join("; ")
+                )))
+            };
+        }
+        stopped.push(name.clone());
     }
 
     let remove_allowed = match can_remove_old_image(&old_image) {
@@ -300,11 +336,7 @@ fn run_group_update(
         }
     };
 
-    let update_result = run(UpdateStep::Pull, None).map(|()| {
-        if remove_allowed && let Err(error) = run(UpdateStep::RemoveOldImage, Some(&old_image)) {
-            eprintln!("svc: {label}: warning: failed to remove old image ({error:#})");
-        }
-    });
+    let update_result = run(UpdateStep::Pull, None);
 
     let mut start_errors = Vec::new();
     for name in members {
@@ -322,6 +354,9 @@ fn run_group_update(
         };
     }
     update_result?;
+    if remove_allowed && let Err(error) = run(UpdateStep::RemoveOldImage, Some(&old_image)) {
+        eprintln!("svc: {label}: warning: failed to remove old image ({error:#})");
+    }
     Ok(UpdateOutcome::Updated)
 }
 
@@ -594,8 +629,51 @@ mod tests {
 
         assert_eq!(
             steps,
-            ["stop b", "stop a", "pull", "remove", "start a", "start b"]
+            ["stop b", "stop a", "pull", "start a", "start b", "remove"]
         );
+    }
+
+    #[test]
+    fn group_recovers_stopped_members_when_later_stop_fails() {
+        let members = ["a".to_owned(), "b".to_owned()];
+        let mut steps = Vec::new();
+        let error = run_group_update(
+            "a",
+            &members,
+            || Ok("old".into()),
+            || Ok(true),
+            |_| Ok(true),
+            |step, _| {
+                steps.push(format!("{step:?}"));
+                if step == UpdateStep::Stop("a".into()) {
+                    bail!("stop a failed");
+                }
+                Ok(())
+            },
+        )
+        .unwrap_err();
+        assert_eq!(error.to_string(), "stop a failed");
+        assert_eq!(steps, ["Stop(\"b\")", "Stop(\"a\")", "Start(\"b\")"]);
+    }
+
+    #[test]
+    fn group_reports_recovery_failure_alongside_stop_failure() {
+        let members = ["a".to_owned(), "b".to_owned()];
+        let error = run_group_update(
+            "a",
+            &members,
+            || Ok("old".into()),
+            || Ok(true),
+            |_| Ok(true),
+            |step, _| match step {
+                UpdateStep::Stop(name) if name == "a" => bail!("stop failed"),
+                UpdateStep::Start(name) if name == "b" => bail!("restart failed"),
+                _ => Ok(()),
+            },
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("b: restart failed"));
+        assert_eq!(error.root_cause().to_string(), "stop failed");
     }
 
     #[test]
@@ -683,6 +761,7 @@ mod tests {
     #[test]
     fn group_reports_start_failures_for_all_members() {
         let members = ["a".to_owned(), "b".to_owned()];
+        let mut removed = false;
 
         let error = run_group_update(
             "a",
@@ -692,6 +771,10 @@ mod tests {
             |_| Ok(true),
             |step, _| match step {
                 UpdateStep::Start(name) if name == "a" => Err(anyhow!("start failed")),
+                UpdateStep::RemoveOldImage => {
+                    removed = true;
+                    Ok(())
+                }
                 _ => Ok(()),
             },
         )
@@ -701,6 +784,7 @@ mod tests {
             error.to_string(),
             "failed to restart services: a: start failed"
         );
+        assert!(!removed, "old image must remain available for recovery");
     }
 
     #[test]
@@ -800,6 +884,14 @@ mod tests {
         command.args(["-c", "echo oops >&2; exit 1"]);
         let error = run_output(command, Duration::from_secs(5)).unwrap_err();
         assert!(error.to_string().contains("oops"), "{error:#}");
+    }
+
+    #[test]
+    fn output_larger_than_pipe_capacity_does_not_deadlock() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "yes x | head -c 262144; yes y | head -c 262144 >&2"]);
+        let result = run_output(command, Duration::from_secs(5)).unwrap();
+        assert_eq!(result.len(), 262143);
     }
 
     #[test]
