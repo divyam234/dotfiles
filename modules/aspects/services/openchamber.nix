@@ -79,6 +79,32 @@
               WantedBy = [ "default.target" ];
             };
           };
+
+          opencode-restart = {
+            Unit = {
+              Description = "Daily restart of OpenCode Server";
+            };
+
+            Service = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.systemd}/bin/systemctl --user restart opencode.service";
+            };
+          };
+        };
+
+        systemd.user.timers.opencode-restart = {
+          Unit = {
+            Description = "Restart OpenCode Server daily at 05:00";
+          };
+
+          Timer = {
+            OnCalendar = "05:00";
+            Persistent = true;
+          };
+
+          Install = {
+            WantedBy = [ "timers.target" ];
+          };
         };
       };
 
