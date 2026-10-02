@@ -47,6 +47,11 @@ in
         users.groups.podman = { };
         users.users.${user.userName}.extraGroups = [ "podman" ];
 
+        # Disable the legacy units explicitly: autoPrune=false leaves empty
+        # unit definitions in the current NixOS Podman module.
+        systemd.services.podman-prune.enable = false;
+        systemd.timers.podman-prune.enable = false;
+
         systemd.services.podman-cleanup = {
           description = "Clean unused root-owned container storage";
           serviceConfig = {

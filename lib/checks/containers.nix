@@ -49,6 +49,8 @@ let
       userTimer = home.systemd.user.timers.podman-cleanup.Timer;
     in
     !host.virtualisation.podman.autoPrune.enable
+    && !host.systemd.services.podman-prune.enable
+    && !host.systemd.timers.podman-prune.enable
     && host.users.users.bhunter.linger
     && host.systemd.services.podman-cleanup.serviceConfig.Type == "oneshot"
     && timer.OnCalendar == "Sun *-*-* 04:00:00"
