@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.openchamber = { host, user, ... }: {
+  den.aspects.openchamber = { host, ... }: {
     homeSecrets = [ "opencode/server_password" ];
     caddyRoutes = {
       openchamber = {
@@ -111,8 +111,6 @@
     nixos =
       { containers, ... }:
       {
-        users.users.${user.userName}.linger = true;
-
         networking.firewall.interfaces."br-${containers.networkName}".allowedTCPPorts = [
           39173
         ];

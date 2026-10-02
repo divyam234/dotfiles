@@ -2,7 +2,6 @@
 {
   den.aspects.spotifyd = { host, user, ... }: {
     nixos = _: {
-      users.users.${user.userName}.linger = true;
       networking.firewall = {
         allowedTCPPorts = [ 24879 ];
         allowedUDPPorts = [ 5353 ];

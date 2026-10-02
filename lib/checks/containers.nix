@@ -41,6 +41,25 @@ let
       && container.serviceConfig.NoNewPrivileges
       && container.serviceConfig.TimeoutStopSec == "70s"
     ) (builtins.attrValues host.virtualisation.quadlet.containers);
+  hasCleanupPolicy =
+    host:
+    let
+      timer = host.systemd.timers.podman-cleanup.timerConfig;
+      home = host.home-manager.users.bhunter;
+      userTimer = home.systemd.user.timers.podman-cleanup.Timer;
+    in
+    !host.virtualisation.podman.autoPrune.enable
+    && host.users.users.bhunter.linger
+    && host.systemd.services.podman-cleanup.serviceConfig.Type == "oneshot"
+    && timer.OnCalendar == "Sun *-*-* 04:00:00"
+    && timer.RandomizedDelaySec == "45m"
+    && timer.AccuracySec == "1m"
+    && !timer.Persistent
+    && home.systemd.user.services.podman-cleanup.Service.Type == "oneshot"
+    && userTimer.OnCalendar == timer.OnCalendar
+    && userTimer.RandomizedDelaySec == timer.RandomizedDelaySec
+    && userTimer.AccuracySec == timer.AccuracySec
+    && !userTimer.Persistent;
 in
 assert missing == [ ];
 assert builtins.hasAttr "svc" netcup.virtualisation.quadlet.networks;
@@ -50,6 +69,8 @@ assert hasContainerPolicy netcup;
 assert hasContainerPolicy laptop;
 assert hasContainerPolicy ideapad;
 assert hasContainerPolicy homelab;
+assert hasCleanupPolicy netcup;
+assert hasCleanupPolicy homelab;
 assert
   netcup.virtualisation.quadlet.containers.streamweave.containerConfig.image
   == "ghcr.io/divyam234/streamweave:latest";

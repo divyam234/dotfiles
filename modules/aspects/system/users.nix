@@ -32,6 +32,7 @@
       in
       {
         inherit (user) uid;
+        linger = true;
         description = user.fullName or user.userName;
         openssh.authorizedKeys.keys = user.authorizedKeys;
         hashedPasswordFile = passwordSecret.path;

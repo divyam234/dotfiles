@@ -1,4 +1,26 @@
 { den, ... }:
+let
+  cleanup =
+    pkgs:
+    pkgs.writeShellApplication {
+      name = "podman-cleanup";
+      runtimeInputs = with pkgs; [
+        podman
+        buildah
+      ];
+      text = ''
+        # Explicit paths keep Buildah in the same store as Podman, including
+        # rootless storage on hosts whose Buildah defaults point at /var/lib.
+        graph_root=$(podman info --format '{{.Store.GraphRoot}}')
+        run_root=$(podman info --format '{{.Store.RunRoot}}')
+        podman unshare buildah --root "$graph_root" --runroot "$run_root" rm --all
+        podman container prune --force --filter until=168h
+        podman image prune --force --filter until=168h
+        # Deliberately includes named volumes: all unreferenced data is deleted.
+        podman volume prune --force
+      '';
+    };
+in
 {
   den.aspects = {
     oci-service = {
@@ -10,24 +32,40 @@
     };
 
     oci-runtime = { user, ... }: {
-      nixos = _: {
+      nixos = { pkgs, ... }: {
         virtualisation = {
           containers.enable = true;
           podman = {
             enable = true;
             dockerCompat = true;
             defaultNetwork.settings.dns_enabled = true;
-            autoPrune = {
-              enable = true;
-              dates = "weekly";
-              flags = [ "--all" ];
-            };
+            autoPrune.enable = false;
           };
           quadlet.enable = true;
         };
 
         users.groups.podman = { };
         users.users.${user.userName}.extraGroups = [ "podman" ];
+
+        systemd.services.podman-cleanup = {
+          description = "Clean unused root-owned container storage";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${cleanup pkgs}/bin/podman-cleanup";
+            Nice = 19;
+            IOSchedulingClass = "idle";
+          };
+        };
+        systemd.timers.podman-cleanup = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "Sun *-*-* 04:00:00";
+            RandomizedDelaySec = "45m";
+            AccuracySec = "1m";
+            # Do not run destructive catch-up cleanup outside the night window.
+            Persistent = false;
+          };
+        };
       };
 
       homeManager =
@@ -41,6 +79,25 @@
             dive
             skopeo
           ];
+
+          systemd.user.services.podman-cleanup = {
+            Unit.Description = "Clean unused rootless container storage";
+            Service = {
+              Type = "oneshot";
+              ExecStart = "${cleanup pkgs}/bin/podman-cleanup";
+              Nice = 19;
+              IOSchedulingClass = "idle";
+            };
+          };
+          systemd.user.timers.podman-cleanup = {
+            Install.WantedBy = [ "timers.target" ];
+            Timer = {
+              OnCalendar = "Sun *-*-* 04:00:00";
+              RandomizedDelaySec = "45m";
+              AccuracySec = "1m";
+              Persistent = false;
+            };
+          };
         };
     };
 
