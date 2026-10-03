@@ -12,7 +12,6 @@ let
   ];
   expectedHomelab = [
     "cloudflare/api_token"
-    "github/token"
     "tailscale/oauth_client_secret"
     "users/bhunter/password"
   ];
@@ -28,7 +27,7 @@ let
     "gemini-fastapi/api_key"
     "gemini-fastapi/secure_1psid"
     "gemini-fastapi/secure_1psidts"
-    "github/token"
+    "ghcr/auth"
     "gproxy/admin_password"
     "gproxy/master_key"
     "mtproxy/secret"

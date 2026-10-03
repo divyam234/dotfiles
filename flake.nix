@@ -12,6 +12,13 @@
 
   inputs = {
     cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+    dbflux = {
+      url = "github:0xErwin1/dbflux";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        rust-overlay.follows = "rust-overlay";
+      };
+    };
     den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";

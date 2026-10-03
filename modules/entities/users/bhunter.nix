@@ -7,7 +7,6 @@ in
     uid = lib.mkDefault 1000;
     fullName = lib.mkDefault "Bhunter";
     gitName = lib.mkDefault "Divyam";
-    githubUser = lib.mkDefault "divyam234";
     email = lib.mkDefault "47589864+divyam234@users.noreply.github.com";
     signingKey = lib.mkDefault ".ssh/id_ed25519.pub";
     signingPublicKey = lib.mkDefault signingPublicKey;

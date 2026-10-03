@@ -12,7 +12,7 @@ let
 in
 assert builtins.hasAttr userName netcup.home-manager.users;
 assert builtins.hasAttr hostName netcup.services.restic.backups;
-assert builtins.hasAttr "ghcr-auth" netcup.systemd.services;
+assert builtins.hasAttr "stash-auth.json" netcup.sops.templates;
 assert builtins.hasAttr "opencode/cli.json" userHome.xdg.configFile;
 assert (builtins.fromJSON userHome.xdg.configFile."opencode/cli.json".text).theme.name == "stylix";
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
@@ -41,7 +41,16 @@ assert
   == userHome.systemd.user.services.openchamber.Service.EnvironmentFile;
 assert builtins.hasAttr "opencode.env" userHome.sops.templates;
 assert builtins.hasAttr "opencode-server.env" userHome.sops.templates;
-assert builtins.hasAttr "ghcr-auth" userHome.systemd.user.services;
+assert builtins.elem "REGISTRY_AUTH_FILE=/run/secrets/container-env/stash-auth.json"
+  netcup.virtualisation.quadlet.containers.stash.serviceConfig.Environment;
+assert builtins.elem "REGISTRY_AUTH_FILE=/run/secrets/container-env/stash-auth.json"
+  netcup.virtualisation.quadlet.containers.stash-worker.serviceConfig.Environment;
+assert builtins.elem "REGISTRY_AUTH_FILE=/run/secrets/container-env/stash-auth.json"
+  netcup.systemd.services.podman-auto-update.serviceConfig.Environment;
+assert builtins.elem "postgres-provision.service"
+  netcup.virtualisation.quadlet.containers.stash.unitConfig.Requires;
+assert builtins.elem "postgres-provision.service"
+  netcup.virtualisation.quadlet.containers.stash-worker.unitConfig.Requires;
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
 assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
 assert !(userHome.systemd.user.services.codeforge.Service ? NoNewPrivileges);

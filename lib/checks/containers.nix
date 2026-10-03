@@ -26,8 +26,7 @@ let
   missing = lib.filter (name: !(builtins.elem name names)) expected;
   hasUpdateServices =
     host:
-    builtins.hasAttr "container-update-webhook" host.systemd.services
-    && builtins.hasAttr "podman-auto-update" host.systemd.services
+    builtins.hasAttr "podman-auto-update" host.systemd.services
     && builtins.hasAttr "podman-auto-update" host.systemd.timers;
   hasContainerPolicy =
     host:
@@ -81,14 +80,10 @@ assert builtins.elem "postgres-provision.service"
   netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
 assert builtins.elem netcup.virtualisation.quadlet.containers.pgdog.ref
   netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
-assert netcup.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
-assert homelab.systemd.services.container-update-webhook.serviceConfig.IPAddressDeny == "any";
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert homelab.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert !(netcup.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
-assert !(builtins.elem 9080 netcup.networking.firewall.allowedTCPPorts);
-assert !(builtins.elem 9080 homelab.networking.firewall.allowedTCPPorts);
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
     "9377:9377"

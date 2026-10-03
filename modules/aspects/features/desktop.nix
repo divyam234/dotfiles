@@ -1,4 +1,4 @@
-{ inputs, den, ... }:
+{ den, ... }:
 {
   den.aspects.desktop = { user, ... }: {
     includes = [
@@ -12,7 +12,6 @@
       den.aspects.niri
       den.aspects.umbriel
       den.aspects.noctalia
-      den.aspects.sonora
       den.aspects.ghostty
       den.aspects.zed
       den.aspects.sublime

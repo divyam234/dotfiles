@@ -38,6 +38,10 @@ let
       "token"
     ]
     [
+      "ghcr"
+      "auth"
+    ]
+    [
       "codeforge"
       "token"
     ]

@@ -9,7 +9,6 @@
     ];
 
     shell-environment.includes = [
-      den.aspects.zsh
       den.aspects.fish
       den.aspects.git
       den.aspects.ssh

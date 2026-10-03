@@ -27,7 +27,6 @@
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.requires-secrets
-      den.aspects.ghcr-auth
       den.aspects.caddy
       den.aspects.cloudflare-dns
     ];

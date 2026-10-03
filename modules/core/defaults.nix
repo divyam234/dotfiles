@@ -36,6 +36,16 @@ in
       url = "github:divyam234/nix-cache";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dbflux = {
+      url = "github:0xErwin1/dbflux";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
+    };
+    sonora = {
+      url = "github:sonorahq/sonora";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
+    };
   };
 
   imports = [ ./schema.nix ];
@@ -90,10 +100,6 @@ in
             type = lib.types.str;
             default = "Bhunter";
             description = "Author name used by Git.";
-          };
-          githubUser = lib.mkOption {
-            type = lib.types.str;
-            description = "GitHub account used for registry authentication.";
           };
           signingKey = lib.mkOption {
             type = lib.types.str;

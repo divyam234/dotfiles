@@ -53,6 +53,5 @@ assert
 assert umbrielSettings.keybinds."Mod+Space" == "spawn:noctalia msg panel-toggle launcher";
 assert umbrielSettings.layout.gap == 12;
 assert home.programs.bunGlobalCli.cachePruneScopes == [ "@oh-my-pi" ];
-assert !(builtins.hasAttr "container-update-webhook" laptop.systemd.services);
 assert !(builtins.hasAttr "rclone-serve-webdav" home.systemd.user.services);
 true

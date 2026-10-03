@@ -23,12 +23,14 @@
           obs-studio
           spotify
           spotify-player
+          sonora
           cutter
           ida-pro
           androidenv.androidPkgs.platform-tools
           httpie-desktop
           ddcutil
           upower
+          dbflux
         ];
       };
   };
