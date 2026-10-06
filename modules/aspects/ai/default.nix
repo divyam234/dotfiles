@@ -45,13 +45,6 @@
           compaction = {
             auto = true;
           };
-          permissions = [
-            {
-              action = "subagent";
-              resource = "*";
-              effect = "deny";
-            }
-          ];
           providers = {
             openai = {
               package = "aisdk:@ai-sdk/openai";

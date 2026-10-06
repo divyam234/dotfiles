@@ -24,6 +24,7 @@
           gotestsum
           gnumake
           just
+          jetbrains.jdk-no-jcef
           libtool
           lsof
           marksman
