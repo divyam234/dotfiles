@@ -17,7 +17,6 @@
           brightnessctl
           playerctl
           mpv
-          obsidian
           telegram-desktop
           vlc
           obs-studio
@@ -30,7 +29,6 @@
           httpie-desktop
           ddcutil
           upower
-          dbflux
         ];
       };
   };

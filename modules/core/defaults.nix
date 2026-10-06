@@ -36,11 +36,6 @@ in
       url = "github:divyam234/nix-cache";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    dbflux = {
-      url = "github:0xErwin1/dbflux";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
     sonora = {
       url = "github:sonorahq/sonora";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -127,7 +127,7 @@
 
         # Site permission defaults. Content setting value 2 generally means block.
 
-        DefaultClipboardSetting = 2;
+        DefaultClipboardSetting = 3;
         DefaultFileSystemReadGuardSetting = 2;
         DefaultFileSystemWriteGuardSetting = 2;
         DefaultGeolocationSetting = 2;

@@ -12,13 +12,6 @@
 
   inputs = {
     cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
-    dbflux = {
-      url = "github:0xErwin1/dbflux";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        rust-overlay.follows = "rust-overlay";
-      };
-    };
     den.url = "github:denful/den";
     disko = {
       url = "github:nix-community/disko";
@@ -28,10 +21,6 @@
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
-    };
-    gen = {
-      url = "github:sini/gen";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -75,10 +64,6 @@
     tinted-sublime-text = {
       url = "github:tinted-theming/tinted-sublime-text";
       flake = false;
-    };
-    umbriel = {
-      url = "github:noctalia-dev/umbriel";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 }

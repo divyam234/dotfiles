@@ -10,7 +10,6 @@
       den.aspects.gnome-apps
       den.aspects.brave
       den.aspects.niri
-      den.aspects.umbriel
       den.aspects.noctalia
       den.aspects.ghostty
       den.aspects.zed

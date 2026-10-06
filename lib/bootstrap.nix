@@ -5,7 +5,6 @@ let
   overlays = [
     inputs.rust-overlay.overlays.default
     inputs.nix-pkgs.overlays.default
-    inputs.dbflux.overlays.default
     inputs.sonora.overlays.default
     (final: _prev: {
       local =
