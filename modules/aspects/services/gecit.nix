@@ -16,7 +16,7 @@
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
             serviceConfig = {
-              ExecStart = "${pkgs.gecit}/bin/gecit run --panel=false --doh=false --fake-ttl 12";
+              ExecStart = "${pkgs.gecit}/bin/gecit run --panel=false --fake-ttl 12";
               Restart = "always";
               RestartSec = 5;
               AmbientCapabilities = [
