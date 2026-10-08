@@ -17,7 +17,6 @@
           brightnessctl
           playerctl
           mpv
-          remmina
           telegram-desktop
           vlc
           obs-studio

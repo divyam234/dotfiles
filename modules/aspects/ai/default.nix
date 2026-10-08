@@ -40,8 +40,8 @@
           };
 
         models = {
-          openaiStrong = "openai/gpt-6.1-sol";
-          openaiFast = "openai/gpt-6-luna";
+          openaiStrong = "gpt-6.1-sol";
+          openaiFast = "gpt-6-luna";
           opencode = "opencode/muse-spark-1.3-contributor-free";
         };
 
@@ -53,7 +53,7 @@
             modelOverrides = builtins.listToAttrs (
               map
                 (model: {
-                  name = lib.removePrefix "openai/" model;
+                  name = model;
                   value = {
                     remoteCompaction = {
                       api = "openai-responses";
@@ -168,35 +168,27 @@
             light = "stylix";
           };
           enabledModels = [
-            "openai-codex/gpt-6.1-sol"
-            "openai-codex/gpt-6-luna"
+            "openai-codex/${models.openaiStrong}"
+            "openai-codex/${models.openaiFast}"
           ];
           modelRoles = {
-            default = "openai-codex/gpt-6.1-sol:low";
-            smol = "openai-codex/gpt-6-luna:low";
-            slow = "openai-codex/gpt-6.1-sol:medium";
+            default = "openai-codex/${models.openaiStrong}:low";
+            smol = "openai-codex/${models.openaiFast}:low";
+            slow = "openai-codex/${models.openaiStrong}:medium";
             plan = "@slow";
           };
           defaultThinkingLevel = "medium";
           hideThinkingBlock = false;
           statusLine.compactThinkingLevel = false;
           tui.renderMermaid = true;
-          display = {
-            hideToolActivity = true;
-            showTokenUsage = true;
-            showTurnTime = true;
-            subagentLivePreview = true;
-          };
           readLineNumbers = true;
           compaction.enabled = true;
           memory.backend = "local";
           browser.enabled = false;
-          providers.openai-codex.codeMode = "on";
           startup = {
             quiet = true;
             showSplash = false;
             setupWizard = false;
-            # bunGlobalCli already checks for updates daily.
             checkUpdate = false;
           };
         };
@@ -238,7 +230,7 @@
           presets = {
             openai = {
               orchestrator = mkAgent {
-                model = models.openaiStrong;
+                model = "openai/${models.openaiStrong}";
                 variant = "high";
                 skills = [ "*" ];
                 mcps = [
@@ -247,13 +239,13 @@
                 ];
               };
               oracle = mkAgent {
-                model = models.openaiStrong;
+                model = "openai/${models.openaiStrong}";
                 variant = "high";
                 skills = [ "simplify" ];
               };
 
               librarian = mkAgent {
-                model = models.openaiFast;
+                model = "openai/${models.openaiFast}";
                 variant = "low";
                 mcps = [
                   "context7"
@@ -262,17 +254,17 @@
               };
 
               explorer = mkAgent {
-                model = models.openaiFast;
+                model = "openai/${models.openaiFast}";
                 variant = "low";
               };
 
               designer = mkAgent {
-                model = models.openaiFast;
+                model = "openai/${models.openaiFast}";
                 variant = "medium";
               };
 
               fixer = mkAgent {
-                model = models.openaiFast;
+                model = "openai/${models.openaiFast}";
                 variant = "high";
               };
             };

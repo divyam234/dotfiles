@@ -47,6 +47,12 @@ cargo test --manifest-path packages/svc/Cargo.toml
 
 The default host for `just build/test/switch` is `laptop` (`host` parameter); the default Home Manager configuration is `bhunter@laptop`.
 
+OMP selects `openai-codex` models through the declarative `gproxy-codex.ts`
+extension, retaining Codex model metadata and discovery while sending requests
+through `openai-responses` to gproxy. Shared OpenAI model IDs are unprefixed;
+OMP adds `openai-codex/` and OpenCode adds `openai/` at their consumers.
+Apply the declarative settings through Home Manager, then restart OMP.
+
 ## Secrets
 
 Secrets use SOPS and Age.
@@ -65,3 +71,5 @@ NixOS hosts run a loopback proxy for the signed cache published from
 raw NARs in immutable GitHub Release chunks and downloads reusable 32 MiB
 blocks with validated HTTP range requests. Configuration and the trusted public
 key live in `modules/aspects/system/nix.nix`.
+The proxy runs as `nix-cache.service`, with its index at
+`/var/cache/nix-cache/index.json`; the Fish alias `ncache-restart` restarts it.
