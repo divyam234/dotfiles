@@ -8,7 +8,7 @@
           # Don't double-mangle with zapret: gecit replaces it.
           services.zapret.enable = lib.mkForce false;
 
-          environment.systemPackages = [ pkgs.gecit ];
+          environment.systemPackages = [ pkgs.local.gecit ];
 
           # Split DNS: strict DoT for public names (ISP poisons plaintext DNS),
           # Tailscale registers ~ts.net per-link routes with resolved itself.
@@ -32,7 +32,7 @@
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
             serviceConfig = {
-              ExecStart = "${pkgs.gecit}/bin/gecit run --panel=false --doh=false";
+              ExecStart = "${pkgs.local.gecit}/bin/gecit run --panel=false --doh=false --exclude=100.64.0.0/10,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8";
               Restart = "always";
               RestartSec = 5;
               AmbientCapabilities = [
