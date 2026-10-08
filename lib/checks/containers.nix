@@ -87,6 +87,7 @@ assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
     "9377:9377"
+    "6080:6080"
   ];
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
@@ -94,6 +95,9 @@ assert
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.ENABLE_VNC
   == "1";
+assert
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.VNC_BIND
+  == "0.0.0.0";
 assert
   netcup.virtualisation.quadlet.containers.adguard-cli.containerConfig.networks
   == [ "container:gluetun" ];

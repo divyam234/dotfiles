@@ -402,6 +402,9 @@
         # Declarative settings: use project config or --config for overrides.
         home.file.".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
         home.file.".omp/agent/models.yml".source = yaml.generate "omp-models.yml" ompModels;
+        home.file.".omp/agent/extensions/browser-view.ts".text =
+          builtins.replaceStrings [ "@XDG_OPEN@" ] [ "${pkgs.xdg-utils}/bin/xdg-open" ]
+            (builtins.readFile ./browser-view.ts);
         home.file.".omp/agent/extensions/gproxy-codex.ts".text =
           builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
             (builtins.readFile ./gproxy-codex.ts);

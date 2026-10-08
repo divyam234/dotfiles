@@ -37,8 +37,12 @@
               CAMOFOX_PORT = "9377";
               MAX_OLD_SPACE_SIZE = "2048";
               ENABLE_VNC = "1";
+              VNC_BIND = "0.0.0.0";
             };
-            publishPorts = [ "9377:9377" ];
+            publishPorts = [
+              "9377:9377"
+              "6080:6080"
+            ];
             volumes = [ "${containers.dataRoot}/camofox:/root/.camofox" ];
           };
           serviceConfig = {
