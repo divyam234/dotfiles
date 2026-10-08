@@ -49,6 +49,8 @@ let
     "vaultwarden/admin_token"
   ];
   expectedLaptopHome = [
+    "camofox/access_key"
+    "camofox/api_key"
     "github/token"
     "nordvpn/token"
     "openai/api_key"
@@ -57,6 +59,8 @@ let
     "ssh/private_key"
   ];
   expectedIdeapadHome = [
+    "camofox/access_key"
+    "camofox/api_key"
     "github/token"
     "nordvpn/token"
     "openai/api_key"
@@ -65,6 +69,8 @@ let
     "ssh/private_key"
   ];
   expectedHomelabHome = [
+    "camofox/access_key"
+    "camofox/api_key"
     "github/token"
     "openai/api_key"
     "postgres/password"
@@ -117,13 +123,12 @@ assert builtins.attrNames home.sops.secrets == expectedLaptopHome;
 assert builtins.attrNames homelabHome.sops.secrets == expectedHomelabHome;
 assert builtins.attrNames ideapadHome.sops.secrets == expectedIdeapadHome;
 assert builtins.attrNames netcupHome.sops.secrets == expectedNetcupHome;
-assert builtins.all (homeConfig: hasPackage "rclone" homeConfig)
-  [
-    home
-    ideapadHome
-    homelabHome
-    netcupHome
-  ];
+assert builtins.all (homeConfig: hasPackage "rclone" homeConfig) [
+  home
+  ideapadHome
+  homelabHome
+  netcupHome
+];
 assert builtins.all
   (
     homeConfig:
