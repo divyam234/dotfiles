@@ -12,7 +12,7 @@
     workstation.includes = [
       den.aspects.desktop
       den.aspects.security-workstation
-      den.aspects.gecit
+      den.aspects.zapret
     ];
 
     server.includes = [
