@@ -19,7 +19,6 @@ let
     "camofox/access_key"
     "camofox/admin_key"
     "camofox/api_key"
-    "camofox/vnc_password"
     "cloudflare/api_token"
     "gateauth/admin_email"
     "gateauth/admin_password"

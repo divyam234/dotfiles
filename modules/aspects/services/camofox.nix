@@ -5,7 +5,6 @@
       "camofox/access_key"
       "camofox/admin_key"
       "camofox/api_key"
-      "camofox/vnc_password"
     ];
 
     nixos =
@@ -22,7 +21,6 @@
             CAMOFOX_ACCESS_KEY=${secrets.camofox.access_key}
             CAMOFOX_ADMIN_KEY=${secrets.camofox.admin_key}
             CAMOFOX_API_KEY=${secrets.camofox.api_key}
-            VNC_PASSWORD=${secrets.camofox.vnc_password}
           '';
         };
 
