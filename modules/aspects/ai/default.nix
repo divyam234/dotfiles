@@ -399,11 +399,7 @@
 
         home.packages = [
           pkgs.codeforge
-        ]
-        ++ lib.optional (builtins.elem host.hostName [
-          "laptop"
-          "ideapad"
-        ]) pkgs.remmina;
+        ];
 
         # Declarative settings: use project config or --config for overrides.
         home.file.".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
