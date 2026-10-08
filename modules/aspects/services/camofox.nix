@@ -38,9 +38,7 @@
             };
             publishPorts = [
               "9377:9377"
-              # Raw VNC listens on container loopback only (no password); the
-              # bridge below relays it to the container address for farsee.
-              "5900:5900"
+              "5900:5901"
             ];
             volumes = [ "${containers.dataRoot}/camofox:/root/.camofox" ];
           };
@@ -56,7 +54,7 @@
             image = "docker.io/alpine/socat:latest";
             networks = [ "container:camofox-browser" ];
             exec = [
-              "TCP-LISTEN:5900,fork,reuseaddr"
+              "TCP-LISTEN:5901,fork,reuseaddr"
               "TCP:127.0.0.1:5900"
             ];
           };

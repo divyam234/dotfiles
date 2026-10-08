@@ -1,11 +1,6 @@
-{ den, inputs, ... }:
+{ den, ... }:
 
 {
-  flake-file.inputs.farsee = {
-    url = "github:zw3rk/farsee";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   den.aspects.ai = {
     homeSecrets = [
       "openai/api_key"
@@ -404,18 +399,11 @@
 
         home.packages = [
           pkgs.codeforge
-        ]
-        ++ lib.optional (builtins.elem host.hostName [
-          "laptop"
-          "ideapad"
-        ]) inputs.farsee.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        ];
 
         # Declarative settings: use project config or --config for overrides.
         home.file.".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
         home.file.".omp/agent/models.yml".source = yaml.generate "omp-models.yml" ompModels;
-        home.file.".omp/agent/extensions/browser.ts".text =
-          builtins.replaceStrings [ "@WL_COPY@" ] [ "${pkgs.wl-clipboard}/bin/wl-copy" ]
-            (builtins.readFile ./browser.ts);
         home.file.".omp/agent/extensions/gproxy-codex.ts".text =
           builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
             (builtins.readFile ./gproxy-codex.ts);

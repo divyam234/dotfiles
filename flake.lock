@@ -124,26 +124,6 @@
         "type": "github"
       }
     },
-    "farsee": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1790586762,
-        "narHash": "sha256-ahFyBRP3BP2pim60SNP/73rH/HEjs/uM5cfku9Q58Kk=",
-        "owner": "zw3rk",
-        "repo": "farsee",
-        "rev": "a1e0207214a7bb17cfb5cb85b5eb5b0dcc7737f0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zw3rk",
-        "repo": "farsee",
-        "type": "github"
-      }
-    },
     "firefox-gnome-theme": {
       "flake": false,
       "locked": {
@@ -528,7 +508,6 @@
         "cachyos-kernel": "cachyos-kernel",
         "den": "den",
         "disko": "disko",
-        "farsee": "farsee",
         "flake-file": "flake-file",
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager",

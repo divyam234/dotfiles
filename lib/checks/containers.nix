@@ -87,7 +87,7 @@ assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
     "9377:9377"
-    "5900:5900"
+    "5900:5901"
   ];
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
@@ -101,6 +101,11 @@ assert
 assert
   netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.unitConfig.Requires
   == [ "camofox-browser.service" ];
+assert
+  netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.containerConfig.exec == [
+    "TCP-LISTEN:5901,fork,reuseaddr"
+    "TCP:127.0.0.1:5900"
+  ];
 assert
   netcup.virtualisation.quadlet.containers.adguard-cli.containerConfig.networks
   == [ "container:gluetun" ];
