@@ -47,6 +47,15 @@ cargo test --manifest-path packages/svc/Cargo.toml
 
 The default host for `just build/test/switch` is `laptop` (`host` parameter); the default Home Manager configuration is `bhunter@laptop`.
 
+Container storage cleanup runs through system and user `podman-cleanup.service`
+oneshots, scheduled on Sundays at 04:00 with up to 45 minutes of randomized delay.
+Root cleanup invokes Buildah directly; rootless cleanup uses `podman unshare`.
+Both remove all Buildah working containers, stopped containers and unused images
+older than seven days (including tagged images), and all unreferenced volumes,
+including named volume data. Images referenced by remaining containers are kept.
+Run manually with `sudo systemctl start podman-cleanup.service` for root storage
+or `systemctl --user start podman-cleanup.service` for user storage.
+
 OMP selects `openai-codex` models through the declarative `gproxy-codex.ts`
 extension, retaining Codex model metadata and discovery while sending requests
 through `openai-responses` to gproxy. Shared OpenAI model IDs are unprefixed;

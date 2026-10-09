@@ -13,9 +13,13 @@ let
         # rootless storage on hosts whose Buildah defaults point at /var/lib.
         graph_root=$(podman info --format '{{.Store.GraphRoot}}')
         run_root=$(podman info --format '{{.Store.RunRoot}}')
-        podman unshare buildah --root "$graph_root" --runroot "$run_root" rm --all
+        if (( EUID == 0 )); then
+          buildah --root "$graph_root" --runroot "$run_root" rm --all
+        else
+          podman unshare buildah --root "$graph_root" --runroot "$run_root" rm --all
+        fi
         podman container prune --force --filter until=168h
-        podman image prune --force --filter until=168h
+        podman image prune --all --force --filter until=168h
         # Deliberately includes named volumes: all unreferenced data is deleted.
         podman volume prune --force
       '';
