@@ -169,6 +169,9 @@ in
           ];
           containerExtra = {
             volumes = [ "/home/${user.userName}/downloads:/downloads" ];
+            environments = {
+              STASH_CAMOFLARE_URL = "http://host.containers.internal:8191";
+            };
           };
           serviceExtra = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /home/${user.userName}/downloads";
