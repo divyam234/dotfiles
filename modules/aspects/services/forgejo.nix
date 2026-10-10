@@ -52,7 +52,7 @@
 
         virtualisation.quadlet.containers.forgejo = {
           containerConfig = {
-            image = "codeberg.org/forgejo/forgejo:15";
+            image = "codeberg.org/forgejo/forgejo:16";
             networkAliases = [ "forgejo" ];
             environmentFiles = [ "${containers.secretDir}/forgejo.env" ];
             volumes = [

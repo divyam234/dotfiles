@@ -137,7 +137,7 @@
 
         virtualisation.quadlet.containers.teldrive = {
           containerConfig = {
-            image = "ghcr.io/tgdrive/teldrive:v2";
+            image = "ghcr.io/tgdrive/teldrive:2";
             networkAliases = [ "teldrive" ];
             environmentFiles = [ "${containers.secretDir}/teldrive.env" ];
             publishPorts = lib.optional (cfg.port != null) "${toString cfg.port}:8080";
