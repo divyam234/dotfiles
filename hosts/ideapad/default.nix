@@ -9,7 +9,6 @@
       den.aspects.oci-base
       den.aspects.container-network
       den.aspects.rclone-webdav
-      den.aspects.teldrive-native
     ];
 
     nixos =
@@ -59,9 +58,5 @@
         networking.useDHCP = lib.mkDefault true;
         system.stateVersion = "26.05";
       };
-
-    homeManager = {
-      services.rclone.serve.webdav.settings.teldrive-api-host = "http://127.0.0.1:8090";
-    };
   };
 }
