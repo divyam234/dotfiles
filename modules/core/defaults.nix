@@ -32,6 +32,10 @@ in
       url = "github:divyam234/nix-pkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    teldrive = {
+      url = "github:tgdrive/teldrive";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-cache = {
       url = "github:divyam234/nix-cache";
       inputs.nixpkgs.follows = "nixpkgs";

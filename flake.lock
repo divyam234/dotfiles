@@ -522,6 +522,7 @@
         "sonora": "sonora",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
+        "teldrive": "teldrive",
         "tinted-sublime-text": "tinted-sublime-text"
       }
     },
@@ -649,6 +650,26 @@
         "owner": "nix-systems",
         "ref": "future-26.11",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "teldrive": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791625727,
+        "narHash": "sha256-7deXntSVVDR/QvlxcSCBenZ2awZeDPRW5WzPHW0kM3Q=",
+        "owner": "tgdrive",
+        "repo": "teldrive",
+        "rev": "6b6562f3e1dbd3d1683ccb74624b3c65b85943d1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tgdrive",
+        "repo": "teldrive",
         "type": "github"
       }
     },

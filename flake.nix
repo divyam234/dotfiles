@@ -61,6 +61,10 @@
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    teldrive = {
+      url = "github:tgdrive/teldrive";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     tinted-sublime-text = {
       url = "github:tinted-theming/tinted-sublime-text";
       flake = false;
