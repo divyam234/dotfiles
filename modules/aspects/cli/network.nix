@@ -24,6 +24,7 @@
           rsync
           socat
           tcpdump
+          teldrive-bin
           wget
           whois
         ];
