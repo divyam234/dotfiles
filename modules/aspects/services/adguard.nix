@@ -39,7 +39,7 @@
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/adguard-cli";
-            MemoryMax = "256M";
+            MemoryMax = "512M";
             CPUQuota = "50%";
           };
         };
