@@ -53,6 +53,7 @@
             pull.ff = "only";
             push.autoSetupRemote = true;
             tag.forceSignAnnotated = false;
+            tag.gpgSign = false;
             core = {
               editor = "nvim";
               pager = "delta";
