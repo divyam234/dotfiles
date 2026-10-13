@@ -10,6 +10,7 @@
       den.aspects.gnome-apps
       den.aspects.brave
       den.aspects.fluxdown
+      den.aspects.tusk
       den.aspects.niri
       den.aspects.noctalia
       den.aspects.ghostty
