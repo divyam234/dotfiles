@@ -6,6 +6,7 @@
       {
         home.packages = with pkgs; [
           baobab
+          disktree
           easyeffects
           foliate
           gnome-disk-utility
@@ -25,7 +26,7 @@
           sonora
           cutter
           ida-pro
-          httpie-desktop
+          probe
           ddcutil
           upower
         ];

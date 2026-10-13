@@ -9,6 +9,7 @@
       den.aspects.desktop-apps
       den.aspects.gnome-apps
       den.aspects.brave
+      den.aspects.fluxdown
       den.aspects.niri
       den.aspects.noctalia
       den.aspects.ghostty
