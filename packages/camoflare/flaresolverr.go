@@ -52,7 +52,7 @@ type flareRequest struct {
 	ReturnOnlyCookies bool `json:"returnOnlyCookies"`
 	// Rejected: rendering is client-side, camoflare mints cookies only.
 	ReturnScreenshot bool `json:"returnScreenshot"`
-	WaitInSeconds     *int          `json:"waitInSeconds"`
+	WaitInSeconds    *int `json:"waitInSeconds"`
 }
 
 type flareSolution struct {
@@ -518,7 +518,10 @@ func challengeDetected(title, html string) bool {
 		return true
 	}
 	lowerHTML := strings.ToLower(html)
-	if strings.Contains(lowerHTML, "__cf_chl") || strings.Contains(lowerHTML, "cf-chl-") {
+	// Solved pages can retain __cf_chl_tk in analytics/referrer URLs.
+	// That URL token alone does not indicate an active challenge.
+	challengeHTML := strings.ReplaceAll(lowerHTML, "__cf_chl_tk", "")
+	if strings.Contains(challengeHTML, "__cf_chl") || strings.Contains(challengeHTML, "cf-chl-") {
 		return true
 	}
 	if strings.Contains(lowerHTML, "cloudflare") &&

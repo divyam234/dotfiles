@@ -256,6 +256,7 @@ func TestChallengeDetected(t *testing.T) {
 	}{
 		{"clear page", "Example Domain", "<html><body>hello</body></html>", false},
 		{"mentions cloudflare in copy", "Blog", "<p>how cloudflare tunnels work</p>", false},
+		{"solved page retains challenge referrer", "Example Domain", `<iframe src="https://example.com/analytics?referrer=https%3A%2F%2Fexample.org%2F%3F__cf_chl_tk%3Dtoken"></iframe>`, false},
 		{"just a moment title", "Just a moment...", "<html></html>", true},
 		{"managed challenge", "x", `<form id="cf-chl-test"><input name="__cf_chl"></form>`, true},
 		{"verifying human", "x", "<div>Cloudflare</div><p>Verifying you are human</p>", true},
