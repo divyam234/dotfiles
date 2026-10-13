@@ -121,7 +121,6 @@ in
               RCLONE_POLL_INTERVAL = "1s";
               STASH_IMAGE_CACHE_DIR = "/var/cache/images";
               STASH_IMAGE_CACHE_MAX_SIZE = "30G";
-              GOMAXPROCS = "4";
             };
             volumes = [
               "/var/cache/rclone:/var/cache/rclone"
@@ -130,8 +129,7 @@ in
           };
           serviceExtra = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /var/cache/rclone /var/cache/images";
-            MemoryMax = "2G";
-            CPUQuota = "400%";
+            MemoryMax = "4G";
           };
         } { inherit containers; };
       };
