@@ -165,6 +165,18 @@ func (c *camofoxClient) navigate(ctx context.Context, userID, tabID, pageURL str
 }
 
 func (c *camofoxClient) evaluate(ctx context.Context, userID, tabID, expression string) (any, error) {
+	if expression == extractExpr {
+		// Wait for navigation and network quiet before reading the DOM;
+		// Cloudflare can redirect after createTab/navigate has returned.
+		ready, err := c.request(ctx, http.MethodPost, "/tabs/"+tabID+"/wait", nil,
+			map[string]any{"userId": userID, "timeout": 10000, "waitForNetwork": true}, "")
+		if err != nil {
+			return nil, fmt.Errorf("wait for page readiness: %w", err)
+		}
+		if value, _ := field(ready, "ready"); value != true {
+			return nil, fmt.Errorf("camofox: page did not become ready before extraction")
+		}
+	}
 	payload, err := c.request(ctx, http.MethodPost, "/tabs/"+tabID+"/evaluate", nil,
 		map[string]any{"userId": userID, "expression": expression}, "")
 	if err != nil {
