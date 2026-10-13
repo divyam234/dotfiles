@@ -14,6 +14,7 @@
           localsend
           mission-center
           pavucontrol
+          pdfcraft
           wl-clipboard
           brightnessctl
           playerctl
