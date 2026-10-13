@@ -103,9 +103,11 @@ rec {
         ${tlsBlock}
         ${headersBlock}
         ${cacheBlock}
-        ${extraConfig}
-        ${authBlock}
-        ${proxyBlock}
+        route {
+          ${authBlock}
+          ${extraConfig}
+          ${proxyBlock}
+        }
       }
     '';
 

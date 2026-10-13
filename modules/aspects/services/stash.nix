@@ -19,10 +19,6 @@ let
       content = stashEnv secrets;
     };
 
-  authTemplateName = "stash-auth.json";
-  authFile = containers: "${containers.secretDir}/${authTemplateName}";
-  authEnv = containers: "REGISTRY_AUTH_FILE=${authFile containers}";
-
   mkStashContainer =
     {
       exec,
@@ -46,32 +42,12 @@ let
         Requires = unitRequires;
         Wants = unitWants;
       };
-      serviceConfig = {
-        Environment = [ (authEnv containers) ];
-      }
-      // serviceExtra;
+      serviceConfig = serviceExtra;
     };
 in
 {
-  den.aspects.stash-ghcr-auth = _: {
-    nixosSecrets = [ "ghcr/auth" ];
-
-    nixos =
-      { containers, secrets, ... }:
-      {
-        sops.templates.${authTemplateName} = secrets.mkTemplate {
-          name = authTemplateName;
-          content = ''{"auths":{"ghcr.io":{"auth":"${secrets.ghcr.auth}"}}}'' + "\n";
-        };
-
-        systemd.services.podman-auto-update.serviceConfig.Environment = [
-          (authEnv containers)
-        ];
-      };
-  };
-
   den.aspects.stash = { user, host, ... }: {
-    includes = [ den.aspects.stash-ghcr-auth ];
+    includes = [ den.aspects.imgresize ];
 
     nixosSecrets = stashSecrets;
 
@@ -81,6 +57,54 @@ in
       proxied = true;
       auth = true;
       upstreams = [ "stash:8080" ];
+      extraConfig = ''
+        @stashImages {
+          method GET HEAD
+          path /api/assets/* /api/gallery-images/*
+        }
+        handle @stashImages {
+          @stashResize expression {http.request.uri.query.w} != "" || {http.request.uri.query.width} != "" || {http.request.uri.query.h} != "" || {http.request.uri.query.height} != ""
+          handle @stashResize {
+            route {
+              vars {
+                resize_width 0
+                resize_height 0
+                resize_fit inside
+                resize_quality 82
+                resize_format jpeg
+              }
+              @stashPng header Accept *image/png*
+              vars @stashPng resize_format png
+              @stashWebp header Accept *image/webp*
+              vars @stashWebp resize_format webp
+              @stashWidth expression {http.request.uri.query.width} != ""
+              vars @stashWidth resize_width {http.request.uri.query.width}
+              @stashW expression {http.request.uri.query.w} != ""
+              vars @stashW resize_width {http.request.uri.query.w}
+              @stashHeight expression {http.request.uri.query.height} != ""
+              vars @stashHeight resize_height {http.request.uri.query.height}
+              @stashH expression {http.request.uri.query.h} != ""
+              vars @stashH resize_height {http.request.uri.query.h}
+              @stashFit expression {http.request.uri.query.fit} != ""
+              vars @stashFit resize_fit {http.request.uri.query.fit}
+              @stashQuality expression {http.request.uri.query.quality} != ""
+              vars @stashQuality resize_quality {http.request.uri.query.quality}
+              @stashQ expression {http.request.uri.query.q} != ""
+              vars @stashQ resize_quality {http.request.uri.query.q}
+              @stashF expression {http.request.uri.query.f} != "" && !{http.request.uri.query.f}.matches("(?i)^auto$")
+              vars @stashF resize_format {http.request.uri.query.f}
+              @stashFormat expression {http.request.uri.query.format} != "" && !{http.request.uri.query.format}.matches("(?i)^auto$")
+              vars @stashFormat resize_format {http.request.uri.query.format}
+              header Vary Accept
+              reverse_proxy imgresize:8080 {
+                method GET
+                rewrite /resize?url=http://stash:8080{http.request.uri.path}&w={http.vars.resize_width}&h={http.vars.resize_height}&fit={http.vars.resize_fit}&q={http.vars.resize_quality}&format={http.vars.resize_format}
+              }
+            }
+          }
+          reverse_proxy stash:8080
+        }
+      '';
     };
 
     nixos =
@@ -119,16 +143,13 @@ in
               RCLONE_VFS_CACHE_MAX_SIZE = "300GiB";
               RCLONE_DIR_CACHE_TIME = "8670h";
               RCLONE_POLL_INTERVAL = "1s";
-              STASH_IMAGE_CACHE_DIR = "/var/cache/images";
-              STASH_IMAGE_CACHE_MAX_SIZE = "30G";
             };
             volumes = [
               "/var/cache/rclone:/var/cache/rclone"
-              "/var/cache/images:/var/cache/images"
             ];
           };
           serviceExtra = {
-            ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /var/cache/rclone /var/cache/images";
+            ExecStartPre = "${pkgs.coreutils}/bin/install -dm750 -o ${user.userName} -g users /var/cache/rclone";
             MemoryMax = "4G";
           };
         } { inherit containers; };
@@ -136,8 +157,6 @@ in
   };
 
   den.aspects.stash-worker = { user, ... }: {
-    includes = [ den.aspects.stash-ghcr-auth ];
-
     nixosSecrets = stashSecrets;
 
     nixos =
