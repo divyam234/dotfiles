@@ -11,6 +11,7 @@
       den.aspects.brave
       den.aspects.fluxdown
       den.aspects.tusk
+      den.aspects.tern
       den.aspects.niri
       den.aspects.noctalia
       den.aspects.ghostty
