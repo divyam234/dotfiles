@@ -22,8 +22,6 @@
           telegram-desktop
           vlc
           obs-studio
-          spotify
-          spotify-player
           sonora
           cutter
           ida-pro

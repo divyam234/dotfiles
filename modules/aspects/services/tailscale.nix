@@ -10,6 +10,11 @@
             default = true;
             description = "Authenticate automatically using the configured SOPS OAuth client secret.";
           };
+          options.exitNode = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Advertise this host as a Tailscale exit node.";
+          };
         };
         default = { };
         description = "Host-specific Tailscale settings.";

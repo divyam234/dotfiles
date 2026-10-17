@@ -49,7 +49,6 @@
       {
         imports = [
           inputs.stylix.homeModules.stylix
-          ./openchamber.nix
         ];
 
         fonts.fontconfig.enable = true;
