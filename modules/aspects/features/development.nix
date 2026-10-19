@@ -1,0 +1,20 @@
+{ den, ... }:
+{
+  den.aspects.development = {
+    includes = [
+      den.aspects.gpg
+      den.aspects.stylix
+      den.aspects.zellij
+      den.aspects.neovim
+      den.aspects.modern-unix
+      den.aspects.fastfetch
+      den.aspects.devtools
+      den.aspects.container-tools
+      den.aspects.database-tools
+      den.aspects.network-tools
+      den.aspects.rclone
+      den.aspects.bun
+      den.aspects.ai
+    ];
+  };
+}

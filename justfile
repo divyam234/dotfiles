@@ -1,0 +1,69 @@
+set dotenv-load
+
+host := `hostname`
+system := `nix eval --impure --raw --expr builtins.currentSystem`
+
+fmt:
+    nix fmt
+
+fmt-check:
+    git diff --check
+
+check:
+    nix build --no-link .#checks.{{ system }}.{formatter,deadnix,statix,architecture,contract-cache,contract-containers,contract-homelab,contract-ideapad,contract-laptop,contract-netcup,contract-security,contract-secrets}
+    nix eval .#nixosConfigurations.laptop.config.system.build.toplevel.drvPath
+    nix eval .#nixosConfigurations.homelab.config.system.build.toplevel.drvPath
+    nix eval .#nixosConfigurations.ideapad.config.system.build.toplevel.drvPath
+    nix eval .#nixosConfigurations.netcup.config.system.build.toplevel.drvPath
+    nix eval .#homeConfigurations.bhunter@laptop.config.home.username
+
+eval h=host:
+    nix eval .#nixosConfigurations.{{ h }}.config.system.build.toplevel.drvPath
+
+eval-hm u="bhunter@laptop":
+    nix eval .#homeConfigurations.{{ u }}.config.home.username
+
+show:
+    nix flake show
+
+write-flake:
+    nix run .#write-flake --show-trace
+
+clean:
+    nh clean all
+
+pull:
+    git pull --ff-only
+
+update:
+    nix flake update
+
+update-commit:
+    nix flake update --commit-lock-file
+
+build h=host:
+    nh os build . -H {{ h }}
+
+test h=host:
+    nh os test . -H {{ h }}
+
+switch h=host:
+    nh os switch . -H {{ h }}
+
+boot h=host:
+    nh os boot . -H {{ h }}
+
+home u="bhunter@laptop":
+    nh home switch . -c {{ u }}
+
+iso h=host:
+    nix build .#{{ h }}-installer-iso
+
+flash-iso device h=host:
+    test -b "{{ device }}"
+    test "$(lsblk -dn -o TYPE "{{ device }}")" = disk
+    printf 'This will erase {{ device }}. Type ERASE to continue: '
+    read confirmation
+    test "$confirmation" = ERASE
+    lsblk -nrpo MOUNTPOINTS "{{ device }}" | while IFS= read -r mountpoint; do test -z "$mountpoint" || sudo umount "$mountpoint"; done
+    iso="$(nix build --print-out-paths .#{{ h }}-installer-iso)/iso/{{ h }}-installer.iso"; test -f "$iso"; sudo dd if="$iso" of="{{ device }}" bs=4M conv=fsync oflag=direct status=progress; sync
