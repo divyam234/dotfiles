@@ -1,0 +1,42 @@
+{ den, ... }:
+{
+  den.aspects.siyuan = { user, host, ... }: {
+    caddyRoutes = {
+      siyuan = {
+        host = "notes.${host.domain}";
+        access = "tailnet";
+        upstreams = [ "siyuan:6806" ];
+      };
+    };
+
+    nixos =
+      {
+        containers,
+        pkgs,
+        ...
+      }:
+      {
+        virtualisation.quadlet.containers.siyuan = {
+          containerConfig = {
+            image = "docker.io/b3log/siyuan";
+            networkAliases = [ "siyuan" ];
+            exec = [
+              "serve"
+              "--workspace=/siyuan/workspace"
+            ];
+            environments = {
+              RUN_IN_CONTAINER = "true";
+              SIYUAN_ACCESS_AUTH_CODE_BYPASS = "true";
+              TZ = "UTC";
+            };
+            volumes = [ "${containers.dataRoot}/siyuan:/siyuan/workspace" ];
+          };
+          serviceConfig = {
+            ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/siyuan";
+            MemoryMax = "1G";
+            CPUQuota = "100%";
+          };
+        };
+      };
+  };
+}

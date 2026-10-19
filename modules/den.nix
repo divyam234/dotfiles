@@ -1,0 +1,29 @@
+{ inputs, den, ... }:
+{
+  flake-file.inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    den.url = "github:denful/den";
+    import-tree.url = "github:vic/import-tree";
+    flake-file.url = "github:vic/flake-file";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+  };
+
+  flake-file.outputs = ''
+    inputs:
+      builtins.removeAttrs
+        (inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules))
+        [ "modules" "denful" ]
+  '';
+
+  imports = [
+    inputs.flake-file.flakeModules.dendritic
+    inputs.den.flakeModule
+    ./core/defaults.nix
+    (inputs.import-tree.match ".*/default\\.nix" ../hosts)
+  ];
+
+  _module.args.__findFile = den.lib.__findFile;
+}

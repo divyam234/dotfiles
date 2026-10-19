@@ -1,0 +1,73 @@
+{ den, ... }:
+{
+  den.aspects.desktop = { user, ... }: {
+    includes = [
+      den.aspects.development
+      den.aspects.audio
+      den.aspects.fonts
+      den.aspects.portals
+      den.aspects.desktop-apps
+      den.aspects.gnome-apps
+      den.aspects.brave
+      den.aspects.fluxdown
+      den.aspects.tusk
+      den.aspects.tern
+      den.aspects.niri
+      den.aspects.noctalia
+      den.aspects.ghostty
+      den.aspects.zed
+      den.aspects.sublime
+      den.aspects.nordvpn
+    ];
+
+    nixos =
+      { pkgs, ... }:
+      {
+
+        networking.networkmanager.enable = true;
+        hardware.bluetooth.enable = true;
+        hardware.logitech.wireless.enable = true;
+        programs.solaar.enable = true;
+        security.polkit.enable = true;
+        security.soteria.enable = true;
+        programs.dconf.enable = true;
+
+        services = {
+          dbus.enable = true;
+          gvfs.enable = true;
+          udisks2.enable = true;
+          upower.enable = true;
+          power-profiles-daemon.enable = true;
+          gnome.gnome-keyring.enable = true;
+          blueman.enable = true;
+        };
+
+        users.users.${user.userName}.extraGroups = [
+          "video"
+          "input"
+          "render"
+          "storage"
+        ];
+
+        environment = {
+          systemPackages = [ pkgs.libsecret ];
+          sessionVariables = {
+            GDK_BACKEND = "wayland,x11";
+            NIXOS_OZONE_WL = "1";
+            SDL_VIDEODRIVER = "wayland";
+          };
+        };
+      };
+
+    homeManager = {
+      gtk.enable = true;
+      xdg = {
+        enable = true;
+        userDirs = {
+          enable = true;
+          createDirectories = true;
+        };
+      };
+    };
+  };
+}

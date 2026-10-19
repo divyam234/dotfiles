@@ -1,0 +1,36 @@
+{
+  homelab,
+  ideapad,
+  laptop,
+  netcup,
+}:
+let
+  hosts = [
+    laptop
+    ideapad
+    homelab
+    netcup
+  ];
+  substituter = "http://127.0.0.1:7745";
+  publicKey = "nix-cache-1:833kjCWb6yhgpaUIez65hOJBJUZDkns+ybXW/WJMsYI=";
+  lantianSubstituter = "https://attic.xuyh0120.win/lantian";
+  lantianPublicKey = "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=";
+  has = value: values: builtins.any (candidate: candidate == value) values;
+  all = predicate: builtins.all predicate hosts;
+in
+assert all (host: has substituter host.nix.settings.substituters);
+assert all (host: has publicKey host.nix.settings.trusted-public-keys);
+assert all (host: host.services.nix-cache.enable);
+assert all (host: host.services.nix-cache.port == 7745);
+assert all (host: host.services.nix-cache.refreshInterval == "1h");
+assert all (host: !has lantianSubstituter host.nix.settings.substituters);
+assert all (host: !has lantianPublicKey host.nix.settings.trusted-public-keys);
+assert all (host: builtins.hasAttr "nix-cache" host.systemd.services);
+assert all (host: host.systemd.services.nix-cache.wantedBy == [ "multi-user.target" ]);
+assert all (host: host.systemd.services.nix-cache.serviceConfig.DynamicUser);
+assert all (
+  host:
+  builtins.match ".*nix-cache serve --listen 127.0.0.1:7745.*--index-cache /var/cache/nix-cache/index.json.*--refresh-interval 1h.*" host.systemd.services.nix-cache.serviceConfig.ExecStart
+  != null
+);
+true
