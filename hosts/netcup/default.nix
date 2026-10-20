@@ -26,14 +26,13 @@
     ];
 
     nixos =
-      { pkgs, ... }:
+      { ... }:
       {
         imports = [
           ./disko.nix
           ./networking.nix
         ];
         boot = {
-          kernelPackages = pkgs.linuxPackages_latest;
           kernelParams = [ "console=ttyS0" ];
           loader = {
             grub.efiInstallAsRemovable = true;

@@ -1,4 +1,4 @@
-{ ideapad }:
+{ ideapad, pkgs }:
 let
   userHome = ideapad.home-manager.users.bhunter;
   niriConfig = userHome.xdg.configFile."niri/config.kdl".text;
@@ -11,7 +11,7 @@ assert ideapad.fileSystems."/mnt/drive".fsType == "ext4";
 assert !(ideapad.services.btrfs.autoScrub.enable or false);
 assert ideapad.hardware.graphics.enable;
 assert ideapad.hardware.graphics.enable32Bit;
-assert ideapad.boot.kernelPackages.kernel.pname == "linux-cachyos-latest-x86_64-v3";
+assert ideapad.boot.kernelPackages.kernel.drvPath == pkgs.linuxPackages_latest.kernel.drvPath;
 assert builtins.hasAttr "niri/config.kdl" userHome.xdg.configFile;
 assert !(builtins.hasAttr "gh-auth" userHome.systemd.user.services);
 assert contains ''output "eDP-1" {'';

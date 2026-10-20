@@ -1,6 +1,7 @@
 { den, ... }:
 {
-  den.aspects.boot-policy.nixos = { lib, ... }: {
+  den.aspects.boot-policy.nixos = { lib, pkgs, ... }: {
+    boot.kernelPackages = pkgs.linuxPackages_latest;
     boot.loader = {
       grub = {
         enable = true;
