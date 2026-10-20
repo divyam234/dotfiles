@@ -23,7 +23,6 @@
           vlc
           obs-studio
           sonora
-          cutter
           ida-pro
           probe
           ddcutil
