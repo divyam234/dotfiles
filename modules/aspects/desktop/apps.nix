@@ -7,7 +7,6 @@
         home.packages = with pkgs; [
           baobab
           disktree
-          easyeffects
           foliate
           gnome-disk-utility
           gparted
@@ -23,7 +22,6 @@
           vlc
           obs-studio
           sonora
-          ida-pro
           probe
           ddcutil
           upower
