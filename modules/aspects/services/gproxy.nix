@@ -44,7 +44,7 @@
 
         virtualisation.quadlet.containers.gproxy = {
           containerConfig = {
-            image = "ghcr.io/leenhawk/gproxy:v4.1.8-musl";
+            image = "ghcr.io/tgdrive/gproxy";
             networkAliases = [ "gproxy" ];
             environmentFiles = [ "${containers.secretDir}/gproxy.env" ];
             volumes = [ "${containers.dataRoot}/gproxy:/var/lib/gproxy" ];
