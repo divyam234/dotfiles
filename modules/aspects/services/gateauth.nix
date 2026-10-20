@@ -40,7 +40,7 @@
             RUN_MIGRATIONS=true
             TRUST_PROXY_HEADERS=true
             TRUSTED_IP_HEADERS=CF-Connecting-IP,X-Real-IP,X-Forwarded-For
-            CORS_ORIGINS=https://auth.${host.domain}
+            CORS_ORIGINS=https://auth.${host.domain},https://stash.${host.domain}
             TRUSTED_ORIGINS=https://*.${host.domain}
             COOKIE_DOMAIN=.${host.domain}
             REQUIRE_EMAIL_VERIFICATION=false
@@ -48,7 +48,9 @@
             ALLOW_DEVELOPMENT_MAIL_LOG=false
             SEED_ADMIN_EMAIL=${secrets.gateauth.admin_email}
             SEED_ADMIN_PASSWORD=${secrets.gateauth.admin_password}
-            SEED_DEFAULT_APPLICATION=false
+            SEED_DEFAULT_APPLICATION=true
+            DEFAULT_APPLICATION_HOST=stash.${host.domain}
+            DEFAULT_APPLICATION_UPSTREAM=http://stash:8080
           '';
         };
 
