@@ -13,6 +13,8 @@
           automake
           bear
           bun
+          cargo
+          clippy
           cmake
           deadnix
           delve
@@ -39,7 +41,8 @@
           pkg-config
           pnpm
           python3
-          rust-bin.stable.latest.default
+          rustc
+          rustfmt
           shellcheck
           shfmt
           sqlc
