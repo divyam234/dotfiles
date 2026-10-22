@@ -12,7 +12,6 @@
           theme = "System";
           cursor = {
             glide = 80;
-            trail = "warp";
           };
           font_size = config.stylix.fonts.sizes.terminal + 1;
           ui_font_size = config.stylix.fonts.sizes.applications + 2;
@@ -20,7 +19,6 @@
           agent_command = "omp";
           adjust_cell_height = "10%";
           system_title_bar = true;
-          status_bar = true;
           opacity = 80;
           blur = 0;
           command_lenses = false;
