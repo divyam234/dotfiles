@@ -47,6 +47,9 @@ assert
   ];
 assert
   netcup.virtualisation.quadlet.containers.pgdog.containerConfig.publishPorts == [ "6432:6432" ];
+assert !(lib.hasInfix "HTTPPROXY=" netcup.sops.templates."gluetun.env".content);
+assert !(lib.hasInfix "HTTPPROXY_LISTENING_ADDRESS=" netcup.sops.templates."gluetun.env".content);
+assert lib.hasInfix "FIREWALL_INPUT_PORTS=3128\n" netcup.sops.templates."gluetun.env".content;
 assert netcup.virtualisation.quadlet.containers.postgres.containerConfig.publishPorts == [ ];
 assert lib.hasInfix ''iifname "eth0" ct status dnat tcp dport { 80, 443 } accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat udp dport 443 accept'' containerIngress;

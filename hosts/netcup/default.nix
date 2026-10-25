@@ -12,6 +12,7 @@
       den.aspects.gemini-fastapi
       den.aspects.gateauth
       den.aspects.gluetun
+      den.aspects.gost
       den.aspects.gproxy
       den.aspects.openchamber
       den.aspects.mtproxy
