@@ -12,8 +12,9 @@ let
 in
 assert builtins.hasAttr userName netcup.home-manager.users;
 assert builtins.hasAttr hostName netcup.services.restic.backups;
+assert !(builtins.hasAttr "opencode/tui.json" userHome.xdg.configFile);
 assert builtins.hasAttr "opencode/cli.json" userHome.xdg.configFile;
-assert (builtins.fromJSON userHome.xdg.configFile."opencode/cli.json".text).theme.name == "stylix";
+assert builtins.hasAttr "opencode/themes/stylix.json" userHome.xdg.configFile;
 assert builtins.hasAttr "opencode" userHome.systemd.user.services;
 assert builtins.hasAttr "openchamber" userHome.systemd.user.services;
 assert

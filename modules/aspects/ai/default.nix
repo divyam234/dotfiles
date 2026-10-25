@@ -346,16 +346,6 @@
           #   type = "zellij";
           # };
         };
-        cliConfig = {
-          "$schema" = "https://opencode.ai/v2/cli.json";
-          theme = {
-            name = "stylix";
-            mode = "system";
-          };
-          session = {
-            sidebar = "hide";
-          };
-        };
       in
       {
         programs = {
@@ -363,6 +353,15 @@
             enable = true;
             package = pkgs.opencode;
             settings = opencodeConfig;
+            cli = {
+              theme = {
+                name = "stylix";
+                mode = "system";
+              };
+              session.sidebar = "hide";
+            };
+            # The pinned Stylix target still selects its theme through the OpenCode 1 option.
+            tui = lib.mkForce { };
           };
 
           fish.interactiveShellInit = lib.mkAfter ''
@@ -448,10 +447,6 @@
         home.file.".config/opencode/oh-my-opencode-slim.json".source =
           json.generate "oh-my-opencode-slim.json" omoSlimConfig;
 
-        xdg.configFile."opencode/cli.json" = {
-          text = builtins.toJSON cliConfig;
-          force = true;
-        };
       };
   };
 }
