@@ -22,7 +22,6 @@
           PartOf = [ gluetun ];
         };
         serviceConfig = {
-          MemoryMax = "128M";
           CPUQuota = "50%";
         };
       };
