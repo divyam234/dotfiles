@@ -59,7 +59,7 @@
 
         virtualisation.quadlet.containers.teldrive = {
           containerConfig = {
-            image = "ghcr.io/tgdrive/teldrive:2";
+            image = "ghcr.io/tgdrive/teldrive:dev";
             networkAliases = [ "teldrive" ];
             environmentFiles = [ "${containers.secretDir}/teldrive.env" ];
           };
