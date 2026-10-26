@@ -17,7 +17,7 @@
             VPN_SERVICE_PROVIDER=nordvpn
             VPN_TYPE=wireguard
             WIREGUARD_PRIVATE_KEY=${secrets.nordvpn.private_key}
-            SERVER_HOSTNAMES=nl1181.nordvpn.com,nl1173.nordvpn.com
+            SERVER_HOSTNAMES=nl1211.nordvpn.com,nl1202.nordvpn.com
             FIREWALL_INPUT_PORTS=3128
             FIREWALL_OUTBOUND_SUBNETS=100.64.0.0/10
           '';
