@@ -333,11 +333,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793064912,
-        "narHash": "sha256-sA9iE0vtn2z5t5P23WLley/dKCtI1YhcH+cTiH9mFRg=",
+        "lastModified": 1793084090,
+        "narHash": "sha256-hC+NfE5pRIgAqdTShmmvgz0AqKJpbx12JVgM+CvM14A=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "9b4dd5065c8e3703d3b4d61569dfc7bda5d12ee1",
+        "rev": "78f3fcc2b3c8af43425a37f347aa07eccc5eda5d",
         "type": "github"
       },
       "original": {
@@ -571,11 +571,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793010801,
-        "narHash": "sha256-vWb/FwfRS1w9rkIGKGURe6Rq/zL+xP4TVPBenLO6q9s=",
+        "lastModified": 1793074546,
+        "narHash": "sha256-Aa/lqrinbXzZSUhi88LFQtWaCUEE7ZkYiR2uynzII7E=",
         "owner": "tgdrive",
         "repo": "teldrive",
-        "rev": "1f2268073371794d1bbdd938e0b215fdaa64241e",
+        "rev": "2571457a9da51bcab0b107f8dad6ad13708528b0",
         "type": "github"
       },
       "original": {
