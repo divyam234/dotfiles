@@ -19,7 +19,7 @@
           playerctl
           mpv
           telegram-desktop
-          vlc
+          vlc4
           obs-studio
           sonora
           probe
