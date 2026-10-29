@@ -23,6 +23,7 @@
         yaml = pkgs.formats.yaml { };
 
         gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
+        deeprelayBaseUrl = "https://gproxy.${host.domain}/deeprelay/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
         claudeApiKeyFile = "${config.xdg.configHome}/claude/api-key";
 
@@ -240,6 +241,16 @@
                 apiKey = "{env:OPENAI_API_KEY}";
               };
             };
+
+            deeprelay = {
+              package = "aisdk:@ai-sdk/openai-compatible";
+              settings = {
+                baseURL = deeprelayBaseUrl;
+                apiKey = "{env:OPENAI_API_KEY}";
+              };
+              # Models come from the gproxy-deeprelay plugin, which refreshes
+              # the route's /v1/models list and injects it per provider reload.
+            };
           };
 
           plugins = [
@@ -441,6 +452,10 @@
         home.file.".omp/agent/extensions/gproxy-codex.ts".text =
           builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
             (builtins.readFile ./gproxy-codex.ts);
+
+        home.file.".config/opencode/plugins/gproxy-deeprelay.ts".text =
+          builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ deeprelayBaseUrl ]
+            (builtins.readFile ./gproxy-deeprelay.ts);
         home.file.".omp/agent/mcp.json".source = json.generate "omp-mcp.json" ompMcp;
         home.file.".omp/agent/themes/stylix.json".source = json.generate "omp-stylix.json" ompTheme;
 
