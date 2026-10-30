@@ -23,6 +23,7 @@
         yaml = pkgs.formats.yaml { };
 
         gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
+        deepseekBaseUrl = "https://gproxy.${host.domain}/deepseek/v1";
         deeprelayBaseUrl = "https://gproxy.${host.domain}/deeprelay/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
         claudeApiKeyFile = "${config.xdg.configHome}/claude/api-key";
@@ -80,6 +81,16 @@
         '';
 
         ompModels = {
+          providers.deepseek = {
+            baseUrl = deepseekBaseUrl;
+            api = "openai-completions";
+            apiKey = "OPENAI_API_KEY";
+          };
+          providers.deeprelay = {
+            baseUrl = deeprelayBaseUrl;
+            api = "openai-completions";
+            apiKey = "OPENAI_API_KEY";
+          };
           providers.openai-codex = {
             baseUrl = gproxyBaseUrl;
             api = "openai-responses";
@@ -240,6 +251,11 @@
                 baseURL = gproxyBaseUrl;
                 apiKey = "{env:OPENAI_API_KEY}";
               };
+            };
+
+            deepseek.settings = {
+              baseURL = deepseekBaseUrl;
+              apiKey = "{env:OPENAI_API_KEY}";
             };
 
             deeprelay = {

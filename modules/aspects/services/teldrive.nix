@@ -42,8 +42,7 @@
             TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION=1
             TELDRIVE_ENCRYPTION_KEYS=1:${secrets.teldrive.encryption_key}
             TELDRIVE_JOBS_RUN_WORKERS=true
-            TELDRIVE_TELEGRAM_MTPROXY_ADDRESS=mtproxy:443
-            TELDRIVE_TELEGRAM_MTPROXY_SECRET=${secrets.mtproxy.secret}
+            TELDRIVE_TELEGRAM_PROXY=http://gluetun:3128
             TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY=false
             TELDRIVE_TELEGRAM_DOWNLOAD_BOTS=4
             TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL=true
