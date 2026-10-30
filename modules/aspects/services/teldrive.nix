@@ -7,7 +7,6 @@
       "teldrive/signing_key"
       "teldrive/data_key"
       "teldrive/encryption_key"
-      "mtproxy/secret"
     ];
 
     caddyRoutes.teldrive = {
@@ -28,7 +27,6 @@
         dependencies = [
           quadlet.containers.postgres.ref
           "postgres-provision.service"
-          quadlet.containers.mtproxy.ref
         ];
       in
       {

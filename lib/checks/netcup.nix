@@ -30,6 +30,7 @@ assert builtins.hasAttr "opencode-server.env" userHome.sops.templates;
 assert !(builtins.hasAttr "stash" netcup.virtualisation.quadlet.containers);
 assert !(builtins.hasAttr "stash-worker" netcup.virtualisation.quadlet.containers);
 assert !(builtins.hasAttr "imgresize" netcup.virtualisation.quadlet.containers);
+assert !(builtins.hasAttr "mtproxy" netcup.virtualisation.quadlet.containers);
 assert lib.hasInfix "SEED_DEFAULT_APPLICATION=false" netcup.sops.templates."gateauth.env".content;
 assert !(lib.hasInfix "stash" netcup.sops.templates."gateauth.env".content);
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);

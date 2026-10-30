@@ -15,7 +15,6 @@
       den.aspects.gost
       den.aspects.gproxy
       den.aspects.openchamber
-      den.aspects.mtproxy
       den.aspects.pgdog
       den.aspects.postgres
       den.aspects.redis
