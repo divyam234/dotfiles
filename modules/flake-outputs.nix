@@ -162,6 +162,12 @@
     {
       packages =
         den.lib.nh.denPackages { fromFlake = true; } pkgs
+        // {
+          dot = pkgs.callPackage ../packages/dot {
+            hosts = builtins.attrNames self.nixosConfigurations;
+            homes = builtins.attrNames self.homeConfigurations;
+          };
+        }
         // lib.optionalAttrs (system == "x86_64-linux") {
           nix-cache-proxy = inputs.nix-cache.packages.${system}.default;
           homelab-installer-iso = mkInstallerIso {
@@ -214,6 +220,7 @@
       };
 
       checks = {
+        dot = self.packages.${system}.dot.tests.behavior;
         formatter = pkgs.runCommand "dotfiles-format-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
           cp -r ${../.} source
           chmod -R u+w source
