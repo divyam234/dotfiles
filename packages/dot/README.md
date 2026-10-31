@@ -38,14 +38,20 @@ explicit host; only hosts exposing an installer output can build one. Destructiv
 disk flashing intentionally remains available only through `just flash-iso`.
 
 For `dot test`, `dot switch`, and `dot boot`, a target matching the local
-hostname is built and activated locally. A different target deploys the current
-local checkout (including untracked files) with `nh`, building on and activating
-the target host over SSH. The target's hostname must resolve through normal SSH
+hostname is built and activated locally. For a different target, `dot` connects
+over SSH, clones `https://github.com/divyam234/dotfiles.git` if the remote checkout
+is missing, runs `git pull --ff-only`, then runs `nh os test/switch/boot` there.
+Clone or pull failures stop before activation. Remote deployments use pushed
+changes, not your local checkout; run `dot push` first to publish local changes.
+Existing remote working-tree changes are subject to Git's normal pull behavior;
+`dot` never resets them. The target's hostname must resolve through normal SSH
 configuration and working SSH access (for example, Tailscale MagicDNS/SSH must
 be reachable). The remote account must have working privilege escalation for
 `nh` to build and activate NixOS. The SSH user is selected by your normal SSH
 configuration; `dot` does not hardcode one. `dot build` remains a local build,
-even when a host is specified.
+even when a host is specified. Remote activation uses the same remote path rules
+as `dot pull HOST` below, and needs no local checkout. Git and `nh` must be
+installed on the target, with Git upstream access configured.
 
 `dot pull` fast-forwards the local checkout. `dot pull HOST` does the same
 locally when HOST matches this machine; otherwise it runs Git over SSH on HOST,
@@ -56,9 +62,11 @@ use an absolute path rather than `~`. The remote checkout must already exist and
 have Git upstream authentication configured. Pulls always use `--ff-only` and
 never reset or discard changes.
 
-`dot push` runs `omp --no-session commit --no-changelog --push` in the local
-checkout selected by `--repo`, `DOTFILES_DIR`, or `~/dotfiles`. It does not accept
-a host or use SSH. `omp` must be available on your PATH.
+`dot push` runs `git add .`, then `omp --no-session commit --no-changelog --push`
+in the local checkout selected by `--repo`, `DOTFILES_DIR`, or `~/dotfiles`.
+It stages all non-ignored changes in that checkout, including deletions and new
+files. If staging fails, it stops before running `omp`. It does not accept a host
+or use SSH. `omp` must be available on your PATH.
 
 `dot` deliberately has no all-machine check command. Command/completion tests
 can be run on their own with `nix build .#checks.x86_64-linux.dot`.

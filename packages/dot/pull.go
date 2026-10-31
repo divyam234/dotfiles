@@ -38,17 +38,19 @@ func (a *app) pullCommand() *cobra.Command {
 			if host == current {
 				return a.execute(cmd, "git", []string{"pull", "--ff-only"})
 			}
-			// Resolve the default on the remote host, not against the local home
-			// directory or DOTFILES_DIR. SSH passes its command through a shell.
-			repo := `"${DOTFILES_DIR:-$HOME/dotfiles}"`
-			if a.repo != "" {
-				repo = quoteShell(a.repo)
-			}
 			// The login shell may be Fish; use sh for the default expansion.
-			remote := "sh -c " + quoteShell("git -C "+repo+" pull --ff-only")
+			remote := "sh -c " + quoteShell("git -C "+a.remoteRepo()+" pull --ff-only")
 			return a.run(cmd, "", "ssh", []string{"--", host, remote})
 		},
 	}
+}
+
+// Resolve defaults on the remote host, not against the local environment.
+func (a *app) remoteRepo() string {
+	if a.repo != "" {
+		return quoteShell(a.repo)
+	}
+	return `"${DOTFILES_DIR:-$HOME/dotfiles}"`
 }
 
 func quoteShell(value string) string {

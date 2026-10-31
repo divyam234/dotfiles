@@ -106,7 +106,7 @@ func (a *app) command() *cobra.Command {
 	root.AddCommand(a.simpleCommand("update", "Update flake inputs", "nix", "flake", "update"))
 	root.AddCommand(a.simpleCommand("update-commit", "Update inputs and commit the lock file", "nix", "flake", "update", "--commit-lock-file"))
 	root.AddCommand(a.pullCommand())
-	root.AddCommand(a.simpleCommand("push", "Commit and push the local checkout using omp", "omp", "--no-session", "commit", "--no-changelog", "--push"))
+	root.AddCommand(a.pushCommand())
 	root.AddCommand(a.simpleCommand("clean", "Clean old Nix generations using nh", "nh", "clean", "all"))
 	root.AddCommand(a.simpleCommand("write-flake", "Regenerate flake.nix", "nix", "run", ".#write-flake", "--show-trace"))
 	root.AddCommand(cacheCommand())
@@ -224,8 +224,7 @@ func (a *app) targetCommand(use, description string, choices []string, defaultTa
 					}
 				}
 				if target != currentHost {
-					commandArgs[2] = "path:."
-					commandArgs = append(commandArgs, "--build-host", target, "--target-host", target)
+					return a.remoteActivation(cmd, target, commandArgs)
 				}
 			}
 			return a.execute(cmd, tool, commandArgs)

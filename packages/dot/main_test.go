@@ -78,7 +78,6 @@ func TestDispatch(t *testing.T) {
 		{[]string{"update"}, "nix", []string{"flake", "update"}},
 		{[]string{"update-commit"}, "nix", []string{"flake", "update", "--commit-lock-file"}},
 		{[]string{"pull"}, "git", []string{"pull", "--ff-only"}},
-		{[]string{"push"}, "omp", []string{"--no-session", "commit", "--no-changelog", "--push"}},
 		{[]string{"clean"}, "nh", []string{"clean", "all"}},
 		{[]string{"write-flake"}, "nix", []string{"run", ".#write-flake", "--show-trace"}},
 	}
@@ -124,8 +123,11 @@ func TestActivationUsesLocalOrRemoteHost(t *testing.T) {
 				}
 				wantArgs := []string{"os", action, ".", "-H", tt.target}
 				if tt.current != tt.target {
-					wantArgs = []string{"os", action, "path:.", "-H", tt.target,
-						"--build-host", tt.target, "--target-host", tt.target}
+					if len(*calls) != 1 || (*calls)[0].Tool != "ssh" || (*calls)[0].Dir != "" ||
+						len((*calls)[0].Args) != 4 || !reflect.DeepEqual((*calls)[0].Args[:3], []string{"-t", "--", tt.target}) {
+						t.Fatalf("unexpected remote invocation: %#v", *calls)
+					}
+					return
 				}
 				want := []invocation{{repo, "nh", wantArgs}}
 				if !reflect.DeepEqual(*calls, want) {
