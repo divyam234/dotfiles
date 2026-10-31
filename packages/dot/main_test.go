@@ -78,6 +78,7 @@ func TestDispatch(t *testing.T) {
 		{[]string{"update"}, "nix", []string{"flake", "update"}},
 		{[]string{"update-commit"}, "nix", []string{"flake", "update", "--commit-lock-file"}},
 		{[]string{"pull"}, "git", []string{"pull", "--ff-only"}},
+		{[]string{"push"}, "omp", []string{"--no-session", "commit", "--no-changelog", "--push"}},
 		{[]string{"clean"}, "nh", []string{"clean", "all"}},
 		{[]string{"write-flake"}, "nix", []string{"run", ".#write-flake", "--show-trace"}},
 	}
@@ -219,6 +220,7 @@ func TestRejectedArgumentsNeverRunTools(t *testing.T) {
 		{"build", "unknown-host"}, {"switch", "unknown-host"}, {"home", "unknown-home"}, {"build", "laptop", "extra"},
 		{"update", "extra"}, {"--repo"}, {"--repo", "/missing", "build"}, {"iso"},
 		{"build", "--unknown-flag"},
+		{"push", "netcup"},
 		{"cache", "refresh", "extra"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {

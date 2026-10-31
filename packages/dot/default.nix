@@ -43,7 +43,7 @@ let
       # Runtime tools must never be called during completion.
       mkdir stubs
       ln -s ${package}/bin/.dot-wrapped stubs/dot
-      for tool in nix nh git ssh; do
+      for tool in nix nh git ssh omp; do
         printf '#!%s\necho unexpected-tool-call >> "%s"\nexit 1\n' \
           "$SHELL" "$PWD/tool-calls" > stubs/$tool
         chmod +x stubs/$tool

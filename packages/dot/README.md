@@ -56,6 +56,10 @@ use an absolute path rather than `~`. The remote checkout must already exist and
 have Git upstream authentication configured. Pulls always use `--ff-only` and
 never reset or discard changes.
 
+`dot push` runs `omp --no-session commit --no-changelog --push` in the local
+checkout selected by `--repo`, `DOTFILES_DIR`, or `~/dotfiles`. It does not accept
+a host or use SSH. `omp` must be available on your PATH.
+
 `dot` deliberately has no all-machine check command. Command/completion tests
 can be run on their own with `nix build .#checks.x86_64-linux.dot`.
 
