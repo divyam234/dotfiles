@@ -103,6 +103,81 @@ func TestDispatch(t *testing.T) {
 	}
 }
 
+func TestActivationUsesLocalOrRemoteHost(t *testing.T) {
+	for _, action := range []string{"test", "switch", "boot"} {
+		for _, tt := range []struct {
+			name, current, target string
+			args                  []string
+		}{
+			{"default local", "laptop", "laptop", []string{action}},
+			{"explicit local", "laptop", "laptop", []string{action, "laptop"}},
+			{"explicit remote", "laptop", "netcup", []string{action, "netcup"}},
+			{"explicit remote from other machine", "workstation", "netcup", []string{action, "netcup"}},
+			{"other machine local", "netcup", "netcup", []string{action, "netcup"}},
+		} {
+			t.Run(action+"/"+tt.name, func(t *testing.T) {
+				a, calls, repo := testApp(t)
+				a.hostname = func() (string, error) { return tt.current, nil }
+				if _, err := execute(a, tt.args...); err != nil {
+					t.Fatal(err)
+				}
+				wantArgs := []string{"os", action, ".", "-H", tt.target}
+				if tt.current != tt.target {
+					wantArgs = []string{"os", action, "path:.", "-H", tt.target,
+						"--build-host", tt.target, "--target-host", tt.target}
+				}
+				want := []invocation{{repo, "nh", wantArgs}}
+				if !reflect.DeepEqual(*calls, want) {
+					t.Fatalf("got %#v, want %#v", *calls, want)
+				}
+			})
+		}
+	}
+}
+
+func TestExplicitActivationHostnameFailureDoesNotRun(t *testing.T) {
+	for _, action := range []string{"test", "switch", "boot"} {
+		t.Run(action, func(t *testing.T) {
+			a, calls, _ := testApp(t)
+			a.hostname = func() (string, error) { return "", errors.New("unavailable") }
+			_, err := execute(a, action, "netcup")
+			if err == nil || !strings.Contains(err.Error(), "determine current hostname") || len(*calls) != 0 {
+				t.Fatalf("err=%v, calls=%#v", err, *calls)
+			}
+		})
+	}
+}
+
+func TestUnknownActivationTargetsAreRejectedBeforeHostnameLookup(t *testing.T) {
+	for _, action := range []string{"test", "switch", "boot"} {
+		t.Run(action, func(t *testing.T) {
+			a, calls, _ := testApp(t)
+			hostnameLookups := 0
+			a.hostname = func() (string, error) {
+				hostnameLookups++
+				return "laptop", nil
+			}
+			_, err := execute(a, action, "unknown-host")
+			if err == nil || hostnameLookups != 0 || len(*calls) != 0 {
+				t.Fatalf("err=%v, hostname lookups=%d, calls=%#v", err, hostnameLookups, *calls)
+			}
+		})
+	}
+}
+
+func TestRemoteActivationErrorPropagates(t *testing.T) {
+	a, calls, _ := testApp(t)
+	wantErr := errors.New("remote deployment failed")
+	a.run = func(_ *cobra.Command, _ string, _ string, args []string) error {
+		*calls = append(*calls, invocation{Args: args})
+		return wantErr
+	}
+	_, err := execute(a, "switch", "netcup")
+	if !errors.Is(err, wantErr) || len(*calls) != 1 {
+		t.Fatalf("err=%v, calls=%#v", err, *calls)
+	}
+}
+
 func TestRepositorySelection(t *testing.T) {
 	for _, args := range [][]string{{"--repo", "REPO", "build"}, {"build", "--repo", "REPO"}} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
@@ -141,9 +216,10 @@ func TestRepositorySelection(t *testing.T) {
 func TestRejectedArgumentsNeverRunTools(t *testing.T) {
 	for _, args := range [][]string{
 		{"unknown"}, {"check"}, {"flash-iso", "/dev/sda"},
-		{"build", "unknown-host"}, {"home", "unknown-home"}, {"build", "laptop", "extra"},
+		{"build", "unknown-host"}, {"switch", "unknown-host"}, {"home", "unknown-home"}, {"build", "laptop", "extra"},
 		{"update", "extra"}, {"--repo"}, {"--repo", "/missing", "build"}, {"iso"},
 		{"build", "--unknown-flag"},
+		{"cache", "refresh", "extra"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			a, calls, _ := testApp(t)
@@ -177,6 +253,7 @@ func TestDefaultTargetFailures(t *testing.T) {
 func TestHelpAndCompletionNeedNoRepository(t *testing.T) {
 	for _, args := range [][]string{
 		nil, {"--help"}, {"build", "--help"}, {"completion", "fish"},
+		{"cache", "--help"}, {"cache", "refresh", "--help"}, {"__complete", "cache", ""},
 		{"__complete", "build", ""}, {"__complete", "home", "alice"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {

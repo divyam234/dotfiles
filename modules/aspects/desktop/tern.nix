@@ -19,7 +19,7 @@
           agent_command = "omp";
           adjust_cell_height = "10%";
           system_title_bar = true;
-          opacity = 80;
+          opacity = 100;
           blur = 0;
           command_lenses = false;
           surface_fold = true;

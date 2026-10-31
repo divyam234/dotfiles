@@ -9,6 +9,7 @@ dot build laptop
 dot switch                 # current hostname
 dot home bhunter@laptop
 dot fmt
+dot cache refresh
 dot --repo /path/to/dotfiles update
 ```
 
@@ -24,9 +25,36 @@ only `dot` itself: no Nix evaluation, git/nh commands, or network access.
 Rebuild Home Manager after adding a target. Repository overrides use the
 installed target list, not the other checkout's live outputs.
 
+`dot cache refresh` asks the running binary cache proxy to download, validate,
+and save the latest index. It reports the index hash, publication timestamp,
+and path count only after success; failures return a nonzero exit status.
+No checkout, sudo, or service restart is needed. The default proxy URL is
+`http://127.0.0.1:7745`; use `dot cache refresh --url URL` for a different address.
+Activate the updated NixOS cache service before using this command. It refreshes
+the proxy index, not Nix's separate evaluation or negative narinfo caches.
+
 `switch`, `test`, `boot`, and `home` activate configurations. `iso` requires an
 explicit host; only hosts exposing an installer output can build one. Destructive
 disk flashing intentionally remains available only through `just flash-iso`.
+
+For `dot test`, `dot switch`, and `dot boot`, a target matching the local
+hostname is built and activated locally. A different target deploys the current
+local checkout (including untracked files) with `nh`, building on and activating
+the target host over SSH. The target's hostname must resolve through normal SSH
+configuration and working SSH access (for example, Tailscale MagicDNS/SSH must
+be reachable). The remote account must have working privilege escalation for
+`nh` to build and activate NixOS. The SSH user is selected by your normal SSH
+configuration; `dot` does not hardcode one. `dot build` remains a local build,
+even when a host is specified.
+
+`dot pull` fast-forwards the local checkout. `dot pull HOST` does the same
+locally when HOST matches this machine; otherwise it runs Git over SSH on HOST,
+without activating anything or requiring a local checkout. Remote pulls use the
+remote account's `DOTFILES_DIR`, falling back to its `~/dotfiles`. For a different
+remote path, use `dot --repo /remote/path pull HOST`. Paths are passed literally;
+use an absolute path rather than `~`. The remote checkout must already exist and
+have Git upstream authentication configured. Pulls always use `--ff-only` and
+never reset or discard changes.
 
 `dot` deliberately has no all-machine check command. Command/completion tests
 can be run on their own with `nix build .#checks.x86_64-linux.dot`.

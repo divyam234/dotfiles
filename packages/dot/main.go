@@ -81,33 +81,34 @@ func (a *app) command() *cobra.Command {
 		root.AddCommand(a.targetCommand(command.name+" [host]", command.description,
 			a.targets.Hosts, a.hostname, "nh", func(target string) []string {
 				return []string{"os", command.name, ".", "-H", target}
-			}))
+			}, command.name == "test" || command.name == "switch" || command.name == "boot"))
 	}
 	root.AddCommand(a.targetCommand("home [user@host]", "Build and activate standalone Home Manager",
 		a.targets.Homes, a.defaultHome, "nh", func(target string) []string {
 			return []string{"home", "switch", ".", "-c", target}
-		}))
+		}, false))
 	root.AddCommand(a.targetCommand("eval [host]", "Evaluate NixOS",
 		a.targets.Hosts, a.hostname, "nix", func(target string) []string {
 			return []string{"eval", ".#nixosConfigurations." + strconv.Quote(target) + ".config.system.build.toplevel.drvPath"}
-		}))
+		}, false))
 	root.AddCommand(a.targetCommand("eval-hm [user@host]", "Evaluate standalone Home Manager",
 		a.targets.Homes, a.defaultHome, "nix", func(target string) []string {
 			return []string{"eval", ".#homeConfigurations." + strconv.Quote(target) + ".config.home.username"}
-		}))
+		}, false))
 	root.AddCommand(a.targetCommand("iso HOST", "Build an installer ISO (explicit host required)",
 		a.targets.Hosts, nil, "nix", func(target string) []string {
 			return []string{"build", ".#" + target + "-installer-iso"}
-		}))
+		}, false))
 
 	root.AddCommand(a.simpleCommand("fmt", "Format tracked Nix files", "nix", "fmt"))
 	root.AddCommand(a.simpleCommand("fmt-check", "Check diff whitespace", "git", "diff", "--check"))
 	root.AddCommand(a.simpleCommand("show", "Show flake outputs", "nix", "flake", "show"))
 	root.AddCommand(a.simpleCommand("update", "Update flake inputs", "nix", "flake", "update"))
 	root.AddCommand(a.simpleCommand("update-commit", "Update inputs and commit the lock file", "nix", "flake", "update", "--commit-lock-file"))
-	root.AddCommand(a.simpleCommand("pull", "Pull with fast-forward only", "git", "pull", "--ff-only"))
+	root.AddCommand(a.pullCommand())
 	root.AddCommand(a.simpleCommand("clean", "Clean old Nix generations using nh", "nh", "clean", "all"))
 	root.AddCommand(a.simpleCommand("write-flake", "Regenerate flake.nix", "nix", "run", ".#write-flake", "--show-trace"))
+	root.AddCommand(cacheCommand())
 	root.AddCommand(&cobra.Command{
 		Use: "completion SHELL", Short: "Generate shell completions",
 		ValidArgs: []string{"bash", "fish", "powershell", "zsh"},
@@ -179,7 +180,7 @@ func (a *app) simpleCommand(name, description, tool string, args ...string) *cob
 	}
 }
 
-func (a *app) targetCommand(use, description string, choices []string, defaultTarget func() (string, error), tool string, arguments func(string) []string) *cobra.Command {
+func (a *app) targetCommand(use, description string, choices []string, defaultTarget func() (string, error), tool string, arguments func(string) []string, activate bool) *cobra.Command {
 	validate := cobra.MaximumNArgs(1)
 	if defaultTarget == nil {
 		validate = cobra.ExactArgs(1)
@@ -211,7 +212,22 @@ func (a *app) targetCommand(use, description string, choices []string, defaultTa
 			if !slices.Contains(choices, target) {
 				return fmt.Errorf("unknown target %q; available: %s", target, strings.Join(choices, ", "))
 			}
-			return a.execute(cmd, tool, arguments(target))
+			commandArgs := arguments(target)
+			if activate {
+				currentHost := target
+				if len(args) != 0 {
+					var err error
+					currentHost, err = a.hostname()
+					if err != nil {
+						return fmt.Errorf("determine current hostname: %w", err)
+					}
+				}
+				if target != currentHost {
+					commandArgs[2] = "path:."
+					commandArgs = append(commandArgs, "--build-host", target, "--target-host", target)
+				}
+			}
+			return a.execute(cmd, tool, commandArgs)
 		},
 	}
 }

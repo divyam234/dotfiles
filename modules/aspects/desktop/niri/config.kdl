@@ -102,6 +102,9 @@ animations {
 window-rule {
     geometry-corner-radius 10
     clip-to-geometry true
+    background-effect {
+        blur true
+    }
 }
 
 window-rule {

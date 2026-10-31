@@ -15,7 +15,6 @@
             window-padding-y = 4;
             window-padding-balance = true;
             background-opacity = 1.0;
-            background-blur-radius = 32;
             cursor-style = "bar";
             cursor-style-blink = false;
             scrollback-limit = 10000;
