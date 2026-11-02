@@ -141,11 +141,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790898470,
-        "narHash": "sha256-zTwuwezD0w3hpga6a6P8emidzAZFyWqlNeRBlpWOOl8=",
+        "lastModified": 1793576659,
+        "narHash": "sha256-V1h85lUaJBQoHFrB2vpXZOE0Ju1MYSnIpsehoVZYlDo=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "024633cd702b10285db5cb19b40ad48d2399ba60",
+        "rev": "ea2630b7470978622c7689a1ff75d2b389175399",
         "type": "github"
       },
       "original": {
@@ -333,11 +333,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793437914,
-        "narHash": "sha256-3YJL8iUInjSASr1nzUn2ZLxV5PcYA7dJ7xRpT7WwlKk=",
+        "lastModified": 1793583706,
+        "narHash": "sha256-42GTbvpWTwIEsSEGvlHan5ataRZEiJa7ZUrvrkIutDs=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "174993e2c1c10c5a4445f461e32e7a10bc8b604d",
+        "rev": "42609df016c382037eb24791c7365b3ed24cea10",
         "type": "github"
       },
       "original": {
@@ -404,11 +404,11 @@
     },
     "quadlet-nix": {
       "locked": {
-        "lastModified": 1790641475,
-        "narHash": "sha256-G/priWdc/7y1Fogok9rn6WS4KhbYpTr2B2PwSMt3ekA=",
+        "lastModified": 1793557434,
+        "narHash": "sha256-+MfKGbBtZ2Khe6qx1ePVxtDdh190sM25U64pBXRDXOM=",
         "owner": "SEIAROTg",
         "repo": "quadlet-nix",
-        "rev": "db3af9df6943692c78cf9a05e3bfeb7d82e94cf3",
+        "rev": "07e4bc60fa9a5872da69f86d1d57b474a086d6dd",
         "type": "github"
       },
       "original": {
@@ -467,11 +467,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1793497332,
-        "narHash": "sha256-RGAlumc4L+3tDaQhBoQGx5bsqjcJN2wr4rWjC13HnuQ=",
+        "lastModified": 1793582224,
+        "narHash": "sha256-NeNJsMnRrll/cbC75vU3oFoNvOlsNzrv83OVB5ZcUUg=",
         "owner": "sonorahq",
         "repo": "sonora",
-        "rev": "9f02d1a71a4451ee8fda7185f9f72f2a0e1ef953",
+        "rev": "e3d4adfe04cd95d9a8b470bd98abc5b2de96c76b",
         "type": "github"
       },
       "original": {
@@ -619,11 +619,11 @@
     "tinted-sublime-text": {
       "flake": false,
       "locked": {
-        "lastModified": 1792897370,
-        "narHash": "sha256-UCyttttgyCvyciOBvQODWJs33/ImOo+PsQD0eQs5CWg=",
+        "lastModified": 1793506138,
+        "narHash": "sha256-Cs16QTcYgYLq5m26H6bIaobdrFWgz4NOlHvaGE+TBYg=",
         "owner": "tinted-theming",
         "repo": "tinted-sublime-text",
-        "rev": "6ef64d4982163e303c22facd3e4e11101553dddc",
+        "rev": "ca288dbbd26703fb9844353b802b9584766255ad",
         "type": "github"
       },
       "original": {
