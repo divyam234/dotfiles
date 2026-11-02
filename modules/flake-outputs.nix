@@ -119,6 +119,7 @@
             ;
         };
         containers = import ../lib/checks/containers.nix {
+          netcupSystem = self.nixosConfigurations.netcup;
           inherit
             homelab
             ideapad

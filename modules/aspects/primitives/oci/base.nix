@@ -120,20 +120,44 @@ in
           lib,
           ...
         }:
+        let
+          rootConfig = config;
+          secretValue = lib.types.coercedTo (lib.types.addCheck lib.types.attrs (
+            value: value.__secret or false
+          )) toString (lib.types.addCheck lib.types.singleLineStr (value: !lib.hasInfix "\r" value));
+          secretContainers = lib.filterAttrs (
+            _: container: container.secretEnvironment != { }
+          ) config.virtualisation.quadlet.containers;
+        in
         {
           options.virtualisation.quadlet.containers = lib.mkOption {
             type = lib.types.attrsOf (
               lib.types.submodule (
-                { name, ... }: {
+                { name, config, ... }: {
+                  options.secretEnvironment = lib.mkOption {
+                    # Template names must not force placeholders: SOPS itself
+                    # enables placeholders only once a template exists.
+                    type = lib.types.lazyAttrsOf secretValue;
+                    default = { };
+                    description = ''
+                      Single-line secret environment values, including catalog secret
+                      objects and strings containing SOPS placeholders. Generates a
+                      private env file and restarts this container when it changes
+                      during SOPS activation. Keep catalog declarations in nixosSecrets.
+                    '';
+                  };
                   config = {
                     autoStart = lib.mkDefault true;
                     containerConfig = {
                       name = lib.mkDefault name;
                       networks = lib.mkDefault [
-                        config.virtualisation.quadlet.networks.${containers.networkName}.ref
+                        rootConfig.virtualisation.quadlet.networks.${containers.networkName}.ref
                       ];
                       autoUpdate = lib.mkDefault "registry";
                       stopTimeout = lib.mkDefault 60;
+                      environmentFiles = lib.mkIf (config.secretEnvironment != { }) [
+                        rootConfig.sops.templates."${name}.env".path
+                      ];
                     };
                     serviceConfig = {
                       Restart = lib.mkDefault "always";
@@ -141,13 +165,40 @@ in
                       NoNewPrivileges = lib.mkDefault true;
                       TimeoutStopSec = lib.mkDefault "70s";
                     };
+                    unitConfig = lib.mkIf (config.secretEnvironment != { } && rootConfig.sops.useSystemdActivation) {
+                      After = [ "sops-install-secrets.service" ];
+                      Requires = [ "sops-install-secrets.service" ];
+                    };
                   };
                 }
               )
             );
           };
 
-          config = { };
+          config = {
+            assertions = lib.mapAttrsToList (name: container: {
+              assertion = lib.all (
+                key:
+                builtins.match "[A-Za-z_][A-Za-z0-9_]*" key != null
+                && !(builtins.hasAttr key container.containerConfig.environments)
+              ) (builtins.attrNames container.secretEnvironment);
+              message = "Quadlet ${name}: secretEnvironment keys must be valid environment names and must not also appear in containerConfig.environments.";
+            }) secretContainers;
+
+            sops.templates = lib.mapAttrs' (
+              name: container:
+              lib.nameValuePair "${name}.env" {
+                path = "${containers.secretDir}/${name}.env";
+                mode = "0400";
+                content =
+                  lib.concatStringsSep "\n" (
+                    lib.mapAttrsToList (key: value: "${key}=${value}") container.secretEnvironment
+                  )
+                  + "\n";
+                restartUnits = [ "${name}.service" ];
+              }
+            ) secretContainers;
+          };
         };
     };
 

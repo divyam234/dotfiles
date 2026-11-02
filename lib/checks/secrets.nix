@@ -94,7 +94,7 @@ let
   expectedTemplates = [
     "caddy.env"
     "camoflare.env"
-    "camofox.env"
+    "camofox-browser.env"
     "cloudflare-dns.env"
     "forgejo.env"
     "gateauth.env"

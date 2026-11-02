@@ -15,21 +15,16 @@
         ...
       }:
       {
-        sops.templates."camofox.env" = secrets.mkTemplate {
-          name = "camofox.env";
-          content = ''
-            CAMOFOX_ACCESS_KEY=${secrets.camofox.access_key}
-            CAMOFOX_ADMIN_KEY=${secrets.camofox.admin_key}
-            CAMOFOX_API_KEY=${secrets.camofox.api_key}
-          '';
-        };
-
         virtualisation.quadlet.containers.camofox-browser = {
+          secretEnvironment = {
+            CAMOFOX_ACCESS_KEY = secrets.camofox.access_key;
+            CAMOFOX_ADMIN_KEY = secrets.camofox.admin_key;
+            CAMOFOX_API_KEY = secrets.camofox.api_key;
+          };
           containerConfig = {
             image = "ghcr.io/jo-inc/camofox-browser:latest";
             healthCmd = "none";
             networkAliases = [ "camofox-browser" ];
-            environmentFiles = [ "${containers.secretDir}/camofox.env" ];
             environments = {
               CAMOFOX_BIND_HOST = "0.0.0.0";
               CAMOFOX_PORT = "9377";

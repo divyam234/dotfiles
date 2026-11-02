@@ -35,20 +35,15 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."vaultwarden.env" = secrets.mkTemplate {
-          name = "vaultwarden.env";
-          content = ''
-            DOMAIN=https://vault.${host.domain}
-            ADMIN_TOKEN=${secrets.vaultwarden.admin_token}
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres/postgres?application_name=bitwarden&options=-c%20search_path%3Dbitwarden
-          '';
-        };
-
         virtualisation.quadlet.containers.vaultwarden = {
+          secretEnvironment = {
+            ADMIN_TOKEN = secrets.vaultwarden.admin_token;
+            DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@postgres/postgres?application_name=bitwarden&options=-c%20search_path%3Dbitwarden";
+          };
           containerConfig = {
             image = "docker.io/vaultwarden/server:latest-alpine";
             networkAliases = [ "vaultwarden" ];
-            environmentFiles = [ "${containers.secretDir}/vaultwarden.env" ];
+            environments.DOMAIN = "https://vault.${host.domain}";
             volumes = [ "${containers.dataRoot}/vaultwarden:/data" ];
           };
           unitConfig = {

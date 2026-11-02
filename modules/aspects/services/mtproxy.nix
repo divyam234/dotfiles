@@ -5,26 +5,20 @@
 
     nixos =
       {
-        containers,
         secrets,
         ...
       }:
       {
-        sops.templates."mtproxy.env" = secrets.mkTemplate {
-          name = "mtproxy.env";
-          content = ''
-            SECRET=${secrets.mtproxy.secret}
-            DIRECT_MODE=true
-            WORKERS=2
-          '';
-        };
-
         virtualisation.quadlet.containers.mtproxy = {
+          secretEnvironment.SECRET = secrets.mtproxy.secret;
           containerConfig = {
             image = "ghcr.io/teleproxy/teleproxy:latest";
             networkAliases = [ "mtproxy" ];
             publishPorts = [ "8670:443" ];
-            environmentFiles = [ "${containers.secretDir}/mtproxy.env" ];
+            environments = {
+              DIRECT_MODE = "true";
+              WORKERS = "2";
+            };
           };
           serviceConfig = {
             MemoryMax = "512M";

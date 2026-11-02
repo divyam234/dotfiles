@@ -18,7 +18,6 @@
     nixos =
       {
         config,
-        containers,
         secrets,
         ...
       }:
@@ -30,35 +29,32 @@
         ];
       in
       {
-        sops.templates."teldrive.env" = secrets.mkTemplate {
-          name = "teldrive.env";
-          content = ''
-            TELDRIVE_HTTP_ADDRESS=0.0.0.0:8080
-            TELDRIVE_DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
-            TELDRIVE_SECURITY_SIGNING_KEY=${secrets.teldrive.signing_key}
-            TELDRIVE_SECURITY_DATA_KEY=${secrets.teldrive.data_key}
-            TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION=1
-            TELDRIVE_ENCRYPTION_KEYS=1:${secrets.teldrive.encryption_key}
-            TELDRIVE_JOBS_RUN_WORKERS=true
-            TELDRIVE_TELEGRAM_PROXY=http://gluetun:3128
-            TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY=false
-            TELDRIVE_TELEGRAM_DOWNLOAD_BOTS=4
-            TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL=true
-            TELDRIVE_TELEGRAM_DOWNLOAD_READ_BUFFERS=32
-            TELDRIVE_TELEGRAM_DOWNLOAD_READ_PARALLEL=4
-            TELDRIVE_TELEGRAM_RATE_LIMIT=false
-            TELDRIVE_TELEGRAM_MAX_RETRIES=30
-            TELDRIVE_SECURITY_ACCESS_TOKEN_TTL=24h
-            TELDRIVE_SECURITY_REFRESH_TOKEN_TTL=8760h
-            TELDRIVE_LOGGING_LOG_FORMAT=text
-          '';
-        };
-
         virtualisation.quadlet.containers.teldrive = {
+          secretEnvironment = {
+            TELDRIVE_DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres";
+            TELDRIVE_SECURITY_SIGNING_KEY = secrets.teldrive.signing_key;
+            TELDRIVE_SECURITY_DATA_KEY = secrets.teldrive.data_key;
+            TELDRIVE_ENCRYPTION_KEYS = "1:${secrets.teldrive.encryption_key}";
+          };
           containerConfig = {
             image = "ghcr.io/tgdrive/teldrive:dev";
             networkAliases = [ "teldrive" ];
-            environmentFiles = [ "${containers.secretDir}/teldrive.env" ];
+            environments = {
+              TELDRIVE_HTTP_ADDRESS = "0.0.0.0:8080";
+              TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION = "1";
+              TELDRIVE_JOBS_RUN_WORKERS = "true";
+              TELDRIVE_TELEGRAM_PROXY = "http://gluetun:3128";
+              TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY = "false";
+              TELDRIVE_TELEGRAM_DOWNLOAD_BOTS = "4";
+              TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL = "true";
+              TELDRIVE_TELEGRAM_DOWNLOAD_READ_BUFFERS = "32";
+              TELDRIVE_TELEGRAM_DOWNLOAD_READ_PARALLEL = "4";
+              TELDRIVE_TELEGRAM_RATE_LIMIT = "false";
+              TELDRIVE_TELEGRAM_MAX_RETRIES = "30";
+              TELDRIVE_SECURITY_ACCESS_TOKEN_TTL = "24h";
+              TELDRIVE_SECURITY_REFRESH_TOKEN_TTL = "8760h";
+              TELDRIVE_LOGGING_LOG_FORMAT = "text";
+            };
           };
           unitConfig = {
             After = dependencies;

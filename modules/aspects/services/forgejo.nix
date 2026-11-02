@@ -32,29 +32,20 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."forgejo.env" = secrets.mkTemplate {
-          name = "forgejo.env";
-          content = ''
-            FORGEJO__database__DB_TYPE=postgres
-            FORGEJO__database__HOST=pgdog:6432
-            FORGEJO__database__NAME=postgres
-            FORGEJO__database__USER=${secrets.postgres.user}
-            FORGEJO__database__PASSWD=${secrets.postgres.password}
-            FORGEJO__database__SCHEMA=forgejo
-            # FORGEJO__database__SSL_MODE=disable
-            # FORGEJO__server__DISABLE_SSH=false
-            # FORGEJO__server__START_SSH_SERVER=true
-            # FORGEJO__server__SSH_SERVER_USE_PROXY_PROTOCOL=false
-            # FORGEJO__server__SSH_PORT=443
-            # FORGEJO__server__SSH_LISTEN_PORT=2240
-          '';
-        };
-
         virtualisation.quadlet.containers.forgejo = {
+          secretEnvironment = {
+            FORGEJO__database__USER = secrets.postgres.user;
+            FORGEJO__database__PASSWD = secrets.postgres.password;
+          };
           containerConfig = {
             image = "codeberg.org/forgejo/forgejo:16";
             networkAliases = [ "forgejo" ];
-            environmentFiles = [ "${containers.secretDir}/forgejo.env" ];
+            environments = {
+              FORGEJO__database__DB_TYPE = "postgres";
+              FORGEJO__database__HOST = "pgdog:6432";
+              FORGEJO__database__NAME = "postgres";
+              FORGEJO__database__SCHEMA = "forgejo";
+            };
             volumes = [
               "${containers.dataRoot}/forgejo:/data:rw"
               # "/etc/localtime:/etc/localtime:ro"

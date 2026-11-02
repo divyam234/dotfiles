@@ -11,23 +11,18 @@
         ...
       }:
       {
-        sops.templates."gluetun.env" = secrets.mkTemplate {
-          name = "gluetun.env";
-          content = ''
-            VPN_SERVICE_PROVIDER=nordvpn
-            VPN_TYPE=wireguard
-            WIREGUARD_PRIVATE_KEY=${secrets.nordvpn.private_key}
-            SERVER_HOSTNAMES=nl1211.nordvpn.com,nl1202.nordvpn.com
-            FIREWALL_INPUT_PORTS=3128
-            FIREWALL_OUTBOUND_SUBNETS=100.64.0.0/10
-          '';
-        };
-
         virtualisation.quadlet.containers.gluetun = {
+          secretEnvironment.WIREGUARD_PRIVATE_KEY = secrets.nordvpn.private_key;
           containerConfig = {
             image = "docker.io/qmcgaw/gluetun";
             networkAliases = [ "gluetun" ];
-            environmentFiles = [ "${containers.secretDir}/gluetun.env" ];
+            environments = {
+              VPN_SERVICE_PROVIDER = "nordvpn";
+              VPN_TYPE = "wireguard";
+              SERVER_HOSTNAMES = "nl1211.nordvpn.com,nl1202.nordvpn.com";
+              FIREWALL_INPUT_PORTS = "3128";
+              FIREWALL_OUTBOUND_SUBNETS = "100.64.0.0/10";
+            };
             addCapabilities = [ "NET_ADMIN" ];
             devices = [ "/dev/net/tun:/dev/net/tun" ];
             sysctl = {

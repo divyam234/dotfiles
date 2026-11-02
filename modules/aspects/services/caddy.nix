@@ -142,22 +142,15 @@
             inherit global routes;
           };
 
-          sops.templates."caddy.env" = secrets.mkTemplate {
-            name = "caddy.env";
-            content = ''
-              CLOUDFLARE_API_TOKEN=${secrets.cloudflare.api_token}
-            '';
-          };
-
           systemd.services.caddy.restartTriggers = [
             config.environment.etc."caddy/Caddyfile".source
           ];
 
           virtualisation.quadlet.containers.caddy = {
+            secretEnvironment.CLOUDFLARE_API_TOKEN = secrets.cloudflare.api_token;
             containerConfig = {
               image = "ghcr.io/tgdrive/caddy";
               networkAliases = [ "caddy" ];
-              environmentFiles = [ "${containers.secretDir}/caddy.env" ];
               publishPorts = [
                 "80:80"
                 "443:443"

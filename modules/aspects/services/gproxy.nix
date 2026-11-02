@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.gproxy = { user, host, ... }: {
+  den.aspects.gproxy = { host, ... }: {
     nixosSecrets = [
       "postgres/user"
       "postgres/password"
@@ -29,24 +29,21 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."gproxy.env" = secrets.mkTemplate {
-          name = "gproxy.env";
-          content = ''
-            GPROXY_HOST=0.0.0.0
-            GPROXY_PORT=8787
-            GPROXY_DATA_DIR=/var/lib/gproxy
-            GPROXY_PERSISTENCE=postgres
-            GPROXY_DSN=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres?application_name=gproxy&options=-c%20search_path%3Dgproxy
-            GPROXY_ADMIN_PASSWORD=${secrets.gproxy.admin_password}
-            GPROXY_MASTER_KEY=${secrets.gproxy.master_key}
-          '';
-        };
-
         virtualisation.quadlet.containers.gproxy = {
+          secretEnvironment = {
+            GPROXY_DSN = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres?application_name=gproxy&options=-c%20search_path%3Dgproxy";
+            GPROXY_ADMIN_PASSWORD = secrets.gproxy.admin_password;
+            GPROXY_MASTER_KEY = secrets.gproxy.master_key;
+          };
           containerConfig = {
             image = "ghcr.io/tgdrive/gproxy";
             networkAliases = [ "gproxy" ];
-            environmentFiles = [ "${containers.secretDir}/gproxy.env" ];
+            environments = {
+              GPROXY_HOST = "0.0.0.0";
+              GPROXY_PORT = "8787";
+              GPROXY_DATA_DIR = "/var/lib/gproxy";
+              GPROXY_PERSISTENCE = "postgres";
+            };
             volumes = [ "${containers.dataRoot}/gproxy:/var/lib/gproxy" ];
           };
           unitConfig = {

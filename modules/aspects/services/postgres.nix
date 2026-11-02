@@ -56,20 +56,15 @@
           }
         ];
 
-        sops.templates."postgres.env" = secrets.mkTemplate {
-          name = "postgres.env";
-          content = ''
-            POSTGRES_USER=${secrets.postgres.user}
-            POSTGRES_PASSWORD=${secrets.postgres.password}
-            POSTGRES_DB=postgres
-          '';
-        };
-
         virtualisation.quadlet.containers.postgres = {
+          secretEnvironment = {
+            POSTGRES_USER = secrets.postgres.user;
+            POSTGRES_PASSWORD = secrets.postgres.password;
+          };
           containerConfig = {
             image = "ghcr.io/tgdrive/postgres:18";
             networkAliases = [ "postgres" ];
-            environmentFiles = [ "${containers.secretDir}/postgres.env" ];
+            environments.POSTGRES_DB = "postgres";
             volumes = [ "${containers.dataRoot}/postgres:/var/lib/postgresql" ];
             healthCmd = "pg_isready -U $POSTGRES_USER -d postgres || exit 1";
           };

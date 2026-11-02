@@ -19,7 +19,6 @@
     nixos =
       {
         config,
-        containers,
         secrets,
         ...
       }:
@@ -27,37 +26,34 @@
         quadlet = config.virtualisation.quadlet;
       in
       {
-        sops.templates."gateauth.env" = secrets.mkTemplate {
-          name = "gateauth.env";
-          content = ''
-            NODE_ENV=production
-            PORT=8080
-            APP_NAME=Gateauth
-            BETTER_AUTH_SECRET=${secrets.gateauth.better_auth_secret}
-            BETTER_AUTH_URL=https://auth.${host.domain}
-            DATABASE_URL=postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres
-            DATABASE_POOL_MAX=20
-            RUN_MIGRATIONS=true
-            TRUST_PROXY_HEADERS=true
-            TRUSTED_IP_HEADERS=CF-Connecting-IP,X-Real-IP,X-Forwarded-For
-            CORS_ORIGINS=https://auth.${host.domain}
-            TRUSTED_ORIGINS=https://*.${host.domain}
-            COOKIE_DOMAIN=.${host.domain}
-            REQUIRE_EMAIL_VERIFICATION=false
-            ENABLE_HIBP=true
-            ALLOW_DEVELOPMENT_MAIL_LOG=false
-            SEED_ADMIN_EMAIL=${secrets.gateauth.admin_email}
-            SEED_ADMIN_PASSWORD=${secrets.gateauth.admin_password}
-            SEED_DEFAULT_APPLICATION=false
-          '';
-        };
-
         virtualisation.quadlet.containers = {
           gateauth = {
+            secretEnvironment = {
+              BETTER_AUTH_SECRET = secrets.gateauth.better_auth_secret;
+              DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres";
+              SEED_ADMIN_EMAIL = secrets.gateauth.admin_email;
+              SEED_ADMIN_PASSWORD = secrets.gateauth.admin_password;
+            };
             containerConfig = {
               image = "ghcr.io/divyam234/gateauth:latest";
               networkAliases = [ "gateauth" ];
-              environmentFiles = [ "${containers.secretDir}/gateauth.env" ];
+              environments = {
+                NODE_ENV = "production";
+                PORT = "8080";
+                APP_NAME = "Gateauth";
+                BETTER_AUTH_URL = "https://auth.${host.domain}";
+                DATABASE_POOL_MAX = "20";
+                RUN_MIGRATIONS = "true";
+                TRUST_PROXY_HEADERS = "true";
+                TRUSTED_IP_HEADERS = "CF-Connecting-IP,X-Real-IP,X-Forwarded-For";
+                CORS_ORIGINS = "https://auth.${host.domain}";
+                TRUSTED_ORIGINS = "https://*.${host.domain}";
+                COOKIE_DOMAIN = ".${host.domain}";
+                REQUIRE_EMAIL_VERIFICATION = "false";
+                ENABLE_HIBP = "true";
+                ALLOW_DEVELOPMENT_MAIL_LOG = "false";
+                SEED_DEFAULT_APPLICATION = "false";
+              };
             };
             unitConfig = {
               After = [ quadlet.containers.pgdog.ref ];
