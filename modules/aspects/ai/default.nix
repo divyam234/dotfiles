@@ -26,7 +26,6 @@
         deepseekBaseUrl = "https://gproxy.${host.domain}/deepseek/v1";
         deeprelayBaseUrl = "https://gproxy.${host.domain}/deeprelay/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
-        claudeApiKeyFile = "${config.xdg.configHome}/claude/api-key";
 
         mkAgent =
           {
@@ -47,38 +46,6 @@
           openaiFast = "gpt-6-luna";
           opencode = "opencode/muse-spark-1.3-contributor-free";
         };
-
-        claudeSettings = {
-          model = models.openaiStrong;
-          effortLevel = "medium";
-          apiKeyHelper = "${pkgs.coreutils}/bin/cat ${lib.escapeShellArg claudeApiKeyFile}";
-          env = {
-            # Claude appends /v1/messages to this provider-scoped base URL.
-            ANTHROPIC_BASE_URL = lib.removeSuffix "/v1" gproxyBaseUrl;
-            ANTHROPIC_DEFAULT_OPUS_MODEL = models.openaiStrong;
-            ANTHROPIC_DEFAULT_SONNET_MODEL = models.openaiStrong;
-            ANTHROPIC_DEFAULT_HAIKU_MODEL = models.openaiFast;
-            CLAUDE_CODE_ALWAYS_ENABLE_EFFORT = "1";
-            CLAUDE_CODE_SKIP_MODEL_VALIDATION = "1";
-            CLAUDE_CODE_MAX_CONTEXT_TOKENS = "500000";
-            CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS = "1";
-            DISABLE_AUTOUPDATER = "1";
-          };
-        };
-
-        claudeOnboarding = pkgs.writeShellScript "claude-onboarding" ''
-          set -eu
-          state_file="${config.home.homeDirectory}/.claude.json"
-          tmp=$(${pkgs.coreutils}/bin/mktemp "$state_file.XXXXXX")
-          trap '${pkgs.coreutils}/bin/rm -f "$tmp"' EXIT
-          if [ -e "$state_file" ]; then
-            ${pkgs.jq}/bin/jq '.hasCompletedOnboarding = true' "$state_file" > "$tmp"
-          else
-            ${pkgs.jq}/bin/jq -n '{hasCompletedOnboarding: true}' > "$tmp"
-          fi
-          ${pkgs.coreutils}/bin/chmod 600 "$tmp"
-          ${pkgs.coreutils}/bin/mv "$tmp" "$state_file"
-        '';
 
         ompModels = {
           providers.deepseek = {
@@ -409,7 +376,6 @@
             enable = true;
             cachePruneScopes = [ "@oh-my-pi" ];
             packages = lib.mkAfter [
-              "@anthropic-ai/claude-code"
               "@oh-my-pi/pi-coding-agent"
               "@askjo/camofox-browser-mcp"
             ];
@@ -421,21 +387,6 @@
         };
 
         stylix.targets.opencode.enable = true;
-
-        home.file.".claude/settings.json".source = json.generate "claude-settings.json" claudeSettings;
-
-        # Only the helper reads this runtime credential; settings contain no token.
-        sops.templates."claude-api-key" = secrets.mkTemplate {
-          name = "claude-api-key";
-          path = claudeApiKeyFile;
-          mode = "0400";
-          content = "${secrets.openai.api_key}";
-        };
-
-        # Claude owns this mutable state file; merge rather than manage a symlink.
-        home.activation.claudeOnboarding = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          ${claudeOnboarding}
-        '';
 
         sops.templates."opencode.env" = secrets.mkTemplate {
           name = "opencode.env";

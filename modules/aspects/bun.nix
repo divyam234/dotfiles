@@ -195,7 +195,6 @@
             default = [ ];
             example = [
               "@openai/codex@latest"
-              "@anthropic-ai/claude-code@latest"
               "@google/gemini-cli@latest"
               "@oh-my-pi/pi-coding-agent@latest"
             ];
