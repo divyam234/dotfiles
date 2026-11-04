@@ -19,7 +19,7 @@
             environments = {
               VPN_SERVICE_PROVIDER = "nordvpn";
               VPN_TYPE = "wireguard";
-              SERVER_HOSTNAMES = "nl1211.nordvpn.com,nl1202.nordvpn.com";
+              SERVER_HOSTNAMES = "nl850.nordvpn.com,nl1258.nordvpn.com";
               FIREWALL_INPUT_PORTS = "3128";
               FIREWALL_OUTBOUND_SUBNETS = "100.64.0.0/10";
             };
@@ -38,8 +38,6 @@
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/gluetun";
-            MemoryMax = "512M";
-            CPUQuota = "100%";
           };
         };
       };

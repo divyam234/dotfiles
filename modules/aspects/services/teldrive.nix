@@ -43,7 +43,7 @@
               TELDRIVE_HTTP_ADDRESS = "0.0.0.0:8080";
               TELDRIVE_ENCRYPTION_ACTIVE_KEY_VERSION = "1";
               TELDRIVE_JOBS_RUN_WORKERS = "true";
-              TELDRIVE_TELEGRAM_PROXY = "http://gluetun:3128";
+              # TELDRIVE_TELEGRAM_PROXY = "http://gluetun:3128";
               TELDRIVE_DATABASE_AUTO_MIGRATE_LEGACY = "false";
               TELDRIVE_TELEGRAM_DOWNLOAD_BOTS = "4";
               TELDRIVE_TELEGRAM_DOWNLOAD_CLIENT_POOL = "true";

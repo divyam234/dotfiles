@@ -21,9 +21,6 @@
           Requires = [ gluetun ];
           PartOf = [ gluetun ];
         };
-        serviceConfig = {
-          CPUQuota = "50%";
-        };
       };
     };
 }
