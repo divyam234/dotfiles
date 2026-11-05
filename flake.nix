@@ -41,10 +41,6 @@
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     quadlet-nix.url = "github:SEIAROTg/quadlet-nix";
-    sonora = {
-      url = "github:sonorahq/sonora";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -36,10 +36,6 @@ in
       url = "github:divyam234/nix-cache";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sonora = {
-      url = "github:sonorahq/sonora";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   imports = [ ./schema.nix ];

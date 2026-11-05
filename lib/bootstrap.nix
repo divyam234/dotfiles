@@ -5,7 +5,6 @@ let
   overlays = [
     inputs.nix-pkgs.overlays.default
     inputs.teldrive.overlays.default
-    inputs.sonora.overlays.default
     (final: _prev: {
       local = dotfilesLib.importPackages final ../packages;
     })
