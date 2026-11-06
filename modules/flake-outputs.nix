@@ -108,7 +108,7 @@
       homelab = self.nixosConfigurations.homelab.config;
       ideapad = self.nixosConfigurations.ideapad.config;
       laptop = self.nixosConfigurations.laptop.config;
-      home = self.homeConfigurations."bhunter@laptop".config;
+      home = laptop.home-manager.users.bhunter;
       contracts = {
         cache = import ../lib/checks/cache.nix {
           inherit
@@ -169,7 +169,7 @@
         // {
           dot = pkgs.callPackage ../packages/dot {
             hosts = builtins.attrNames self.nixosConfigurations;
-            homes = builtins.attrNames self.homeConfigurations;
+            homes = builtins.attrNames (self.homeConfigurations or { });
           };
         }
         // lib.optionalAttrs (system == "x86_64-linux") {
@@ -262,7 +262,7 @@
         homelab-nixos-eval = self.nixosConfigurations.homelab.config.system.build.toplevel;
         ideapad-nixos-eval = self.nixosConfigurations.ideapad.config.system.build.toplevel;
         laptop-nixos-eval = self.nixosConfigurations.laptop.config.system.build.toplevel;
-        laptop-hm-eval = self.homeConfigurations."bhunter@laptop".activationPackage;
+        laptop-hm-eval = home.home.activationPackage;
       }
       // lib.optionalAttrs (system == "aarch64-linux") {
         netcup-nixos-eval = self.nixosConfigurations.netcup.config.system.build.toplevel;

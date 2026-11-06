@@ -25,7 +25,6 @@
         environment = {
           sessionVariables.LIBVA_DRIVER_NAME = "iHD";
           systemPackages = with pkgs; [
-            ffmpeg-full
             intel-gpu-tools
             libva-utils
             mesa-demos

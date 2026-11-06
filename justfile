@@ -15,13 +15,13 @@ check:
     nix eval .#nixosConfigurations.homelab.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.ideapad.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.netcup.config.system.build.toplevel.drvPath
-    nix eval .#homeConfigurations.bhunter@laptop.config.home.username
+    nix eval .#nixosConfigurations.laptop.config.home-manager.users.bhunter.home.username
 
 eval h=host:
     nix eval .#nixosConfigurations.{{ h }}.config.system.build.toplevel.drvPath
 
-eval-hm u="bhunter@laptop":
-    nix eval .#homeConfigurations.{{ u }}.config.home.username
+eval-hm h=host u="bhunter":
+    nix eval .#nixosConfigurations.{{ h }}.config.home-manager.users.{{ u }}.home.username
 
 show:
     nix flake show
@@ -53,8 +53,8 @@ switch h=host:
 boot h=host:
     nh os boot . -H {{ h }}
 
-home u="bhunter@laptop":
-    nh home switch . -c {{ u }}
+home h=host:
+    nh os switch . -H {{ h }}
 
 iso h=host:
     nix build .#{{ h }}-installer-iso

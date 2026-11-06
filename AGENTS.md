@@ -4,7 +4,7 @@
 
 This repository is the declarative NixOS and Home Manager configuration for:
 
-- `laptop`: NixOS with standalone Home Manager for `bhunter@laptop`.
+- `laptop`: NixOS with integrated Home Manager for `bhunter`.
 - `netcup` and other servers: NixOS with integrated Home Manager and OCI/Quadlet services.
 - `packages/svc`: a Rust CLI/TUI for inspecting and operating systemd-managed Quadlet containers.
 
@@ -19,7 +19,7 @@ entity -> same-named host aspect -> reusable aspects -> NixOS/Home Manager modul
                                       -> quirks -> single consumers
 ```
 
-- Host, home, and user entities live under `modules/entities/` and contain data only. Den's built-in instantiation creates NixOS and Home Manager configurations.
+- Host entities live in `hosts/<name>/entity.nix`; home and user entities live under `modules/entities/`. Entities contain data only. Den's built-in instantiation creates NixOS and Home Manager configurations.
 - `hosts/<name>/default.nix` defines the host aspect and selects shared platform aspects once.
 - Reusable behavior lives in `modules/aspects/`; aspects expose `den.aspects.<name>`, compose through `includes`, and provide `nixos` and/or `homeManager` functions.
 - `modules/core/` defines Den defaults, schemas, shared arguments, and host options. Libraries and overlays are assembled in `lib/bootstrap.nix`.
@@ -27,14 +27,14 @@ entity -> same-named host aspect -> reusable aspects -> NixOS/Home Manager modul
 - Secrets flow from the allowed catalog in `lib/secrets.nix` and the injected `secrets` argument into SOPS templates. Aspects emit catalog paths through `nixosSecrets` or `homeSecrets`; prefer `secrets` placeholders and `secrets.mkTemplate { name, content }`, and do not set `sopsFile` in leaf aspects.
 - Service aspects define Quadlet units and their systemd runtime dependencies. Do not duplicate `oci-service`, `requires-domain`, or `requires-secrets` through leaf services; Den `includes` are compositional, not identity-deduplicated.
 
-Home Manager relationships are structural: `netcup` and `homelab` use Den's integrated Home Manager policy with `homeManager`-class users; `bhunter@laptop` is a standalone home for a `user`-class system user.
+Home Manager relationships are structural: hosts use Den's integrated Home Manager policy with `homeManager`-class users, including `bhunter` on `laptop`.
 
 Do not introduce inventories, mode flags, string routing, registries, dispatchers, dependency resolvers, forwarding layers, or Den-internal mutation. Never access Den internals such as `__scopeHandlers`.
 
 ## Key Directories
 
-- `modules/entities/`: direct host, home, and user declarations.
-- `hosts/`: host-specific aspects, hardware, storage, networking, and secrets files.
+- `modules/entities/`: direct home and user declarations.
+- `hosts/`: host entities (`entity.nix`), host-specific aspects (`default.nix`), hardware, storage, networking, and secrets files.
 - `modules/aspects/`: reusable roles, features, services, application configuration, and system behavior.
 - `modules/core/`: Den schema, defaults, shared injections, and package policy.
 - `lib/`: bootstrap helpers, secret contracts, Den helpers, and composition checks.
@@ -52,12 +52,12 @@ just fmt                      # format tracked Nix files with nixfmt
 just fmt-check                # check whitespace errors in the diff
 just check                    # flake eval, formatting, deadnix, statix, architecture/contracts
 just eval laptop              # evaluate a NixOS host
-just eval-hm                  # evaluate bhunter@laptop
+just eval-hm laptop           # evaluate laptop's integrated Home Manager
 just build netcup             # build a host without activating it
 just test netcup              # activate until reboot
 just switch netcup            # build and activate permanently
 just boot netcup              # install as next boot configuration
-just home                     # switch bhunter@laptop Home Manager config
+just home laptop              # switch laptop, including Home Manager
 just svc-status               # inspect the service stack
 cargo test --manifest-path packages/svc/Cargo.toml
 ```
@@ -75,7 +75,7 @@ just write-flake
 ### Nix
 
 - Rely on Den's built-in `instantiate` defaults unless a genuinely custom Nix class requires another constructor.
-- Put direct declarations in `modules/entities/`, host implementation in `hosts/<name>/`, reusable behavior in `modules/aspects/`, and shared options/defaults in `modules/core/`.
+- Put host declarations in `hosts/<name>/entity.nix`, home/user declarations in `modules/entities/`, host implementation in `hosts/<name>/default.nix`, reusable behavior in `modules/aspects/`, and shared options/defaults in `modules/core/`.
 - Name aspect files and `den.aspects.<name>` consistently. Compose existing aspects instead of creating a parallel convention.
 - Use module options and `lib.mkIf` for reusable toggles. Enforce composition invariants with assertions and `lib/checks/` contracts.
 - Use the injected `secrets` argument and `dotfiles` secret helpers. Shared secrets belong in `secrets/common.yaml`; host secrets belong in `hosts/<name>/secrets.yaml`.

@@ -13,6 +13,9 @@ let
     )
   );
 in
+assert laptop.home-manager.useUserPackages;
+assert home.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
+assert builtins.hasAttr "home-manager-${userName}" laptop.systemd.services;
 assert
   laptop.services.displayManager.noctalia-greeter.extraArgs == [
     "--session"
