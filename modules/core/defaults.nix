@@ -11,6 +11,7 @@ let
 in
 {
   flake-file.inputs = {
+    iets.url = "github:numtide/iets";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -8,8 +8,12 @@
     nixos =
       { ... }:
       {
-        imports = [ inputs.nix-cache.nixosModules.default ];
+        imports = [
+          inputs.nix-cache.nixosModules.default
+          inputs.iets.nixosModules.default
+        ];
         services.nix-cache.enable = true;
+        iets.classic.enable = true;
 
         programs.nix-ld.enable = true;
 
@@ -21,6 +25,10 @@
           channel.enable = false;
           registry.nixpkgs.flake = inputs.nixpkgs;
           settings = {
+            extra-substituters = [ "https://cache.numtide.com" ];
+            extra-trusted-public-keys = [
+              "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+            ];
             nix-path = [ "nixpkgs=flake:nixpkgs" ];
             experimental-features = [
               "nix-command"

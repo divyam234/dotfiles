@@ -25,6 +25,7 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    iets.url = "github:numtide/iets";
     import-tree.url = "github:vic/import-tree";
     lazyvim = {
       url = "github:pfassina/lazyvim-nix";
