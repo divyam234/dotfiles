@@ -14,24 +14,17 @@
       }:
       let
         colors = config.lib.stylix.colors;
-        tintedSublime = pkgs.runCommand "tinted-sublime-text-base16-nix-compatible" { } ''
-          cp -R ${inputs.tinted-sublime-text} "$out"
-          chmod -R u+w "$out"
-
-          substituteInPlace "$out/templates/config.yaml" \
-            --replace-fail \
-              'supported-systems: [base16, base24]' \
-              'supported-systems: [base16,base24]'
-        '';
-
+        # Explicit extensions avoid parsing upstream's config.yaml during evaluation.
         colorScheme = colors {
-          templateRepo = tintedSublime;
+          templateRepo = inputs.tinted-sublime-text;
           target = "base16-color-scheme";
+          extension = ".sublime-color-scheme";
         };
 
         sublimeTheme = colors {
-          templateRepo = tintedSublime;
+          templateRepo = inputs.tinted-sublime-text;
           target = "base16-sublime-theme";
+          extension = ".sublime-theme";
         };
 
         sublimeTextMimeTypes = [
