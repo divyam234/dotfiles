@@ -13,6 +13,7 @@ _: {
       }
     ];
 
+    rcloneWebdav.cacheDir = "/mnt/drive/rclone";
     users.bhunter = { };
   };
 }

@@ -18,6 +18,7 @@
       den.aspects.pgdog
       den.aspects.postgres
       den.aspects.redis
+      den.aspects.rclone-webdav
       den.aspects.restic
       den.aspects.siyuan
       den.aspects.stash

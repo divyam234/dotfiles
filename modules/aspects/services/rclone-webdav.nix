@@ -17,9 +17,9 @@
               description = "Port the WebDAV server listens on.";
             };
             cacheDir = lib.mkOption {
-              type = lib.types.str;
-              default = "/mnt/drive/rclone";
-              description = "Directory rclone uses for VFS caching.";
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Directory rclone uses for VFS caching; defaults to rclone-webdav under the user's XDG cache directory.";
             };
           };
         };
@@ -66,10 +66,11 @@
           environmentFile = rcloneEnv;
           settings = {
             addr = [ "0.0.0.0:${toString cfg.port}" ];
-            cache-dir = cfg.cacheDir;
+            cache-dir = if cfg.cacheDir == null then "${config.xdg.cacheHome}/rclone-webdav" else cfg.cacheDir;
             vfs-cache-mode = "full";
             vfs-cache-max-age = "8670h";
             dir-cache-time = "24h";
+            fast-list = true;
             allow-origin = "*";
             poll-interval = "1s";
             vfs-read-ahead = "384Mi";

@@ -103,5 +103,4 @@ assert builtins.elem {
   target = "tailscale-ipv4";
   type = "A";
 } dnsManifest.records;
-assert !(builtins.hasAttr "rclone-serve-webdav" userHome.systemd.user.services);
 true
