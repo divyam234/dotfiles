@@ -24,7 +24,6 @@
 
         gproxyBaseUrl = "https://gproxy.${host.domain}/codex/v1";
         deepseekBaseUrl = "https://gproxy.${host.domain}/deepseek/v1";
-        deeprelayBaseUrl = "https://gproxy.${host.domain}/deeprelay/v1";
         opencodeEnvFile = "${config.xdg.configHome}/opencode/opencode.env";
 
         mkAgent =
@@ -44,41 +43,38 @@
         models = {
           openaiStrong = "gpt-6.1-sol";
           openaiFast = "gpt-6-luna";
-          opencode = "opencode/muse-spark-1.3-contributor-free";
         };
 
         ompModels = {
-          providers.deepseek = {
-            baseUrl = deepseekBaseUrl;
-            api = "openai-completions";
-            apiKey = "OPENAI_API_KEY";
-          };
-          providers.deeprelay = {
-            baseUrl = deeprelayBaseUrl;
-            api = "openai-completions";
-            apiKey = "OPENAI_API_KEY";
-          };
-          providers.openai-codex = {
-            baseUrl = gproxyBaseUrl;
-            api = "openai-responses";
-            apiKey = "OPENAI_API_KEY";
-            modelOverrides = builtins.listToAttrs (
-              map
-                (model: {
-                  name = model;
-                  value = {
-                    remoteCompaction = {
-                      api = "openai-responses";
-                      v2StreamingEnabled = true;
+          providers = {
+            deepseek = {
+              baseUrl = deepseekBaseUrl;
+              api = "openai-completions";
+              apiKey = "OPENAI_API_KEY";
+            };
+            openai-codex = {
+              baseUrl = gproxyBaseUrl;
+              api = "openai-responses";
+              apiKey = "OPENAI_API_KEY";
+              modelOverrides = builtins.listToAttrs (
+                map
+                  (model: {
+                    name = model;
+                    value = {
+                      remoteCompaction = {
+                        api = "openai-responses";
+                        v2StreamingEnabled = true;
+                      };
                     };
-                  };
-                })
-                [
-                  models.openaiStrong
-                  models.openaiFast
-                ]
-            );
+                  })
+                  [
+                    models.openaiStrong
+                    models.openaiFast
+                  ]
+              );
+            };
           };
+
         };
 
         ompMcp = {
@@ -225,15 +221,6 @@
               apiKey = "{env:OPENAI_API_KEY}";
             };
 
-            deeprelay = {
-              package = "aisdk:@ai-sdk/openai-compatible";
-              settings = {
-                baseURL = deeprelayBaseUrl;
-                apiKey = "{env:OPENAI_API_KEY}";
-              };
-              # Models come from the gproxy-deeprelay plugin, which refreshes
-              # the route's /v1/models list and injects it per provider reload.
-            };
           };
 
           plugins = [
@@ -252,7 +239,7 @@
             openai = {
               orchestrator = mkAgent {
                 model = "openai/${models.openaiStrong}";
-                variant = "high";
+                variant = "medium";
                 skills = [ "*" ];
                 mcps = [
                   "*"
@@ -285,60 +272,13 @@
               };
 
               fixer = mkAgent {
-                model = "openai/${models.openaiFast}";
-                variant = "high";
+                model = "openai/${models.openaiStrong}";
+                variant = "low";
               };
             };
 
-            opencode = {
-              orchestrator = mkAgent {
-                model = models.opencode;
-                skills = [ "*" ];
-                mcps = [
-                  "*"
-                  "!context7"
-                ];
-              };
-
-              oracle = mkAgent {
-                model = models.opencode;
-                variant = "high";
-                skills = [ "simplify" ];
-              };
-
-              council = mkAgent {
-                model = models.opencode;
-                variant = "high";
-              };
-
-              librarian = mkAgent {
-                model = models.opencode;
-                mcps = [
-                  "websearch"
-                  "context7"
-                  "grep_app"
-                ];
-              };
-
-              explorer = mkAgent {
-                model = models.opencode;
-              };
-
-              designer = mkAgent {
-                model = models.opencode;
-                variant = "medium";
-              };
-
-              fixer = mkAgent {
-                model = models.opencode;
-                variant = "high";
-              };
-            };
           };
           balanceProviderUsage = false;
-          # multiplexer = {
-          #   type = "zellij";
-          # };
         };
       in
       {
@@ -409,26 +349,26 @@
           '';
         };
 
-        home.packages = [
-          pkgs.codeforge
-        ];
+        home = {
+          packages = [
+            pkgs.codeforge
+          ];
 
-        # Declarative settings: use project config or --config for overrides.
-        home.file.".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
-        home.file.".omp/agent/models.yml".source = yaml.generate "omp-models.yml" ompModels;
-        home.file.".omp/agent/extensions/gproxy-codex.ts".text =
-          builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
-            (builtins.readFile ./gproxy-codex.ts);
+          # Declarative settings: use project config or --config for overrides.
+          file = {
+            ".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
+            ".omp/agent/models.yml".source = yaml.generate "omp-models.yml" ompModels;
+            ".omp/agent/extensions/gproxy-codex.ts".text =
+              builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
+                (builtins.readFile ./gproxy-codex.ts);
 
-        home.file.".config/opencode/plugins/gproxy-deeprelay.ts".text =
-          builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ deeprelayBaseUrl ]
-            (builtins.readFile ./gproxy-deeprelay.ts);
-        home.file.".omp/agent/mcp.json".source = json.generate "omp-mcp.json" ompMcp;
-        home.file.".omp/agent/themes/stylix.json".source = json.generate "omp-stylix.json" ompTheme;
+            ".omp/agent/mcp.json".source = json.generate "omp-mcp.json" ompMcp;
+            ".omp/agent/themes/stylix.json".source = json.generate "omp-stylix.json" ompTheme;
 
-        home.file.".config/opencode/oh-my-opencode-slim.json".source =
-          json.generate "oh-my-opencode-slim.json" omoSlimConfig;
-
+            ".config/opencode/oh-my-opencode-slim.json".source =
+              json.generate "oh-my-opencode-slim.json" omoSlimConfig;
+          };
+        };
       };
   };
 }

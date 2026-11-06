@@ -62,7 +62,7 @@
         services.rclone.serve.webdav = {
           enable = true;
           protocol = "webdav";
-          remote = cfg.remote;
+          inherit (cfg) remote;
           environmentFile = rcloneEnv;
           settings = {
             addr = [ "0.0.0.0:${toString cfg.port}" ];

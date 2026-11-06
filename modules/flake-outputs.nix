@@ -129,7 +129,10 @@
             ;
         };
         homelab = import ../lib/checks/homelab.nix { inherit homelab; };
-        ideapad = import ../lib/checks/ideapad.nix { inherit ideapad pkgs; };
+        ideapad = import ../lib/checks/ideapad.nix {
+          inherit ideapad;
+          pkgs = self.nixosConfigurations.ideapad.pkgs;
+        };
         laptop = import ../lib/checks/laptop.nix { inherit home laptop; };
         netcup = import ../lib/checks/netcup.nix { inherit lib netcup; };
         security = import ../lib/checks/security.nix {

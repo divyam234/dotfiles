@@ -53,26 +53,32 @@ in
 
         # Disable the legacy units explicitly: autoPrune=false leaves empty
         # unit definitions in the current NixOS Podman module.
-        systemd.services.podman-prune.enable = false;
-        systemd.timers.podman-prune.enable = false;
+        systemd = {
+          services = {
+            podman-prune.enable = false;
 
-        systemd.services.podman-cleanup = {
-          description = "Clean unused root-owned container storage";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${cleanup pkgs}/bin/podman-cleanup";
-            Nice = 19;
-            IOSchedulingClass = "idle";
+            podman-cleanup = {
+              description = "Clean unused root-owned container storage";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${cleanup pkgs}/bin/podman-cleanup";
+                Nice = 19;
+                IOSchedulingClass = "idle";
+              };
+            };
           };
-        };
-        systemd.timers.podman-cleanup = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "Sun *-*-* 04:00:00";
-            RandomizedDelaySec = "45m";
-            AccuracySec = "1m";
-            # Do not run destructive catch-up cleanup outside the night window.
-            Persistent = false;
+          timers = {
+            podman-prune.enable = false;
+            podman-cleanup = {
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnCalendar = "Sun *-*-* 04:00:00";
+                RandomizedDelaySec = "45m";
+                AccuracySec = "1m";
+                # Do not run destructive catch-up cleanup outside the night window.
+                Persistent = false;
+              };
+            };
           };
         };
       };

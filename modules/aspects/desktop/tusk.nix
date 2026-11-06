@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   den.aspects.tusk = {
     homeManager =
       {
@@ -69,13 +68,15 @@
         };
       in
       {
-        home.packages = [ pkgs.tusk ];
+        home = {
+          packages = [ pkgs.tusk ];
 
-        # Tusk reads this hard-coded Omarchy path and reloads the palette live.
-        home.file.".local/state/omarchy/current/theme/colors.toml".source = palette;
-        home.activation.tuskStylix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          ${syncSettings}/bin/tusk-sync-theme
-        '';
+          # Tusk reads this hard-coded Omarchy path and reloads the palette live.
+          file.".local/state/omarchy/current/theme/colors.toml".source = palette;
+          activation.tuskStylix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            ${syncSettings}/bin/tusk-sync-theme
+          '';
+        };
       };
   };
 }

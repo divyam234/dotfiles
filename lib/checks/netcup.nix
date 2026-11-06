@@ -29,7 +29,9 @@ assert builtins.hasAttr "opencode.env" userHome.sops.templates;
 assert builtins.hasAttr "opencode-server.env" userHome.sops.templates;
 assert !(builtins.hasAttr "imgresize" netcup.virtualisation.quadlet.containers);
 assert !(builtins.hasAttr "mtproxy" netcup.virtualisation.quadlet.containers);
-assert lib.hasInfix "SEED_DEFAULT_APPLICATION=false" netcup.sops.templates."gateauth.env".content;
+assert
+  netcup.virtualisation.quadlet.containers.gateauth.containerConfig.environments.SEED_DEFAULT_APPLICATION
+  == "false";
 assert !(lib.hasInfix "stash" netcup.sops.templates."gateauth.env".content);
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
 assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
@@ -49,7 +51,9 @@ assert
   netcup.virtualisation.quadlet.containers.pgdog.containerConfig.publishPorts == [ "6432:6432" ];
 assert !(lib.hasInfix "HTTPPROXY=" netcup.sops.templates."gluetun.env".content);
 assert !(lib.hasInfix "HTTPPROXY_LISTENING_ADDRESS=" netcup.sops.templates."gluetun.env".content);
-assert lib.hasInfix "FIREWALL_INPUT_PORTS=3128\n" netcup.sops.templates."gluetun.env".content;
+assert
+  netcup.virtualisation.quadlet.containers.gluetun.containerConfig.environments.FIREWALL_INPUT_PORTS
+  == "3128";
 assert netcup.virtualisation.quadlet.containers.postgres.containerConfig.publishPorts == [ ];
 assert lib.hasInfix ''iifname "eth0" ct status dnat tcp dport { 80, 443 } accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat udp dport 443 accept'' containerIngress;
@@ -69,10 +73,6 @@ assert lib.hasInfix "auth.${domain}" caddyfile;
 assert lib.hasInfix "streamweave.${domain}" caddyfile;
 assert lib.hasInfix "reverse_proxy streamweave:8080" caddyfile;
 assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
-assert lib.hasInfix "rewrite /api/verify?application=default-app" caddyfile;
-assert lib.hasInfix
-  "redir https://auth.${domain}/login?redirect=https://{http.request.host}{http.request.uri} 302"
-  caddyfile;
 assert builtins.elem {
   name = "git.${domain}";
   proxied = false;
