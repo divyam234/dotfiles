@@ -27,8 +27,6 @@ assert
   == userHome.systemd.user.services.openchamber.Service.EnvironmentFile;
 assert builtins.hasAttr "opencode.env" userHome.sops.templates;
 assert builtins.hasAttr "opencode-server.env" userHome.sops.templates;
-assert !(builtins.hasAttr "stash" netcup.virtualisation.quadlet.containers);
-assert !(builtins.hasAttr "stash-worker" netcup.virtualisation.quadlet.containers);
 assert !(builtins.hasAttr "imgresize" netcup.virtualisation.quadlet.containers);
 assert !(builtins.hasAttr "mtproxy" netcup.virtualisation.quadlet.containers);
 assert lib.hasInfix "SEED_DEFAULT_APPLICATION=false" netcup.sops.templates."gateauth.env".content;
@@ -68,7 +66,6 @@ assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
-assert !(lib.hasInfix "stash.${domain}" caddyfile);
 assert lib.hasInfix "streamweave.${domain}" caddyfile;
 assert lib.hasInfix "reverse_proxy streamweave:8080" caddyfile;
 assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
@@ -100,6 +97,11 @@ assert builtins.elem {
   target = "public-ipv4";
   type = "A";
 } dnsManifest.records;
-assert !(builtins.any (record: record.name == "stash.${domain}") dnsManifest.records);
+assert builtins.elem {
+  name = "stash.${domain}";
+  proxied = false;
+  target = "tailscale-ipv4";
+  type = "A";
+} dnsManifest.records;
 assert !(builtins.hasAttr "rclone-serve-webdav" userHome.systemd.user.services);
 true
