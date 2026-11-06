@@ -13,7 +13,7 @@
           dysk
           eza
           fd
-          ffmpeg
+          ffmpeg-full
           file
           gdb
           glow

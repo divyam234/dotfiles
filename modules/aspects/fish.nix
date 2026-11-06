@@ -9,7 +9,7 @@
           nix-your-shell
           (local.dot.override {
             hosts = builtins.attrNames self.nixosConfigurations;
-            homes = builtins.attrNames self.homeConfigurations;
+            homes = builtins.attrNames (self.homeConfigurations or { });
           })
         ];
 

@@ -17,6 +17,6 @@ _: {
       }
     ];
 
-    users.bhunter.classes = [ "user" ];
+    users.bhunter = { };
   };
 }

@@ -4,6 +4,7 @@
     includes = [
       den.aspects.base
       den.aspects.workstation
+      den.aspects.home-manager-policy
       den.aspects.btrfs
       den.aspects.oci-base
       den.aspects.container-network

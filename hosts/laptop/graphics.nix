@@ -43,6 +43,5 @@
     mesa-demos
     intel-gpu-tools
     nvtopPackages.full
-    ffmpeg-full
   ];
 }

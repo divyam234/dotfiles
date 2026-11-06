@@ -22,7 +22,7 @@
     inputs.flake-file.flakeModules.dendritic
     inputs.den.flakeModule
     ./core/defaults.nix
-    (inputs.import-tree.match ".*/default\\.nix" ../hosts)
+    (inputs.import-tree.match ".*/(default|entity)\\.nix" ../hosts)
   ];
 
   _module.args.__findFile = den.lib.__findFile;

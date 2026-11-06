@@ -144,6 +144,6 @@ assert netcupHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert ideapadHome.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert builtins.hasAttr "sops-nix" netcupHome.systemd.user.services;
 assert builtins.hasAttr "sops-nix" ideapadHome.systemd.user.services;
-assert home.sops.age.keyFile == "${home.xdg.configHome}/sops/age/keys.txt";
+assert home.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
 assert builtins.hasAttr "sops-nix" home.systemd.user.services;
 true

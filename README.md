@@ -6,7 +6,7 @@ NixOS and Home Manager configuration for three machines, built with flakes, flak
 
 | Host | Platform | Configuration |
 | --- | --- | --- |
-| `laptop` | `x86_64-linux` | NixOS with standalone Home Manager (`bhunter@laptop`) |
+| `laptop` | `x86_64-linux` | NixOS with integrated Home Manager |
 | `netcup` | `aarch64-linux` | NixOS server with integrated Home Manager |
 | `homelab` | `x86_64-linux` | NixOS server with integrated Home Manager |
 
@@ -16,8 +16,8 @@ NixOS and Home Manager configuration for three machines, built with flakes, flak
 entity -> host aspect -> reusable aspects -> NixOS/Home Manager modules
 ```
 
-- `modules/entities/` — data-only host, home, and user declarations
-- `hosts/` — hardware and host-specific configuration
+- `modules/entities/` — data-only home and user declarations
+- `hosts/` — data-only host declarations (`entity.nix`), host aspects (`default.nix`), and hardware configuration
 - `modules/aspects/` — reusable roles, features, services, and application configuration
 - `modules/core/` — Den schema and shared defaults
 - `lib/` — helpers and evaluation checks
@@ -37,15 +37,15 @@ just write-flake
 just fmt                     # format tracked Nix files
 just check                   # run all flake checks
 just eval laptop             # evaluate a NixOS host
-just eval-hm                 # evaluate bhunter@laptop
+just eval-hm laptop          # evaluate laptop's integrated Home Manager
 just build netcup            # build without activating
 just test netcup             # activate until reboot
 just switch netcup           # build and activate
-just home                    # switch bhunter@laptop Home Manager
+just home laptop             # switch laptop, including Home Manager
 cargo test --manifest-path packages/svc/Cargo.toml
 ```
 
-Host recipes default to the current machine's hostname (`hostname`), so `just switch` on `ideapad` targets `ideapad`. Pass a host explicitly to override it, for example `just switch netcup`. The default Home Manager configuration remains `bhunter@laptop`.
+Host recipes default to the current machine's hostname (`hostname`), so `just switch` on `ideapad` targets `ideapad`. Pass a host explicitly to override it, for example `just switch netcup`. Home Manager is integrated and activates with the system; `just home` is an alias for a system switch.
 
 Container storage cleanup runs through system and user `podman-cleanup.service`
 oneshots, scheduled on Sundays at 04:00 with up to 45 minutes of randomized delay.
