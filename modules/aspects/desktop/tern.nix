@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   den.aspects.tern = {
     homeManager =
       { config, pkgs, ... }:
