@@ -70,11 +70,11 @@
     },
     "den": {
       "locked": {
-        "lastModified": 1792618207,
-        "narHash": "sha256-iBpvVBVBnynNWW9sLX5oKVigXU28oO2oiMPXgcLO1HI=",
+        "lastModified": 1793924417,
+        "narHash": "sha256-ut7iiD2h2mbtWJaku3wJcQkLmZa7rmzOa6LyWPj9U2s=",
         "owner": "denful",
         "repo": "den",
-        "rev": "0f7675b0b789eabe1a62f8a31b5323a7ad3ca5c4",
+        "rev": "2f1ae4aa27e756684d1fb5ebc1d25267727bd305",
         "type": "github"
       },
       "original": {
@@ -333,11 +333,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793853967,
-        "narHash": "sha256-r63z+nsGhrtKlHbuuRZhp+y/E7Z7F64xgfrpc8DzOSQ=",
+        "lastModified": 1793932897,
+        "narHash": "sha256-7dbiy0J5DjsIWkIjcKNhIsoMlze6qQuIH8ScdriBtQo=",
         "owner": "divyam234",
         "repo": "nix-pkgs",
-        "rev": "85f387edee4b6c8cd2851cc5e584eee485392a3b",
+        "rev": "37910e2a0f2683ad5af85a4a0eea916b7f8fe48a",
         "type": "github"
       },
       "original": {
@@ -528,11 +528,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793780968,
-        "narHash": "sha256-T1l0z4tkSIUqSi56MAb3Peh2iu2Z9Xq9ywOVaXu2b0s=",
+        "lastModified": 1793923186,
+        "narHash": "sha256-0WsKB5E/kTDDsxeTiE+wzwXs7E2MFHNsC2KL3cloh3M=",
         "owner": "tgdrive",
         "repo": "teldrive",
-        "rev": "644f0d2d3159abe76367e9cae0eabf4c94b86440",
+        "rev": "1b69a80f90f159d2c110c0b37106d44652067ac1",
         "type": "github"
       },
       "original": {
