@@ -45,7 +45,6 @@
           tree
           unzip
           usbutils
-          viddy
           xxd
           yq-go
           zoxide
