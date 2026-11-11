@@ -57,6 +57,7 @@
           systemd-tmpfiles-clean.serviceConfig.ImportCredential = lib.mkForce [ "" ];
           systemd-tmpfiles-resetup.serviceConfig.ImportCredential = lib.mkForce [ "" ];
           systemd-sysctl.serviceConfig.ImportCredential = lib.mkForce [ "" ];
+          console-getty.serviceConfig.ImportCredential = lib.mkForce [ "" ];
           # DynamicUser allocates Android app-range UIDs with blocked egress.
           nix-cache.serviceConfig.DynamicUser = lib.mkForce false;
           systemd-udev-trigger = {

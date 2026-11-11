@@ -24,6 +24,7 @@ assert capri.systemd.services.systemd-resolved.serviceConfig.ImportCredential ==
 assert capri.systemd.services.systemd-tmpfiles-setup.serviceConfig.ImportCredential == [ "" ];
 assert capri.systemd.services.systemd-tmpfiles-resetup.serviceConfig.ImportCredential == [ "" ];
 assert capri.systemd.services.systemd-sysctl.serviceConfig.ImportCredential == [ "" ];
+assert capri.systemd.services.console-getty.serviceConfig.ImportCredential == [ "" ];
 assert !capri.systemd.services.nix-cache.serviceConfig.DynamicUser;
 assert capri.users.users.nix-cache.uid == 8999;
 assert capri.boot.kernel.sysctl."net.ipv4.ip_forward" == 1;
