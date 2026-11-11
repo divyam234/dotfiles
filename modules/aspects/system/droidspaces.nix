@@ -33,6 +33,9 @@
         };
       };
       environment.systemPackages = [ pkgs.iptables-legacy ];
+      # Android applies app-UID network policy to the default 30001+ range.
+      # Keep distinct, unprivileged build users below AID_APP_START (10000).
+      ids.uids.nixbld = lib.mkForce 9000;
 
       systemd = {
         network.enable = lib.mkForce false;
