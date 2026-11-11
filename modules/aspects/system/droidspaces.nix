@@ -58,8 +58,6 @@
           systemd-tmpfiles-resetup.serviceConfig.ImportCredential = lib.mkForce [ "" ];
           systemd-sysctl.serviceConfig.ImportCredential = lib.mkForce [ "" ];
           console-getty.serviceConfig.ImportCredential = lib.mkForce [ "" ];
-          # DynamicUser allocates Android app-range UIDs with blocked egress.
-          nix-cache.serviceConfig.DynamicUser = lib.mkForce false;
           systemd-udev-trigger = {
             serviceConfig.ExecStart = lib.mkForce [
               ""
@@ -105,7 +103,6 @@
           aid_inet.gid = 3003;
           aid_net_raw.gid = 3004;
           aid_net_admin.gid = 3005;
-          nix-cache.gid = 8999;
         };
         users = {
           root.extraGroups = [
@@ -114,11 +111,6 @@
             "aid_net_admin"
           ];
           bhunter.extraGroups = [ "aid_inet" ];
-          nix-cache = {
-            isSystemUser = true;
-            uid = 8999;
-            group = "nix-cache";
-          };
         };
       };
     };
