@@ -1,0 +1,25 @@
+{ capri, lib }:
+assert capri.boot.isContainer;
+assert capri.nixpkgs.hostPlatform.system == "aarch64-linux";
+assert lib.versions.major capri.systemd.package.version == "262";
+assert capri.system.build.tarball.type == "derivation";
+assert capri.services.tailscale.enable;
+assert capri.services.openssh.ports == [ 2222 ];
+assert !capri.services.openssh.settings.PasswordAuthentication;
+assert capri.sops.age.keyFile == "/var/lib/sops-nix/key.txt";
+assert capri.sops.secrets."users/bhunter/password".neededForUsers;
+assert capri.home-manager.users.bhunter.home.username == "bhunter";
+assert capri.boot.kernelModules == [ ];
+assert !capri.systemd.network.enable;
+assert !capri.services.timesyncd.enable;
+assert !capri.services.fail2ban.enable;
+assert !capri.virtualisation.podman.enable;
+assert !capri.services.caddy.enable;
+assert capri.systemd.services.dhcpcd.serviceConfig.ProtectProc == "default";
+assert capri.systemd.services.systemd-journald.serviceConfig.ImportCredential == [ "" ];
+assert capri.systemd.services.systemd-resolved.serviceConfig.ImportCredential == [ "" ];
+assert capri.systemd.services.systemd-tmpfiles-setup.serviceConfig.ImportCredential == [ "" ];
+assert capri.boot.kernel.sysctl."net.ipv4.ip_forward" == 1;
+assert capri.boot.kernel.sysctl."net.ipv6.conf.all.forwarding" == 1;
+assert builtins.attrNames capri.virtualisation.quadlet.containers == [ ];
+true

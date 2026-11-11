@@ -110,6 +110,10 @@
       laptop = self.nixosConfigurations.laptop.config;
       home = laptop.home-manager.users.bhunter;
       contracts = {
+        capri = import ../lib/checks/capri.nix {
+          capri = self.nixosConfigurations.capri.config;
+          inherit lib;
+        };
         cache = import ../lib/checks/cache.nix {
           inherit
             homelab
