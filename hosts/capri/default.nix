@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, lib, ... }:
 {
   den.aspects.capri = {
     includes = [
@@ -8,8 +8,14 @@
       den.aspects.server
       den.aspects.home-manager-policy
       den.aspects.droidspaces
+      den.aspects.teldrive-native
     ];
 
-    nixos.system.stateVersion = "26.05";
+    nixos = {
+      system.stateVersion = "26.05";
+      services.teldrive.settings.http.address = lib.mkForce "0.0.0.0:8090";
+      services.teldrive.user = "root";
+      services.teldrive.group = "root";
+    };
   };
 }
