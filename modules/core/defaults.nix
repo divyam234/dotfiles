@@ -51,6 +51,8 @@ in
     };
 
     schema = {
+      host.includes = [ den.batteries.user-aspects ];
+
       home.includes = [
         (
           { home, ... }:

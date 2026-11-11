@@ -9,7 +9,6 @@
         pulse.enable = true;
         alsa.enable = true;
         alsa.support32Bit = true;
-        jack.enable = true;
       };
 
       users.users.${user.userName}.extraGroups = [ "audio" ];
