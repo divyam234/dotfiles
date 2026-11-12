@@ -1,0 +1,1523 @@
+diff --git a/arch/arm/lib/Makefile b/arch/arm/lib/Makefile
+index 7b60cecb..92052c05 100644
+--- a/arch/arm/lib/Makefile
++++ b/arch/arm/lib/Makefile
+@@ -54,6 +54,9 @@ obj-$(CONFIG_$(PHASE_)SEMIHOSTING) += semihosting.o
+ 
+ ifneq ($(filter y,$(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR) $(CONFIG_SAVE_PREV_BL_FDT_ADDR)),)
+ obj-y += save_prev_bl_data.o
++ifdef CONFIG_ARM64
++obj-y += save_boot_params.o
++endif
+ endif
+ 
+ # obj-$(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR) += save_prev_bl_data.o
+diff --git a/arch/arm/lib/save_boot_params.S b/arch/arm/lib/save_boot_params.S
+new file mode 100644
+index 00000000..99b60fe4
+--- /dev/null
++++ b/arch/arm/lib/save_boot_params.S
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++#include <linux/linkage.h>
++
++/* Entry precedes both stack initialization and position-independent fixups. */
++ENTRY(save_boot_params)
++	adrp	x1, saved_prev_bl_x0
++	add	x1, x1, :lo12:saved_prev_bl_x0
++	str	x0, [x1]
++	b	save_boot_params_ret
++ENDPROC(save_boot_params)
+diff --git a/arch/arm/lib/save_prev_bl_data.c b/arch/arm/lib/save_prev_bl_data.c
+index 4357acae..5055efca 100644
+--- a/arch/arm/lib/save_prev_bl_data.c
++++ b/arch/arm/lib/save_prev_bl_data.c
+@@ -14,7 +14,10 @@
+ #include <asm/system.h>
+ #include <asm/armv8/mmu.h>
+ 
+-static ulong reg0 __section(".data");
++#ifdef CONFIG_ARM64
++ulong saved_prev_bl_x0 __section(".data");
++#else
++static ulong saved_prev_bl_x0 __section(".data");
+ 
+ /**
+  * Save x0 register value, assuming previous bootloader set it to
+@@ -22,9 +25,10 @@ static ulong reg0 __section(".data");
+  */
+ void save_boot_params(ulong r0)
+ {
+-	reg0 = r0;
++	saved_prev_bl_x0 = r0;
+ 	save_boot_params_ret();
+ }
++#endif
+ 
+ bool is_addr_accessible(phys_addr_t addr)
+ {
+@@ -46,7 +50,7 @@ bool is_addr_accessible(phys_addr_t addr)
+ 
+ phys_addr_t get_prev_bl_fdt_addr(void)
+ {
+-	return reg0;
++	return saved_prev_bl_x0;
+ }
+ 
+ int save_prev_bl_data(void)
+@@ -55,24 +59,24 @@ int save_prev_bl_data(void)
+ 	int node;
+ 	u64 initrd_start_prop;
+ 
+-	if (!is_addr_accessible((phys_addr_t)reg0))
++	if (!is_addr_accessible((phys_addr_t)saved_prev_bl_x0))
+ 		return -ENODATA;
+ 
+-	fdt_blob = (struct fdt_header *)reg0;
++	fdt_blob = (struct fdt_header *)saved_prev_bl_x0;
+ 	if (!fdt_valid(&fdt_blob)) {
+-		pr_warn("%s: address 0x%lx is not a valid fdt\n", __func__, reg0);
++		pr_warn("%s: address 0x%lx is not a valid fdt\n", __func__, saved_prev_bl_x0);
+ 		return -ENODATA;
+ 	}
+ 
+ 	if (IS_ENABLED(CONFIG_SAVE_PREV_BL_FDT_ADDR))
+-		env_set_addr("prevbl_fdt_addr", (void *)reg0);
++		env_set_addr("prevbl_fdt_addr", (void *)saved_prev_bl_x0);
+ 	if (!IS_ENABLED(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR))
+ 		return 0;
+ 
+ 	node = fdt_path_offset(fdt_blob, "/chosen");
+ 	if (!node) {
+ 		pr_warn("%s: chosen node not found in device tree at addr: 0x%lx\n",
+-					__func__, reg0);
++					__func__, saved_prev_bl_x0);
+ 		return -ENODATA;
+ 	}
+ 	/*
+diff --git a/arch/arm/mach-snapdragon/Kconfig b/arch/arm/mach-snapdragon/Kconfig
+index d3de8693..06b1773a 100644
+--- a/arch/arm/mach-snapdragon/Kconfig
++++ b/arch/arm/mach-snapdragon/Kconfig
+@@ -1,5 +1,22 @@
+ if ARCH_SNAPDRAGON
+ 
++config QCOM_ABL_MEMORY_HANDOFF
++	bool "Merge ABL firmware memory into an internal Snapdragon control tree"
++	depends on SAVE_PREV_BL_FDT_ADDR && OF_SEPARATE
++	help
++	  Preserve the incoming ABL RAM banks, firmware reservations, and
++	  no-map regions while using a separate upstream driver device tree.
++	  Protect the full relocation arena and EFI memory descriptors.
++	  Opt-in only for tested devices with a compatible ABL handoff.
++
++config MOTOROLA_CAPRI
++	select QCOM_ABL_MEMORY_HANDOFF
++	bool "Motorola Moto G10 Power XT2127-4"
++	help
++	  Use an internal Capri driver tree while retaining the live ABL RAM
++	  banks and firmware reservations. Android vendor_boot and DTBO are
++	  left unchanged. The board is launched as a header-v3 boot image.
++
+ config SYS_SOC
+ 	default "snapdragon"
+ 
+@@ -24,6 +41,7 @@ config SYS_MALLOC_LEN
+ 	default 0x800000
+ 
+ config LNX_KRNL_IMG_TEXT_OFFSET_BASE
++	default 0x40000000 if MOTOROLA_CAPRI
+ 	default 0x80000000
+ 
+ config SYS_BOARD
+diff --git a/arch/arm/mach-snapdragon/Makefile b/arch/arm/mach-snapdragon/Makefile
+index 343e825c..660ddb0a 100644
+--- a/arch/arm/mach-snapdragon/Makefile
++++ b/arch/arm/mach-snapdragon/Makefile
+@@ -3,5 +3,6 @@
+ # (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
+ 
+ obj-y += board.o
++obj-$(CONFIG_QCOM_ABL_MEMORY_HANDOFF) += qcom-abl-memory.o
+ obj-$(CONFIG_EFI_HAVE_CAPSULE_SUPPORT) += capsule_update.o
+ obj-$(CONFIG_OF_LIVE) += of_fixup.o
+diff --git a/arch/arm/mach-snapdragon/board.c b/arch/arm/mach-snapdragon/board.c
+index 829a0109..4cba565d 100644
+--- a/arch/arm/mach-snapdragon/board.c
++++ b/arch/arm/mach-snapdragon/board.c
+@@ -39,7 +39,8 @@ DECLARE_GLOBAL_DATA_PTR;
+ 
+ enum qcom_boot_source qcom_boot_source __section(".data") = 0;
+ 
+-static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
++static struct mm_region rbx_mem_map[
++	IS_ENABLED(CONFIG_QCOM_ABL_MEMORY_HANDOFF) ? 128 : CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
+ 
+ struct mm_region *mem_map = rbx_mem_map;
+ 
+@@ -223,6 +224,15 @@ int board_fdt_blob_setup(void **fdtp)
+ 		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n",
+ 		      (phys_addr_t)external_fdt);
+ 
++#ifdef CONFIG_QCOM_ABL_MEMORY_HANDOFF
++	if (!internal_valid || !external_valid)
++		panic("Qualcomm ABL: internal and live firmware trees are required\n");
++	ret = qcom_abl_fdt_setup(fdtp, external_fdt);
++	if (ret)
++		panic("Qualcomm ABL: refusing unsafe firmware handoff: %s\n", fdt_strerror(ret));
++	internal_fdt = *fdtp;
++#endif
++
+ 	/* Prefer memory information from internal DT if it's present */
+ 	if (internal_valid)
+ 		ret = qcom_parse_memory(internal_fdt);
+@@ -251,7 +261,7 @@ int board_fdt_blob_setup(void **fdtp)
+ 
+ 	if (internal_valid) {
+ 		debug("Using built in FDT\n");
+-		ret = -EEXIST;
++		ret = IS_ENABLED(CONFIG_QCOM_ABL_MEMORY_HANDOFF) ? 0 : -EEXIST;
+ 	} else {
+ 		debug("Using external FDT\n");
+ 		*fdtp = external_fdt;
+@@ -599,7 +609,7 @@ static void build_mem_map(void)
+ 			 PTE_BLOCK_NON_SHARE |
+ 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+ 
+-	for (i = 1, j = 0; i < ARRAY_SIZE(rbx_mem_map) - 1 && gd->bd->bi_dram[j].size; i++, j++) {
++	for (i = 1, j = 0; j < CONFIG_NR_DRAM_BANKS && gd->bd->bi_dram[j].size; i++, j++) {
+ 		mem_map[i].phys = gd->bd->bi_dram[j].start;
+ 		mem_map[i].virt = mem_map[i].phys;
+ 		mem_map[i].size = gd->bd->bi_dram[j].size;
+@@ -610,6 +620,10 @@ static void build_mem_map(void)
+ 	mem_map[i].phys = UINT64_MAX;
+ 	mem_map[i].size = 0;
+ 
++#ifdef CONFIG_QCOM_ABL_MEMORY_HANDOFF
++	qcom_abl_mem_map(mem_map, ARRAY_SIZE(rbx_mem_map));
++#endif
++
+ #ifdef DEBUG
+ 	debug("Configured memory map:\n");
+ 	for (i = 0; mem_map[i].size; i++)
+diff --git a/arch/arm/mach-snapdragon/qcom-abl-memory.c b/arch/arm/mach-snapdragon/qcom-abl-memory.c
+new file mode 100644
+index 00000000..f113ced2
+--- /dev/null
++++ b/arch/arm/mach-snapdragon/qcom-abl-memory.c
+@@ -0,0 +1,576 @@
++// SPDX-License-Identifier: GPL-2.0+
++/* Merge runtime ABL memory and reservations into an upstream driver DT. */
++#include <asm/armv8/mmu.h>
++#include <asm/global_data.h>
++#include <asm/unaligned.h>
++#include <env_internal.h>
++#include <efi_loader.h>
++#include <fdt_support.h>
++#include <init.h>
++#include <linux/sizes.h>
++#include <malloc.h>
++#include "qcom-priv.h"
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#define QCOM_ABL_FDT_LIMIT SZ_2M
++#define QCOM_ABL_PAGE SZ_4K
++
++/* Used before BSS is cleared, and before even the early allocator is safe. */
++static unsigned char qcom_abl_fdt[SZ_128K]
++	__aligned(8) __section(".data") = { 0 };
++
++static bool range_valid(u64 start, u64 size)
++{
++	return size && start <= ~0ULL - size &&
++	       start + size <= ~0ULL - (QCOM_ABL_PAGE - 1);
++}
++
++static int check_blob(const void *fdt, size_t bound)
++{
++	uintptr_t addr = (uintptr_t)fdt;
++	u32 size;
++
++	if (!fdt || (addr & 7) || bound < sizeof(struct fdt_header) ||
++	    addr > UINTPTR_MAX - bound || fdt_check_header(fdt))
++		return -FDT_ERR_BADMAGIC;
++	size = fdt_totalsize(fdt);
++	if (size > bound || size < sizeof(struct fdt_header))
++		return -FDT_ERR_TRUNCATED;
++	return fdt_check_full(fdt, size);
++}
++
++static u64 cells_read(const fdt32_t *p, int cells)
++{
++	u64 value = fdt32_to_cpu(*p);
++
++	if (cells == 2)
++		value = (value << 32) | fdt32_to_cpu(p[1]);
++	return value;
++}
++
++static bool enabled(const void *fdt, int node)
++{
++	const char *status;
++	int len;
++
++	while (node > 0) {
++		status = fdt_getprop(fdt, node, "status", &len);
++		if (status && !((len == sizeof("okay") && !memcmp(status, "okay", len)) ||
++				(len == sizeof("ok") && !memcmp(status, "ok", len))))
++			return false;
++		node = fdt_parent_offset(fdt, node);
++	}
++	return true;
++}
++
++/* Resolve the existing /chosen simple-framebuffer, using its parent's
++ * address/size cell counts. Capri's reg has FOUR 32-bit cells (2+2),
++ * not two 64-bit cells to be checked using sizeof(fdt64_t).
++ * There is no fallback: never silently disable firmware memory protection.
++ */
++static int qcom_abl_framebuffer(const void *fdt, u64 *start, u64 *end)
++{
++	const fdt32_t *reg;
++	u64 size;
++	int chosen, node, ac, sc, len, count = 0;
++
++	chosen = fdt_path_offset(fdt, "/chosen");
++	if (chosen < 0)
++		return -FDT_ERR_NOTFOUND;
++	ac = fdt_address_cells(fdt, chosen);
++	sc = fdt_size_cells(fdt, chosen);
++	if ((ac != 1 && ac != 2) || (sc != 1 && sc != 2))
++		return -FDT_ERR_BADNCELLS;
++	fdt_for_each_subnode(node, fdt, chosen) {
++		if (!enabled(fdt, node) ||
++		    fdt_node_check_compatible(fdt, node, "simple-framebuffer"))
++			continue;
++		reg = fdt_getprop(fdt, node, "reg", &len);
++		if (!reg || len != (ac + sc) * sizeof(*reg) || ++count != 1)
++			return -FDT_ERR_BADVALUE;
++		*start = cells_read(reg, ac);
++		size = cells_read(reg + ac, sc);
++		if (!range_valid(*start, size) ||
++		    ((*start | size) & (QCOM_ABL_PAGE - 1)))
++			return -FDT_ERR_BADVALUE;
++		*end = *start + size;
++	}
++	return count == 1 ? 0 : -FDT_ERR_NOTFOUND;
++}
++
++/* LMB rejects partial overlaps and ranges crossing a memory-bank boundary.
++ * Keep a page-rounded union within each RAM bank; retain the original
++ * reserved-memory nodes separately for their CPU mapping policy.
++ */
++static int reserve_range(void *fdt, u64 start, u64 size)
++{
++	fdt64_t banks[CONFIG_NR_DRAM_BANKS * 2];
++	const fdt64_t *reg;
++	u64 end, base, limit, low, high, other, length;
++	int node, len, i, j, ret;
++
++	if (!range_valid(start, size))
++		return -FDT_ERR_BADVALUE;
++	end = ALIGN(start + size, QCOM_ABL_PAGE);
++	start = ALIGN_DOWN(start, QCOM_ABL_PAGE);
++	node = fdt_path_offset(fdt, "/memory");
++	reg = fdt_getprop(fdt, node, "reg", &len);
++	if (!reg || len <= 0 || len > sizeof(banks) || len % (2 * sizeof(*reg)))
++		return -FDT_ERR_BADVALUE;
++	/* Updating the reserve map moves the structure block and its properties. */
++	memcpy(banks, reg, len);
++	for (i = 0; i < len / sizeof(*banks); i += 2) {
++		base = fdt64_ld(&banks[i]);
++		limit = base + fdt64_ld(&banks[i + 1]);
++		low = max(start, base);
++		high = min(end, limit);
++		if (low >= high)
++			continue;
++		for (j = 0; j < fdt_num_mem_rsv(fdt);) {
++			ret = fdt_get_mem_rsv(fdt, j, &other, &length);
++			if (ret)
++				return ret;
++			if (other < base || other + length > limit ||
++			    other > high || other + length < low) {
++				j++;
++				continue;
++			}
++			low = min(low, other);
++			high = max(high, other + length);
++			ret = fdt_del_mem_rsv(fdt, j);
++			if (ret)
++				return ret;
++			/* An expanded union may now touch an earlier entry. */
++			j = 0;
++		}
++		ret = fdt_add_mem_rsv(fdt, low, high - low);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int import_memory(void *dst, const void *src)
++{
++	fdt64_t banks[CONFIG_NR_DRAM_BANKS * 2];
++	const fdt32_t *reg;
++	const char *type;
++	u64 start, size, other, other_size;
++	int node, len, count = 0, i, ac, sc, ret;
++
++	ac = fdt_address_cells(src, 0);
++	sc = fdt_size_cells(src, 0);
++	if ((ac != 1 && ac != 2) || (sc != 1 && sc != 2))
++		return -FDT_ERR_BADNCELLS;
++	fdt_for_each_subnode(node, src, 0) {
++		type = fdt_getprop(src, node, "device_type", &len);
++		if (!type || len != sizeof("memory") || strcmp(type, "memory") ||
++		    !enabled(src, node))
++			continue;
++		reg = fdt_getprop(src, node, "reg", &len);
++		if (!reg || len <= 0 || len % ((ac + sc) * sizeof(*reg)))
++			return -FDT_ERR_BADVALUE;
++		while (len) {
++			start = cells_read(reg, ac);
++			size = cells_read(reg + ac, sc);
++			if (!range_valid(start, size) || (start | size) & (QCOM_ABL_PAGE - 1) ||
++			    count == CONFIG_NR_DRAM_BANKS)
++				return -FDT_ERR_BADVALUE;
++			for (i = 0; i < count; i++) {
++				other = fdt64_to_cpu(banks[2 * i]);
++				other_size = fdt64_to_cpu(banks[2 * i + 1]);
++				if (start < other + other_size && other < start + size)
++					return -FDT_ERR_BADVALUE;
++			}
++			/* Ascending order also avoids the common parser's lossy comparator. */
++			for (i = count; i && fdt64_to_cpu(banks[2 * (i - 1)]) > start; i--) {
++				banks[2 * i] = banks[2 * (i - 1)];
++				banks[2 * i + 1] = banks[2 * (i - 1) + 1];
++			}
++			banks[2 * i] = cpu_to_fdt64(start);
++			banks[2 * i + 1] = cpu_to_fdt64(size);
++			count++;
++			reg += ac + sc;
++			len -= (ac + sc) * sizeof(*reg);
++		}
++	}
++	if (!count)
++		return -FDT_ERR_NOTFOUND;
++	/* Remove unit-addressed reference memory nodes as well as /memory. */
++	for (;;) {
++		fdt_for_each_subnode(node, dst, 0) {
++			const char *name = fdt_get_name(dst, node, NULL);
++
++			if (!strcmp(name, "memory") || !strncmp(name, "memory@", 7))
++				break;
++		}
++		if (node < 0)
++			break;
++		ret = fdt_del_node(dst, node);
++		if (ret)
++			return ret;
++	}
++	ret = fdt_setprop_u32(dst, 0, "#address-cells", 2);
++	if (ret)
++		return ret;
++	ret = fdt_setprop_u32(dst, 0, "#size-cells", 2);
++	if (ret)
++		return ret;
++	node = fdt_add_subnode(dst, 0, "memory");
++	if (node < 0)
++		return node;
++	ret = fdt_setprop_string(dst, node, "device_type", "memory");
++	if (ret)
++		return ret;
++	return fdt_setprop(dst, node, "reg", banks, count * 2 * sizeof(*banks));
++}
++
++/* Never copy downstream phandles, compatibles, or hardware references. Each
++ * tuple gets its own node so consumers which only read tuple zero remain safe.
++ */
++static int import_reservations(void *dst, const void *src)
++{
++	const fdt32_t *reg;
++	fdt64_t tuple[2];
++	u64 start, size, fb_start, fb_end;
++	char name[40];
++	int parent, node, out, root, ac, sc, len, n = 0, i, ret;
++
++	parent = fdt_path_offset(dst, "/reserved-memory");
++	if (parent >= 0) {
++		/* Any remaining reference is a control-DT integration error. */
++		int dev = -1, plen, j, target;
++		const fdt32_t *refs;
++
++		while ((dev = fdt_next_node(dst, dev, NULL)) >= 0) {
++			if (!enabled(dst, dev))
++				continue;
++			refs = fdt_getprop(dst, dev, "memory-region", &plen);
++			if (!refs)
++				continue;
++			if (plen <= 0 || plen % sizeof(*refs))
++				return -FDT_ERR_BADPHANDLE;
++			for (j = 0; j < plen / sizeof(*refs); j++) {
++				target = fdt_node_offset_by_phandle(dst, fdt32_to_cpu(refs[j]));
++				if (target >= 0 && fdt_parent_offset(dst, target) == parent)
++					return -FDT_ERR_BADPHANDLE;
++			}
++		}
++		ret = fdt_del_node(dst, parent);
++		if (ret)
++			return ret;
++	}
++	/* No reference-tree reserve map survives either. */
++	while (fdt_num_mem_rsv(dst)) {
++		ret = fdt_del_mem_rsv(dst, 0);
++		if (ret)
++			return ret;
++	}
++	root = fdt_add_subnode(dst, 0, "reserved-memory");
++	if (root < 0)
++		return root;
++	ret = fdt_setprop_u32(dst, root, "#address-cells", 2);
++	if (ret)
++		return ret;
++	ret = fdt_setprop_u32(dst, root, "#size-cells", 2);
++	if (ret)
++		return ret;
++	ret = fdt_setprop(dst, root, "ranges", NULL, 0);
++	if (ret)
++		return ret;
++	parent = fdt_path_offset(src, "/reserved-memory");
++	if (parent >= 0) {
++		ac = fdt_address_cells(src, parent);
++		sc = fdt_size_cells(src, parent);
++		if ((ac != 1 && ac != 2) || (sc != 1 && sc != 2))
++			return -FDT_ERR_BADNCELLS;
++		reg = fdt_getprop(src, parent, "ranges", &len);
++		if (!reg || len)
++			return -FDT_ERR_BADVALUE;
++		fdt_for_each_subnode(node, src, parent) {
++			reg = fdt_getprop(src, node, "reg", &len);
++			/* Dynamic pools have no physical reservation yet. */
++			if (!reg)
++				continue;
++			if (len <= 0 || len % ((ac + sc) * sizeof(*reg)))
++				return -FDT_ERR_BADVALUE;
++			while (len) {
++				start = cells_read(reg, ac);
++				size = cells_read(reg + ac, sc);
++				ret = reserve_range(dst, start, size);
++				if (ret)
++					return ret;
++				snprintf(name, sizeof(name), "firmware-%d@%llx", n++, start);
++				out = fdt_add_subnode(dst, root, name);
++				if (out < 0)
++					return out;
++				tuple[0] = cpu_to_fdt64(start);
++				tuple[1] = cpu_to_fdt64(size);
++				ret = fdt_setprop(dst, out, "reg", tuple, sizeof(tuple));
++				if (ret)
++					return ret;
++				if (fdt_getprop(src, node, "no-map", NULL)) {
++					ret = fdt_setprop(dst, out, "no-map", NULL, 0);
++					if (ret)
++						return ret;
++				}
++				/* Do not retain reusable: firmware may still own the pool. */
++				reg += ac + sc;
++				len -= (ac + sc) * sizeof(*reg);
++			}
++		}
++	}
++	for (i = 0; i < fdt_num_mem_rsv(src); i++) {
++		ret = fdt_get_mem_rsv(src, i, &start, &size);
++		if (ret)
++			return ret;
++		ret = reserve_range(dst, start, size);
++		if (ret)
++			return ret;
++	}
++	ret = qcom_abl_framebuffer(dst, &fb_start, &fb_end);
++	if (ret)
++		return ret;
++	return reserve_range(dst, fb_start, fb_end - fb_start);
++}
++
++static bool in_ram(const void *fdt, u64 start, u64 size)
++{
++	const fdt64_t *reg;
++	u64 base, length;
++	int node, len, i;
++
++	if (!range_valid(start, size))
++		return false;
++	node = fdt_path_offset(fdt, "/memory");
++	reg = fdt_getprop(fdt, node, "reg", &len);
++	for (i = 0; reg && i < len / sizeof(*reg); i += 2) {
++		base = get_unaligned_be64(&reg[i]);
++		length = get_unaligned_be64(&reg[i + 1]);
++		if (start >= base && start + size <= base + length)
++			return true;
++	}
++	return false;
++}
++
++/* Pure libfdt merge entry point: all buffers are bounded, no allocation or GD.
++ * Failure leaves scratch unusable; neither input is ever modified. */
++int qcom_abl_merge_fdt(const void *control, size_t control_bound,
++			 const void *firmware, size_t firmware_bound,
++			 void *scratch, size_t scratch_size)
++{
++	const fdt32_t *id, *expected_id, *prop;
++	const char *args, *compatible;
++	u64 start, end;
++	int ret, len, expected_len, compatible_len, chosen, out;
++
++	ret = check_blob(control, control_bound);
++	if (ret)
++		return ret;
++	ret = check_blob(firmware, firmware_bound);
++	if (ret)
++		return ret;
++	/* Require the firmware family explicitly declared by the board DT.
++	 * Check the property is a bounded, NUL-terminated single string. */
++	compatible = fdt_getprop(control, 0, "u-boot,abl-compatible", &compatible_len);
++	if (!compatible || compatible_len < 2 ||
++	    compatible[compatible_len - 1] != '\0' ||
++	    strnlen(compatible, compatible_len) != compatible_len - 1 ||
++	    fdt_node_check_compatible(firmware, 0, compatible))
++		return -FDT_ERR_BADVALUE;
++	expected_id = fdt_getprop(control, 0, "qcom,board-id", &expected_len);
++	id = fdt_getprop(firmware, 0, "qcom,board-id", &len);
++	if (!expected_id || !id || expected_len != 8 || len != expected_len ||
++	    memcmp(id, expected_id, len))
++		return -FDT_ERR_BADVALUE;
++	if (!scratch || ((uintptr_t)scratch & 7) || scratch_size > QCOM_ABL_FDT_LIMIT ||
++	    scratch_size < fdt_totalsize(control) ||
++	    (uintptr_t)scratch > UINTPTR_MAX - scratch_size ||
++	    ((uintptr_t)scratch < (uintptr_t)control + fdt_totalsize(control) &&
++	     (uintptr_t)control < (uintptr_t)scratch + scratch_size) ||
++	    ((uintptr_t)scratch < (uintptr_t)firmware + fdt_totalsize(firmware) &&
++	     (uintptr_t)firmware < (uintptr_t)scratch + scratch_size))
++		return -FDT_ERR_NOSPACE;
++	ret = fdt_open_into(control, scratch, scratch_size);
++	if (ret)
++		return ret;
++	ret = import_memory(scratch, firmware);
++	if (ret)
++		return ret;
++	ret = import_reservations(scratch, firmware);
++	if (ret)
++		return ret;
++	if (!in_ram(scratch, (uintptr_t)firmware, fdt_totalsize(firmware)))
++		return -FDT_ERR_BADVALUE;
++	ret = reserve_range(scratch, (uintptr_t)firmware, fdt_totalsize(firmware));
++	if (ret)
++		return ret;
++	chosen = fdt_path_offset(firmware, "/chosen");
++	out = fdt_path_offset(scratch, "/chosen");
++	if (out < 0)
++		out = fdt_add_subnode(scratch, 0, "chosen");
++	if (out < 0)
++		return out;
++	/* Retain only ABL's serial/boot metadata, not its console or hardware DT. */
++	args = fdt_getprop(firmware, chosen, "bootargs", &len);
++	if (args) {
++		if (len <= 0 || args[len - 1])
++			return -FDT_ERR_BADVALUE;
++		ret = fdt_setprop(scratch, out, "bootargs", args, len);
++		if (ret)
++			return ret;
++	}
++	prop = fdt_getprop(firmware, chosen, "linux,initrd-start", &len);
++	if (prop) {
++		if (len != 4 && len != 8)
++			return -FDT_ERR_BADVALUE;
++		start = cells_read(prop, len / 4);
++		prop = fdt_getprop(firmware, chosen, "linux,initrd-end", &len);
++		if (!prop || (len != 4 && len != 8))
++			return -FDT_ERR_BADVALUE;
++		end = cells_read(prop, len / 4);
++		if (end <= start || !in_ram(scratch, start, end - start))
++			return -FDT_ERR_BADVALUE;
++		/* Keep it safe, but do not advertise an old Android initrd to Linux. */
++		ret = reserve_range(scratch, start, end - start);
++		if (ret)
++			return ret;
++	}
++	return fdt_pack(scratch);
++}
++
++int qcom_abl_fdt_setup(void **fdtp, const void *firmware)
++{
++	int ret;
++
++	ret = qcom_abl_merge_fdt(*fdtp, QCOM_ABL_FDT_LIMIT, firmware,
++				 QCOM_ABL_FDT_LIMIT, qcom_abl_fdt, sizeof(qcom_abl_fdt));
++	if (!ret)
++		*fdtp = qcom_abl_fdt;
++	return ret;
++}
++
++/* The entire pre-relocation arena must fit one gap, not just U-Boot's image.
++ * The 16 MiB headroom covers the fixed 720x1600 video buffer, page tables,
++ * FDT, GD and stack; the configured malloc arena is accounted separately.
++ */
++phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
++{
++	const fdt64_t *banks;
++	u64 base, top, start, size, low, best = 0;
++	u64 need = total_size + TOTAL_MALLOC_LEN + SZ_16M;
++	int len, node, i, j;
++	bool again;
++
++	node = fdt_path_offset(gd->fdt_blob, "/memory");
++	banks = fdt_getprop(gd->fdt_blob, node, "reg", &len);
++	for (i = 0; i < len / sizeof(*banks); i += 2) {
++		base = get_unaligned_be64(&banks[i]);
++		top = base + get_unaligned_be64(&banks[i + 1]);
++		do {
++			again = false;
++			low = base;
++			for (j = 0; j < fdt_num_mem_rsv(gd->fdt_blob); j++) {
++				fdt_get_mem_rsv(gd->fdt_blob, j, &start, &size);
++				if (start < top && start + size > base) {
++					if (start + size >= top) {
++						top = max(base, start);
++						again = true;
++						break;
++					}
++					low = max(low, start + size);
++				}
++			}
++			top = ALIGN_DOWN(top, SZ_64K);
++			if (!again && top >= low && top - low >= need) {
++				best = max(best, top);
++				break;
++			}
++			if (!again && low > base) {
++				top = low;
++				again = true;
++			}
++		} while (again && top > base);
++	}
++	if (!best)
++		panic("Qualcomm ABL: no safe contiguous relocation arena\n");
++	return best;
++}
++
++/* Emit page-granular RAM/device mappings with no-map holes already absent.
++ * This protects BOTH page tables before the MMU is first enabled, unlike a
++ * post-construction attribute change which also touches live cache state.
++ */
++void qcom_abl_mem_map(struct mm_region *map, int capacity)
++{
++	struct mm_region source[CONFIG_NR_DRAM_BANKS + 2];
++	u64 pos, end, stop, start, size, hole_end, fb_start, fb_end;
++	const fdt64_t *reg;
++	int s, parent, node, len, n = 0;
++
++	memcpy(source, map, sizeof(source));
++	memset(map, 0, capacity * sizeof(*map));
++	if (qcom_abl_framebuffer(gd->fdt_blob, &fb_start, &fb_end))
++		panic("Qualcomm ABL: missing or invalid framebuffer\n");
++	parent = fdt_path_offset(gd->fdt_blob, "/reserved-memory");
++	for (s = 0; source[s].size; s++) {
++		pos = source[s].phys;
++		end = pos + source[s].size;
++		while (pos < end) {
++			stop = end;
++			hole_end = pos;
++			fdt_for_each_subnode(node, gd->fdt_blob, parent) {
++				if (!fdt_getprop(gd->fdt_blob, node, "no-map", NULL))
++					continue;
++				reg = fdt_getprop(gd->fdt_blob, node, "reg", &len);
++				start = ALIGN_DOWN(get_unaligned_be64(&reg[0]), QCOM_ABL_PAGE);
++				size = get_unaligned_be64(&reg[1]);
++				size = ALIGN(get_unaligned_be64(&reg[0]) + size, QCOM_ABL_PAGE);
++				/* Firmware framebuffer is the sole intentional no-map access. */
++				if (pos >= fb_start && pos < fb_end)
++					continue;
++				if (start < fb_end && size > fb_start) {
++					if (pos >= fb_end)
++						start = max(start, fb_end);
++					else
++						size = min(size, fb_start);
++				}
++				if (start <= pos && size > pos)
++					hole_end = max(hole_end, min(size, end));
++				else if (start > pos)
++					stop = min(stop, start);
++			}
++			if (hole_end > pos) {
++				pos = hole_end;
++				continue;
++			}
++			if (pos < fb_start)
++				stop = min(stop, fb_start);
++			else if (pos < fb_end)
++				stop = min(stop, fb_end);
++			if (n >= capacity - 1)
++				panic("Qualcomm ABL: memory map capacity exceeded\n");
++			map[n] = source[s];
++			map[n].phys = pos;
++			map[n].virt = pos;
++			map[n++].size = stop - pos;
++			pos = stop;
++		}
++	}
++}
++
++#if CONFIG_IS_ENABLED(EFI_LOADER)
++void efi_add_known_memory(void)
++{
++	u64 start, size;
++	int i;
++
++	/* Use the control tree even when EFI later receives a separate Linux DT. */
++	for (i = 0; i < fdt_num_mem_rsv(gd->fdt_blob); i++) {
++		fdt_get_mem_rsv(gd->fdt_blob, i, &start, &size);
++		if (efi_add_memory_map(start, size, EFI_RESERVED_MEMORY_TYPE) != EFI_SUCCESS)
++			panic("Qualcomm ABL: unable to protect firmware memory from EFI\n");
++	}
++}
++#endif
+diff --git a/arch/arm/mach-snapdragon/qcom-priv.h b/arch/arm/mach-snapdragon/qcom-priv.h
+index b8bf574e..b84bef0a 100644
+--- a/arch/arm/mach-snapdragon/qcom-priv.h
++++ b/arch/arm/mach-snapdragon/qcom-priv.h
+@@ -3,6 +3,18 @@
+ #ifndef __QCOM_PRIV_H__
+ #define __QCOM_PRIV_H__
+ 
++#include <linux/types.h>
++
++struct mm_region;
++
++#ifdef CONFIG_QCOM_ABL_MEMORY_HANDOFF
++int qcom_abl_merge_fdt(const void *control, size_t control_bound,
++			 const void *firmware, size_t firmware_bound,
++			 void *scratch, size_t scratch_size);
++int qcom_abl_fdt_setup(void **fdtp, const void *firmware);
++void qcom_abl_mem_map(struct mm_region *map, int capacity);
++#endif
++
+ /**
+  * enum qcom_boot_source - Track where we got loaded from.
+  * Used for capsule update logic.
+@@ -20,7 +32,7 @@ extern enum qcom_boot_source qcom_boot_source;
+ #if IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_SUPPORT)
+ void qcom_configure_capsule_updates(void);
+ #else
+-void qcom_configure_capsule_updates(void) {}
++static inline void qcom_configure_capsule_updates(void) {}
+ #endif /* EFI_HAVE_CAPSULE_SUPPORT */
+ 
+ #endif /* __QCOM_PRIV_H__ */
+diff --git a/board/qualcomm/CAPRI-UPSTREAM-PORT.md b/board/qualcomm/CAPRI-UPSTREAM-PORT.md
+new file mode 100644
+index 00000000..b2c3e735
+--- /dev/null
++++ b/board/qualcomm/CAPRI-UPSTREAM-PORT.md
+@@ -0,0 +1,84 @@
++# Motorola Moto G10 Power XT2127-4: upstream U-Boot port
++
++Base: official upstream U-Boot `v2026.07` (`ece349ad`).
++Branch: `capri-safe-handoff`.
++
++## Why the device-tree-only experiment failed
++
++The previous `capri-dt-only` build was accepted by Motorola ABL through
++`fastboot boot`, but stayed at the Motorola splash screen with no menu.
++The actual failure point was not observable without an early debug console.
++The default Qualcomm environment initially didn't automatically show a menu;
++fixing that alone did not resolve the failure.
++
++The compiled C `save_boot_params()` in the earlier build performed a stack
++push before ARM64 stack setup. The replacement assembly captures ABL's
++incoming `x0` without touching the stack. The custom Capri memory path is
++necessary for our currently verified design: the internal DT describes U-Boot
++drivers, whereas the *live* ABL DT describes RAM and firmware reservations.
++The stock Android device-tree files have a zero-sized `/memory` placeholder,
++so copying static memory values is unsafe. The port validates and imports
++runtime RAM, reserves firmware carveouts and framebuffer memory, selects a
++safe relocation arena, and protects no-map areas and EFI memory descriptors.
++
++This branch deliberately reuses the exact handoff and memory-protection code
++that previously booted successfully on the handset, on top of **official**
++U-Boot. The Tauchgang Samsung patches, CI and branding have not been ported.
++The three relevant differences in upstream Linux DT includes are overridden
++in the Capri board DTS to reproduce the previously tested tree's properties.
++
++This is a *smallest known-working-behavior port*, not a claim that all custom
++Capri code is theoretically unavoidable. Simplify it **after** hardware
++verification, one change at a time.
++
++## Reproducible build and package
++
++From this checkout on the ARM64 NixOS build host:
++
++```sh
++nix-shell ../capri-build-tools/shell-uboot.nix --run \
++  'python3 ../capri-build-tools/build-uboot.py . ../capri-upstream-safe-output --jobs 8'
++```
++
++The builder currently retains a historical `Tauchgang U-Boot` *string in its
++JSON metadata* because it is shared with the earlier project. The binary
++built from this branch is official U-Boot with our Capri patches, not Tauchgang.
++
++Expected image: `../capri-upstream-safe-output/boot-uboot-capri-v3.img`.
++Its Android v3 header uses an ARM64 `0x80000` text offset and a 50-byte
++empty ramdisk, compatible with the previously tested packaging layout.
++
++## Host validation already completed
++
++- Clean compilation against official upstream `v2026.07`.
++- U-Boot's `binary_size_check` and `init_sp_bss_offset_check` completed.
++- Initial historical builds had write functions disabled by configuration;
++  the separate Nix patch now enables MMC, FAT, ext4 and GPT write support.
++- The resulting `.config` was byte-identical to the previous hardware-tested
++  Tauchgang build's `.config`.
++- Early ARM64 `save_boot_params` object disassembly contains only PC-relative
++  pointer calculation, store of `x0`, and branch; no stack instructions.
++- Compiled control DT is 59,920 bytes, with only display `resets` property
++  ordering differing from the previously tested control DT; semantic values
++  match.
++- `unpack_bootimg` verified version 3, header and payload sizes; extracted
++  kernel and ramdisk are byte-identical to packaged inputs.
++- `git diff --check` passes.
++
++These are **host-only** tests. No boot on hardware of this *upstream* binary has
++been observed yet. Do not claim it works until the menu and shell appear.
++
++## First device test (temporary only)
++
++With a known-good fallback available and the XT2127-4 in ABL fastboot mode,
++copy the image to the USB-attached `ideapad` host and use:
++
++```sh
++fastboot boot /tmp/boot-uboot-capri-upstream-safe-v3.img
++```
++
++**Do not use `fastboot flash`, erase, or modify `vendor_boot`/`dtbo`.**
++Confirm that the menu is visible, volume/power keys respond, USB ACM console
++appears after enabling it, `mmc info` and `part list mmc 0` succeed, and
++`bootefi hello` returns. If the splash screen remains, collect video or USB
++observations to distinguish early relocation, display and input failures.
+diff --git a/board/qualcomm/CAPRI-UPSTREAM-SIMPLIFICATION-AUDIT.md b/board/qualcomm/CAPRI-UPSTREAM-SIMPLIFICATION-AUDIT.md
+new file mode 100644
+index 00000000..5e1916b2
+--- /dev/null
++++ b/board/qualcomm/CAPRI-UPSTREAM-SIMPLIFICATION-AUDIT.md
+@@ -0,0 +1,125 @@
++# Capri U-Boot: audit of generic upstream RAM/handoff support
++
++Base: **official U-Boot v2026.07**, Capri verified on handset using branch
++`capri-safe-handoff` commit `f726c188`. This audit is source inspection,
++**not** an additional device boot test. Baseline is not modified.
++
++## What works upstream already
++
++- `arch/arm/mach-snapdragon/board.c:board_fdt_blob_setup()` obtains the ABL
++  FDT from `get_prev_bl_fdt_addr()` and can parse its `/memory` if the internal
++  DT has none. The result populates U-Boot's RAM-bank list.
++- `boot/image-fdt.c:boot_fdt_add_mem_rsv_regions()` knows FDT reserve-map
++  entries and `/reserved-memory` with `no-map`; `lib/lmb.c:lmb_reserve_common()`
++  invokes it on the **selected control DT**.
++- `common/memtop.c:get_mem_top()` finds a gap that avoids reservations in a
++  **single contiguous RAM region** supplied by the caller.
++- `lib/efi_loader/efi_dt_fixup.c:efi_carve_out_dt_rsv()` handles reserved
++  regions in the **payload DT** when the EFI DT-fixup protocol is used.
++- `lib/efi_loader/efi_memory.c:efi_add_known_memory()` is a weak extension
++  point for reserving additional firmware/board regions.
++- Generic Qualcomm simple-framebuffer, eMMC and input paths work on the
++  confirmed Capri build with minimal DT and driver quirks.
++
++## Missing integration: why copying only the DTS was insufficient
++
++1. `arch/arm/cpu/armv8/start.S` calls `save_boot_params` **before the normal
++   stack is initialized**. Upstream C implementation in
++   `arch/arm/lib/save_prev_bl_data.c` compiled to `stp x29, x30, [sp, #-16]!`
++   on our build host. The working stack-free assembly (`save_boot_params.S`)
++   captures incoming x0 safely, without relying on incoming SP. This is a
++   generic ARM64 defect for the enabled previous-bootloader save path, not
++   Capri-specific hardware logic; it merits an upstreamable generic patch.
++2. `board_fdt_blob_setup()` chooses the **internal device tree** for U-Boot
++   driver bindings and only borrows **RAM bank geometry** from ABL's device
++   tree. It does not merge ABL's *reserved-memory* and FDT memreserve map.
++   Therefore LMB cannot see them from the control DT, despite supporting
++   reservations itself. The Android stock DT uses `/memory` placeholders,
++   so hard-coding the bank layout would also be wrong.
++3. `board_get_usable_ram_top()` defaults to RAM top and does not check
++   firmware carveouts at **pre-relocation** time. `get_mem_top()` accounts
++   for reservations but accepts only a single `[base, size)` pair. Our ABL
++   geometry can contain multiple banks and gaps; using one span directly
++   would allow relocation into an unavailable hole. The Capri hook explicitly
++   scans each bank and requires space for the *entire* pre-relocation arena,
++   not only `gd->mon_len`.
++4. `arch/arm/mach-snapdragon/board.c:carve_out_reserved_memory()` runs only
++   for **qcom,qcs404**, and runs after page table setup. Capri's existing
++   patch instead builds page tables with `no-map` holes already absent while
++   explicitly permitting the inherited framebuffer. Simply importing DT
++   nodes is not enough to make the ARM64 MMU map safe.
++5. `efi_carve_out_dt_rsv()` reserves ranges from the **EFI payload's DT**;
++   when a different payload DT is submitted, those may not include ABL
++   reservations. The Capri hook restores authoritative control-tree firmware
++   reservations with `efi_add_known_memory()`. This protects the EFI map.
++6. The static Capri DT is for mainline U-Boot drivers, not downstream ABL
++   phandles. Replacing it wholesale with the ABL DT can break eMMC, display,
++   USB and buttons; different bindings must not be blindly merged.
++
++## Functions in `capri.c` and reduction opportunities
++
++| Current function | Can existing generic upstream code replace it unchanged? | Conclusion |
++|---|---|---|
++| `qcom_capri_merge_fdt`, `import_memory` | No | Generic Qualcomm hook should merge *runtime* bank geometry with validation; do not import all downstream hardware nodes. |
++| `import_reservations`, `reserve_range` | Not without glue | Generic libfdt + LMB can consume a merged control DT; need pre-relocation, multi-bank, overlap-checked import. |
++| `board_get_usable_ram_top` | No | Generalize `get_mem_top` to multiple banks + full arena size, or keep a small Qualcomm wrapper. |
++| `qcom_capri_mem_map` | No | Build `no-map` holes into both MMU page tables; existing QCS404 carveout path doesn't cover Capri. |
++| `efi_add_known_memory` | Partly | Generic EFI extension hook exists; must keep an authoritative source for firmware reservations independent of the payload DT. |
++| FDT board-ID, bounds, alignment checks | Should remain | This is safety-critical validation of untrusted runtime firmware input. |
++| Fixed framebuffer reservation/exemption | Board specific | Must be specified explicitly, ideally from a DT reserved-memory + simple-framebuffer relationship rather than raw address literals. |
++
++## Upstreamable patch strategy (one independently testable step each)
++
++1. **ARM64 previous-BL x0 capture:** isolate the stack-free saver in generic
++   `arch/arm/lib`; build/test the assembly with `sp=0` and preserve x0.
++2. **Qualcomm DT handoff:** introduce an opt-in generic firmware-memory merge
++   before DRAM/relocation, retaining the mainline control DT for devices.
++   Unit test multiple bank ranges, overlapping and unaligned reservations,
++   DT buffer bounds, and FDT reserve map.
++3. **Relocation selection:** introduce a generic multi-bank reserved-region
++   placement helper, including complete U-Boot relocation arena footprint.
++   Test RAM holes and rejected invalid layouts.
++4. **MMU no-map:** preconstruct both page tables without mapped secure
++   firmware regions, using an opt-in generic Qualcomm path; verify the
++   framebuffer exception and number of descriptors.
++5. **EFI reservations:** ensure the board/firmware reserved ranges cannot be
++   downgraded when a different EFI payload FDT is supplied.
++6. Replace `CONFIG_MOTOROLA_CAPRI`-specific branching with generic opt-in
++   Kconfig once stepwise builds and actual device tests pass.
++
++**Do not remove the existing code wholesale.** Existing upstream mechanisms
++handle only parts of this pipeline; the verified 531-line `capri.c` currently
++connects them at several *different boot stages*. The failed DTS-only image
++cannot isolate which missing stage caused the hang. No new simplified image
++should be called verified until boot menu, USB serial, eMMC and EFI smoke
++checks pass on the actual XT2127-4.
++
++## Device-tree comparison on actual XT2127-4 (2026-11-12)
++
++Temporary boot of verified upstream-safe image. USB ACM shell enabled at the
++on-screen menu. All FDT commands were read-only; no partition was flashed.
++
++- ABL-passed tree: `prevbl_fdt_addr=454c4000`; `/memory` contains three
++  populated bank pairs: `(0x40000000,0x3dd00000)`,
++  `(0xc0000000,0x80000000)`, `(0x80000000,0x40000000)`.
++  Original Motorola `hyp_region@45700000` and
++  `cont_splash_region@5c000000` reservations present.
++- Original appended U-Boot DTB: `0x401e5890` = load base `0x40080000`
++  + nodtb image length `0x165890`. Its `/memory@80000000` is **still
++  zero-sized**, and its reserved-memory entries retain the upstream DTS
++  naming. ABL did **not** fix up the appended DTB on this test.
++- Active U-Boot control DTB: `fdtcontroladdr=13f587c70`, also reported by
++  `bdinfo` as `fdt_blob`. It uses the mainline compatible
++  `motorola,capri`, `qcom,sm4250`, has the three populated, sorted RAM
++  banks, and contains imported `firmware-0@45700000` with `no-map`.
++  `bdinfo` confirms active framebuffer `0x5c000000` and LMB firmware
++  reservations; relocated U-Boot starts at `0x13fdb5000`.
++- U-Boot's `fdt addr -c` **only prints** the control-FDT address, it does
++  not change the working FDT used by `fdt print`. We explicitly selected
++  each address with `fdt addr ADDRESS` before printing properties.
++
++**Result:** For this Motorola ABL implementation, upstream U-Boot cannot
++rely on ABL populating the appended mainline DTB. The safe port's merge
++of the separate runtime vendor DTB into a mainline control DTB is necessary
++for its current memory-management approach. Genericizing that merge is
++reasonable; dropping it without replacing its protection is not.
+diff --git a/board/qualcomm/QCOM-ABL-MEMORY-HANDOFF.md b/board/qualcomm/QCOM-ABL-MEMORY-HANDOFF.md
+new file mode 100644
+index 00000000..7ee55e89
+--- /dev/null
++++ b/board/qualcomm/QCOM-ABL-MEMORY-HANDOFF.md
+@@ -0,0 +1,107 @@
++# Qualcomm ABL memory handoff (Moto G10 Power hardware-verified)
++
++## Why this exists
++
++On the Motorola Moto G10 Power XT2127-4 (Capri, Qualcomm SM4250), ABL
++passes a *separate* vendor FDT in x0. The appended mainline U-Boot DTB is
++not fixed up with live RAM geometry. Replacing the mainline DT with the
++vendor DT would also lose the upstream driver bindings.
++
++`CONFIG_QCOM_ABL_MEMORY_HANDOFF` opts into an early merge implemented by
++`arch/arm/mach-snapdragon/qcom-abl-memory.c`. The mainline DT remains the
++control tree; the module imports only runtime memory banks and protected
++firmware reservations. The stack-free ARM64 x0 saver is still necessary.
++
++## Board-defined properties
++
++The Capri control DT in
++`dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts` supplies:
++
++- `qcom,board-id = <0x500 0xb200>`: must match the firmware root property.
++- `u-boot,abl-compatible = "qcom,bengal-capri"`: required matching
++  compatible in the firmware root node.
++- An enabled `simple-framebuffer` child of `/chosen` with `reg =
++  <0 0x5c000000 0 0x465000>` and `#address-cells = <2>`,
++  `#size-cells = <2>` on `/chosen`.
++
++The framebuffer parser uses the parent's cell counts, checks tuple length,
++page alignment, nonzero size, overflow, and requires exactly one enabled
++simple-framebuffer. A missing or malformed framebuffer fails the merge;
++no unsafe "unreserved framebuffer" fallback is permitted. The parsed
++range is used for both the reserve map and the existing MMU exception.
++
++**Do not confuse the configured 0x465000-byte simple-framebuffer range with
++ABL's larger 0x1000000-byte firmware splash reservation.** The latter is
++also imported and remains protected.
++
++## Preserved safety-critical mechanisms
++
++- Bound-checked FDT validation and runtime RAM-bank import.
++- Firmware `/reserved-memory` and FDT reserve-map import, including
++  no-map semantics; no vendor hardware phandles are imported.
++- Multi-bank, reservation-aware pre-relocation arena selection.
++- Pre-MMU page-table construction with firmware no-map holes, retaining
++  the inherited framebuffer mapping.
++- EFI reservation of authoritative control-DT firmware ranges.
++
++The relocation, MMU hole construction, and EFI algorithms have **not**
++been redesigned. Generalizing these remains higher risk and is out of
++scope for the currently hardware-verified port.
++
++## Hardware verification: 2026-11-12
++
++Tested on the real XT2127-4 using **temporary `fastboot boot` only**. No
++flash, erase, or partition mutation was performed.
++
++| Commit | Change | Hardware evidence |
++| --- | --- | --- |
++| `82ce1375` | Restored proven Capri firmware-ID and framebuffer policy in generic module | U-Boot menu, USB ACM, RAM, eMMC, GPT, `bootefi hello` |
++| `b0d4289e` | Expected `qcom,board-id` sourced from control DT | USB ACM, matching live board IDs, unchanged RAM, `bootefi hello` |
++| `c5164383` | Required vendor compatible sourced from control DT | U-Boot menu confirmed; no serial/EFI test recorded at that commit |
++| `bedcdf2c` | Framebuffer address and size sourced from simple-framebuffer DT | USB ACM, active framebuffer, memory reservations, eMMC, `bootefi hello` |
++
++Last hardware-verified commit: **`bedcdf2c`** on
++`qcom-abl-dt-framebuffer`. The active U-Boot console reported
++`U-Boot 2026.07-00010-gbedcdf2c5592`.
++
++Observed memory geometry: `(0x40000000, 0x3dd00000)`,
++`(0x80000000, 0x40000000)`, `(0xc0000000, 0x80000000)`.
++The relocation address was `0x13fdb5000`; the ABL firmware FDT was
++`0x454c4000`; video was `720x1600x32` at `0x5c000000`.
++U-Boot's LMB dump listed 13 reserved regions; the firmware's
++`0x5c000000..0x5cffffff` splash area remained reserved. The control
++FDT pointer can differ slightly with binary layout, and is not fixed.
++
++Read-only smoke-test commands in the U-Boot USB serial shell:
++
++```text
++version
++bdinfo
++printenv prevbl_fdt_addr fdtcontroladdr
++fdt addr ${fdtcontroladdr}
++fdt print /chosen/framebuffer@5c000000
++mmc list
++mmc dev 0
++mmc info
++bootefi hello
++```
++
++For every future behavioral change, build an independent v3 boot image,
++run `fastboot boot <image>` (never `fastboot flash`), verify the on-screen
++menu, enable USB ACM, inspect `bdinfo`/reservations/framebuffer, check
++read-only eMMC discovery and `bootefi hello`, then reboot to Android.
++Keep a separate known-good image and Git commit available for recovery.
++
++## Remaining work
++
++Low-risk work: documentation, comments, board-specific configuration and
++focused negative-case tests for invalid FDT inputs. No genericity claim has
++been proven on a second Qualcomm handset; only Capri is hardware tested.
++Higher-risk redesigns (relocation, ARM64 argument capture, MMU, EFI, and
++scratch-buffer policy) should remain unchanged unless addressed and tested
++independently.
++
++The earlier simplification audit at
++`board/qualcomm/CAPRI-UPSTREAM-SIMPLIFICATION-AUDIT.md` is historical:
++its references to `capri.c` and proposed hard-coded framebuffer cleanup
++reflect the state before these subsequent changes.
+diff --git a/board/qualcomm/motorola-capri.config b/board/qualcomm/motorola-capri.config
+new file mode 100644
+index 00000000..540b2056
+--- /dev/null
++++ b/board/qualcomm/motorola-capri.config
+@@ -0,0 +1,50 @@
++# Apply after qcom_defconfig; native storage/EFI, no embedded Linux payload.
++CONFIG_MOTOROLA_CAPRI=y
++CONFIG_DEFAULT_DEVICE_TREE="qcom/sm4250-motorola-capri-power"
++CONFIG_OF_SEPARATE=y
++# CONFIG_OF_OMIT_DTB is not set
++# CONFIG_OF_UPSTREAM_BUILD_VENDOR is not set
++CONFIG_TEXT_BASE=0x40080000
++CONFIG_SYS_MALLOC_LEN=0x800000
++CONFIG_SYS_MALLOC_F_LEN=0x10000
++CONFIG_ENV_USE_DEFAULT_ENV_TEXT_FILE=y
++CONFIG_ENV_DEFAULT_ENV_TEXT_FILE="board/qualcomm/motorola-capri.env"
++CONFIG_ENV_IS_NOWHERE=y
++# CONFIG_REQUIRE_SERIAL_CONSOLE is not set
++CONFIG_PANIC_HANG=y
++CONFIG_CMD_PAUSE=y
++CONFIG_HUSH_PARSER=y
++CONFIG_BUTTON_REMAP_PHONE_KEYS=y
++CONFIG_CONSOLE_RECORD=y
++CONFIG_CONSOLE_RECORD_INIT_F=y
++CONFIG_CONSOLE_RECORD_OUT_SIZE=0x10000
++CONFIG_CMD_PART=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++# Enable normal writable filesystems, eMMC storage, and GPT operations.
++CONFIG_MMC_WRITE=y
++CONFIG_FAT_WRITE=y
++CONFIG_EXT4_WRITE=y
++CONFIG_CMD_EXT4_WRITE=y
++CONFIG_CMD_GPT=y
++CONFIG_EFI_LOADER=y
++CONFIG_EFI_BOOTMGR=y
++CONFIG_CMD_BOOTEFI=y
++CONFIG_CMD_BOOTEFI_BOOTMGR=y
++CONFIG_BOOTEFI_HELLO_COMPILE=y
++CONFIG_CMD_BOOTEFI_HELLO=y
++# USB ACM console shares the composite USB gadget framework.
++CONFIG_USB_GADGET_DOWNLOAD=y
++CONFIG_USB_FUNCTION_ACM=y
++CONFIG_USB_GADGET_MANUFACTURER="Motorola"
++CONFIG_USB_GADGET_VENDOR_NUM=0x0525
++CONFIG_USB_GADGET_PRODUCT_NUM=0xa4a7
++CONFIG_PINCTRL_QCOM_SM6115=y
++# CONFIG_PINCTRL_QCOM_GENERIC is not set
++# CONFIG_MSM_SERIAL is not set
++# CONFIG_MSM_GENI_SERIAL is not set
++# CONFIG_UFS is not set
++# CONFIG_SCSI is not set
++# CONFIG_CMD_UFS is not set
++# CONFIG_CMD_USB is not set
++# CONFIG_USB_XHCI_HCD is not set
+diff --git a/board/qualcomm/motorola-capri.env b/board/qualcomm/motorola-capri.env
+new file mode 100644
+index 00000000..02e34429
+--- /dev/null
++++ b/board/qualcomm/motorola-capri.env
+@@ -0,0 +1,22 @@
++bootdelay=3
++stdin=serial,button-kbd
++stdout=serial,vidconsole
++stderr=serial,vidconsole
++
++# EFI boot manager starts first; manual storage commands remain available at the shell.
++preboot=echo Motorola Capri Power - Official U-Boot; mmc dev 0; mmc rescan; mmc info
++bootcmd=bootefi bootmgr; run menucmd
++menucmd=bootmenu -1
++# Start ACM alone first: console mux otherwise hides its failure if buttons work.
++# ACM startup waits for the host to open the port.
++serial_gadget=echo Open the USB serial port on the host; setenv stdin usbacm && setenv stdin serial,button-kbd,usbacm && setenv stdout serial,vidconsole,usbacm && setenv stderr serial,vidconsole,usbacm && echo USB serial console enabled
++
++bootmenu_0=Boot EFI system=bootefi bootmgr
++bootmenu_1=Enable USB serial console=run serial_gadget
++bootmenu_2=List eMMC partitions=part list mmc 0; pause
++bootmenu_3=Board and RAM information=bdinfo; pause
++bootmenu_4=U-Boot shell=echo Use USB serial console for shell input
++bootmenu_5=Restart phone=reset
++
++button_cmd_0_name=Volume Down
++button_cmd_0=run menucmd
+diff --git a/cmd/mmc.c b/cmd/mmc.c
+index 81b1ca4a..241fcdc5 100644
+--- a/cmd/mmc.c
++++ b/cmd/mmc.c
+@@ -1122,6 +1122,7 @@ static int do_mmc_bkops_enable(struct cmd_tbl *cmdtp, int flag,
+ }
+ #endif
+ 
++#if CONFIG_IS_ENABLED(MMC_WRITE)
+ static int do_mmc_boot_wp(struct cmd_tbl *cmdtp, int flag,
+ 			  int argc, char * const argv[])
+ {
+@@ -1149,6 +1150,7 @@ static int do_mmc_boot_wp(struct cmd_tbl *cmdtp, int flag,
+ 	printf("boot areas protected\n");
+ 	return CMD_RET_SUCCESS;
+ }
++#endif
+ 
+ #if CONFIG_IS_ENABLED(CMD_MMC_REG)
+ static int do_mmc_reg(struct cmd_tbl *cmdtp, int flag,
+@@ -1240,8 +1242,8 @@ static int do_mmc_reg(struct cmd_tbl *cmdtp, int flag,
+ static struct cmd_tbl cmd_mmc[] = {
+ 	U_BOOT_CMD_MKENT(info, 1, 0, do_mmcinfo, "", ""),
+ 	U_BOOT_CMD_MKENT(read, 4, 1, do_mmc_read, "", ""),
+-	U_BOOT_CMD_MKENT(wp, 2, 0, do_mmc_boot_wp, "", ""),
+ #if CONFIG_IS_ENABLED(MMC_WRITE)
++	U_BOOT_CMD_MKENT(wp, 2, 0, do_mmc_boot_wp, "", ""),
+ 	U_BOOT_CMD_MKENT(write, 4, 0, do_mmc_write, "", ""),
+ 	U_BOOT_CMD_MKENT(erase, 3, 0, do_mmc_erase, "", ""),
+ #endif
+@@ -1306,12 +1308,14 @@ U_BOOT_CMD(
+ 	"MMC sub system",
+ 	"info - display info of the current MMC device\n"
+ 	"mmc read addr blk# cnt\n"
++#if CONFIG_IS_ENABLED(MMC_WRITE)
+ 	"mmc write addr blk# cnt\n"
+ #if CONFIG_IS_ENABLED(CMD_MMC_SWRITE)
+ 	"mmc swrite addr blk#\n"
+ #endif
+ 	"mmc erase blk# cnt\n"
+ 	"mmc erase partname\n"
++#endif
+ 	"mmc rescan [mode]\n"
+ 	"mmc part - lists available partition on current mmc device\n"
+ 	"mmc dev [dev] [part] [mode] - show or set current mmc device [partition] and set mode\n"
+@@ -1319,11 +1323,13 @@ U_BOOT_CMD(
+ 	"    [MMC_LEGACY, MMC_HS, SD_HS, MMC_HS_52, MMC_DDR_52, UHS_SDR12, UHS_SDR25,\n"
+ 	"    UHS_SDR50, UHS_DDR50, UHS_SDR104, MMC_HS_200, MMC_HS_400, MMC_HS_400_ES]\n"
+ 	"mmc list - lists available devices\n"
++#if CONFIG_IS_ENABLED(MMC_WRITE)
+ 	"mmc wp [PART] - power on write protect boot partitions\n"
+ 	"  arguments:\n"
+ 	"   PART - [0|1]\n"
+ 	"       : 0 - first boot partition, 1 - second boot partition\n"
+ 	"         if not assigned, write protect all boot partitions\n"
++#endif
+ #if CONFIG_IS_ENABLED(MMC_HW_PARTITIONING)
+ 	"mmc hwpartition <USER> <GP> <MODE> - does hardware partitioning\n"
+ 	"  arguments (sizes in 512-byte blocks):\n"
+diff --git a/drivers/video/simplefb.c b/drivers/video/simplefb.c
+index 8d0772d4..061d5523 100644
+--- a/drivers/video/simplefb.c
++++ b/drivers/video/simplefb.c
+@@ -9,6 +9,8 @@
+ #include <log.h>
+ #include <video.h>
+ #include <asm/global_data.h>
++#include <asm/system.h>
++#include <linux/sizes.h>
+ 
+ static int simple_video_probe(struct udevice *dev)
+ {
+@@ -19,9 +21,15 @@ static int simple_video_probe(struct udevice *dev)
+ 	int ret;
+ 	fdt_addr_t base;
+ 	fdt_size_t size;
+-	u32 width, height, stride, rot;
++	u32 width, height, stride;
++	struct ofnode_phandle_args args;
++
++	ret = dev_read_phandle_with_args(dev, "memory-region", NULL, 0, 0, &args);
++	if (ret)
++		base = dev_read_addr_size(dev, &size);
++	else
++		base = ofnode_get_addr_size(args.node, "reg", &size);
+ 
+-	base = dev_read_addr_size(dev, &size);
+ 	if (base == FDT_ADDR_T_NONE) {
+ 		debug("%s: Failed to decode memory region\n", __func__);
+ 		return -EINVAL;
+@@ -37,6 +45,13 @@ static int simple_video_probe(struct udevice *dev)
+ 	plat->base = base;
+ 	plat->size = size;
+ 
++#ifdef CONFIG_ARM64
++	/* The framebuffer buffer might not be mapped on some devices */
++	if (plat->base % SZ_4K)
++		log_warning("Framebuffer base %lx is not 4k aligned!\n", plat->base);
++	mmu_map_region((phys_addr_t)plat->base, (phys_addr_t)ALIGN(plat->size, SZ_4K), false);
++#endif
++
+ 	video_set_flush_dcache(dev, true);
+ 
+ 	debug("%s: Query resolution...\n", __func__);
+@@ -47,14 +62,13 @@ static int simple_video_probe(struct udevice *dev)
+ 		log_err("%s: invalid width or height: %d\n", __func__, ret);
+ 		return ret ?: -EINVAL;
+ 	}
+-	ofnode_read_u32(node, "rot", &rot);
+-	uc_priv->rot = rot;
++	uc_priv->rot = ofnode_read_u32_default(node, "rot", 0);
+ 	uc_priv->xsize = width;
+ 	uc_priv->ysize = height;
+ 
+ 	/* Optional - in most cases, auto-calculation works */
+ 	ret = ofnode_read_u32(node, "stride", &stride);
+-	if (!ret || stride)
++	if (!ret)
+ 		uc_priv->line_length = stride;
+ 
+ 	format = ofnode_read_string(node, "format");
+diff --git a/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts b/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
+new file mode 100644
+index 00000000..37f555ed
+--- /dev/null
++++ b/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
+@@ -0,0 +1,148 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
++/dts-v1/;
++
++#include "sm4250.dtsi"
++#include "pm6125.dtsi"
++
++/ {
++	model = "Motorola Moto G10 Power (XT2127-4)";
++	compatible = "motorola,capri", "qcom,sm4250";
++	qcom,msm-id = <0x1a1 0x10000>;
++	qcom,board-id = <0x500 0xb200>;
++	/* ABL's vendor DT family; checked before importing runtime memory. */
++	u-boot,abl-compatible = "qcom,bengal-capri";
++
++	aliases {
++		mmc0 = &sdhc_1;
++		usb0 = &usb_dwc3;
++	};
++
++	chosen {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++		stdout-path = "framebuffer0";
++
++		/* ABL already drives the panel. Do not reset the display or rails. */
++		framebuffer0: framebuffer@5c000000 {
++			compatible = "simple-framebuffer";
++			reg = <0 0x5c000000 0 0x465000>;
++			width = <720>;
++			height = <1600>;
++			stride = <2880>;
++			format = "a8r8g8b8";
++			status = "okay";
++		};
++	};
++};
++
++/* Internal U-Boot control tree; ABL provides the live memory layout.
++ * The Capri board hook imports RAM banks and firmware reservations early.
++ */
++&smem_mem { status = "disabled"; };
++&gpu { status = "disabled"; };
++&remoteproc_mpss { status = "disabled"; };
++&remoteproc_adsp { status = "disabled"; };
++&remoteproc_cdsp { status = "disabled"; };
++&wifi { status = "disabled"; };
++&apps_smmu { status = "disabled"; };
++
++&xo_board { clock-frequency = <19200000>; };
++&sleep_clk { clock-frequency = <32764>; };
++
++/* PM6125 RPM supplies are already voted on by ABL. U-Boot has no RPM-SMD
++ * regulator driver for this PMIC: retain those votes rather than inventing
++ * fixed regulators or pretending to control them. Values match Capri Linux.
++ */
++&rpm_requests {
++	regulators-0 {
++		compatible = "qcom,rpm-pm6125-regulators";
++
++		vreg_l4a: l4 {
++			regulator-min-microvolt = <488000>;
++			regulator-max-microvolt = <1000000>;
++		};
++		vreg_l11a: l11 {
++			regulator-min-microvolt = <1704000>;
++			regulator-max-microvolt = <1952000>;
++		};
++		vreg_l12a: l12 {
++			regulator-min-microvolt = <1624000>;
++			regulator-max-microvolt = <1984000>;
++		};
++		vreg_l15a: l15 {
++			regulator-min-microvolt = <2920000>;
++			regulator-max-microvolt = <3232000>;
++		};
++		vreg_l24a: l24 {
++			regulator-min-microvolt = <2704000>;
++			regulator-max-microvolt = <3544000>;
++		};
++	};
++};
++
++&sdhc_1 {
++	vmmc-supply = <&vreg_l24a>;
++	vqmmc-supply = <&vreg_l11a>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&sdc1_state_on>;
++	non-removable;
++	max-frequency = <50000000>;
++	/* Keep the firmware's domain and DMA setup; Linux owns native policy. */
++	/delete-property/ power-domains;
++	/delete-property/ operating-points-v2;
++	/delete-property/ interconnects;
++	/delete-property/ interconnect-names;
++	/delete-property/ iommus;
++	status = "okay";
++};
++
++&tlmm { gpio-reserved-ranges = <14 4>; };
++
++&usb {
++	qcom,select-utmi-as-pipe-clk;
++	status = "okay";
++};
++
++&usb_dwc3 {
++	/delete-property/ usb-role-switch;
++	/* The disabled SMMU cannot be probed; retain ABL's DMA setup. */
++	/delete-property/ iommus;
++	maximum-speed = "high-speed";
++	dr_mode = "peripheral";
++	phys = <&usb_hsphy>;
++	phy-names = "usb2-phy";
++};
++
++&usb_hsphy {
++	vdd-supply = <&vreg_l4a>;
++	vdda-pll-supply = <&vreg_l12a>;
++	vdda-phy-dpdm-supply = <&vreg_l15a>;
++	status = "okay";
++};
++
++&pon_pwrkey { status = "okay"; };
++&pon_resin {
++	linux,code = <KEY_VOLUMEDOWN>;
++	status = "okay";
++};
++
++/* Keep the three relevant firmware-DT properties identical to the
++ * already hardware-tested Capri control tree. Upstream's included
++ * sm6115/pm6125 nodes differ from Tauchgang's newer Linux DTS copy.
++ */
++&pm6125_rtc {
++	/delete-property/ status;
++};
++
++&mdss {
++	/* SM6115 DISP_CC_MDSS_CORE_BCR reset ID from the newer binding. */
++	resets = <&dispcc 0>;
++};
++
++&{/timer} {
++	interrupts = <GIC_PPI 1 IRQ_TYPE_LEVEL_LOW>,
++		     <GIC_PPI 2 IRQ_TYPE_LEVEL_LOW>,
++		     <GIC_PPI 3 IRQ_TYPE_LEVEL_LOW>,
++		     <GIC_PPI 0 IRQ_TYPE_LEVEL_LOW>;
++};
+diff --git a/lib/efi_loader/efi_dt_fixup.c b/lib/efi_loader/efi_dt_fixup.c
+index 333711b9..d35506c4 100644
+--- a/lib/efi_loader/efi_dt_fixup.c
++++ b/lib/efi_loader/efi_dt_fixup.c
+@@ -129,6 +129,9 @@ void efi_carve_out_dt_rsv(void *fdt)
+ 			subnode = fdt_next_subnode(fdt, subnode);
+ 		}
+ 	}
++	/* A payload DT must not downgrade the ABL firmware reservations. */
++	if (IS_ENABLED(CONFIG_QCOM_ABL_MEMORY_HANDOFF))
++		efi_add_known_memory();
+ }
+ 
+ /**

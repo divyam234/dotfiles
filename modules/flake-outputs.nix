@@ -108,6 +108,7 @@
       homelab = self.nixosConfigurations.homelab.config;
       ideapad = self.nixosConfigurations.ideapad.config;
       laptop = self.nixosConfigurations.laptop.config;
+      capriBoot = pkgs.callPackage ../packages/capri/uboot { };
       home = laptop.home-manager.users.bhunter;
       contracts = {
         capri = import ../lib/checks/capri.nix {
@@ -190,6 +191,12 @@
             name = "laptop";
             diskoConfig = ../hosts/laptop/disko.nix;
           };
+        }
+        // lib.optionalAttrs (system == "aarch64-linux") {
+          capri-kernel = self.nixosConfigurations.capri.config.boot.kernelPackages.kernel;
+          capri-rootfs-image = self.nixosConfigurations.capri.config.system.build.rootfsImage;
+          capri-uboot = capriBoot.uboot;
+          capri-uboot-boot-image = capriBoot.bootImage;
         };
 
       formatter = pkgs.writeShellApplication {
@@ -270,6 +277,7 @@
       }
       // lib.optionalAttrs (system == "aarch64-linux") {
         netcup-nixos-eval = self.nixosConfigurations.netcup.config.system.build.toplevel;
+        capri-nixos-eval = self.nixosConfigurations.capri.config.system.build.toplevel;
       };
     };
 }
