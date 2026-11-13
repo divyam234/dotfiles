@@ -158,12 +158,13 @@ let
       // structuredExtraConfig;
     kernelPatches = [
       {
-        name = "capri-power-xt2127-4";
-        patch = ../patches/0001-kernel-capri-power-variant.patch;
+        # One patch for the XT2127-4 device tree, PMI632 battery driver,
+        # source detection, charging controller and OEM PMIC readbacks.
+        name = "capri-power-charging";
+        patch = ../patches/0001-kernel-capri-power-charging.patch;
       }
       {
-        # Seed late Kconfig dependencies before the interactive generator
-        # requests built-in DRM_MSM, as in chayleaf's config_fixes patch.
+        # Kconfig dependency seed is independent of the battery driver.
         name = "capri-config-dependencies";
         patch = ../patches/0002-kernel-capri-config-dependencies.patch;
       }

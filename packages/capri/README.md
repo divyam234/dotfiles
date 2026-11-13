@@ -20,24 +20,22 @@ Snapdragon's normal runtime memory allocator, not fixed addresses.
 The Android header-v3 U-Boot image's empty ramdisk is only a packaging
 placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
 
-## Kernel: `0001-kernel-capri-power-variant.patch`
+## Kernel: one combined Capri Power charging patch
 
-- Base: [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), branch `capri-7.2`, commit `232c314e8909dd77395b2c553e7dda2232e4a4cc` (the upstream Capri kernel source containing drivers and a 7.2.9 Linux tree).
-- The working `capri-build-src/` directory was copied from this source family and had **four additional source changes**. This patch captures the complete difference excluding build products:
-  1. `arch/arm64/boot/dts/qcom/Makefile`
-  2. `arch/arm64/boot/dts/qcom/capri-power-battery.dtsi` (new)
-  3. `arch/arm64/boot/dts/qcom/sm4250-motorola-capri-power.dts` (new)
-  4. `drivers/power/supply/capri-pmi632-battery.c`
-- The separate local documentation-only kernel commit `099b491896d8989e633c8b35bf1c48ceaa185d55` is *not* a prerequisite for compilation and is not included.
-- The Nix derivation generates its configuration from the standard ARM64 `defconfig`, Nixpkgs' common kernel settings and declarative Capri `structuredExtraConfig` overrides. It installs matching modules and builds the Power DTB before generating `include/generated/capri-dtb.h` for `Image`.
-- Sanity check: `git apply --check <patch>` against the pinned Capri kernel checkout.
+- **Kernel source:** [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), branch `capri-7.2`, pinned commit `232c314e8909dd77395b2c553e7dda2232e4a4cc`.
+- **Only Power/charging source patch:** `0001-kernel-capri-power-charging.patch`. It replaces the old Power variant patch and patches 0003–0008, preserving their complete source changes.
+- **Seven files covered:** the Power DTS and DT build rule, the PMI632 battery driver, the input/IRQ monitor, the Power charger controller and both policy/charger headers. The compiled working tree was compared byte-for-byte with the replayed combined patch.
+- **Separate build-only patch:** `0002-kernel-capri-config-dependencies.patch` seeds Qualcomm display/audio Kconfig dependencies. This is unrelated to charging.
+- **Device defaults:** the charger now reads and checks the existing PMI632 factory settings for 4.45 V float voltage, JEITA, watchdog, safety timer, signed termination and USB input limit rather than overwriting those protections with JK50 values. The battery profile retains the 3 A *factory maximum*, not a 3 A USB draw authorization. For the observed 500 mA SDP input the experimental charger caps battery FCC at 200 mA; that cap is deliberately **not** the stock fast-charge rate.
+- **Activation:** the battery driver detects the Power variant from its device-tree property and enables the Power charging controller by default, without adding charging kernel parameters. The optional generic `charging=0` override still inhibits charging during diagnostics. The driver fails initialization if the observed PMIC safety settings are unexpected.
+- **Compilation:** the Nix derivation builds the Power DTB first, embeds it into `include/generated/capri-dtb.h`, and compiles the ARM64 `Image` with matching modules.
 
-`0002-kernel-capri-config-dependencies.patch` seeds built-in Qualcomm LLCC/OCMEM,
-backlight and APR support in the standard defconfig. These dependencies must
-already permit built-in DRM/audio before Nixpkgs' interactive configuration
-generator reaches the drivers. This follows the dependency seed approach used
-by chayleaf's OnePlus configuration; it does not replace the shared NixOS
-settings or disable strict checking.
+The previous monitoring and dry-run-policy development remains documented in
+[PMI632 charging validation](CHARGING-VALIDATION.md), but the intermediate patch
+files have been removed. The combined patch is intended to apply once to the
+pinned upstream kernel. Its successful compilation does **not** establish that
+charging, hardware watchdog shutdown or termination work correctly on a live
+lithium battery. No device flash or charging experiment is part of consolidation.
 
 ## Important
 
@@ -175,8 +173,57 @@ checked the partition-UUID guard for the correct UUID, a wrong UUID and missing
 eMMC. These are configuration checks, not U-Boot/kernel compilation or physical
 boot validation. No device formatting, partition writes or flashing occurred.
 
-Native USB ECM/SSH recovery and early-initrd Buffyboard remain unimplemented;
-the RAMUI telnet service is not a secure native recovery path.
+USB ECM plus SSH is configured for the **normal** native NixOS system.
+Early-initrd USB recovery and early-initrd Buffyboard remain unimplemented;
+the RAMUI telnet service is not installed in NixOS.
+
+## USB ECM networking and USB-only unauthenticated SSH (normal NixOS)
+
+`hosts/capri/usb-ecm.nix` creates the configfs ECM function after the real
+root is mounted. It uses RAMUI's experimental USB IDs (`18d1:d001`) and
+sets `172.16.42.1/24` on the gadget's explicitly named `usb0` interface.
+NetworkManager leaves USB interfaces unmanaged; Wi-Fi works independently.
+
+There are now **two separate SSH servers**:
+
+- **Normal NixOS SSH:** port `2222`, existing `bhunter` account,
+  key authentication required on all networks. No change to this policy.
+- **USB-only diagnostic SSH:** port `2223`, listens only at
+  `172.16.42.1` and is allowed by the firewall only for input arriving via
+  `usb0`. The dedicated non-root `capriusb` account has an empty password;
+  the independent OpenSSH daemon sets `UsePAM no`, `PermitEmptyPasswords yes`,
+  and `PasswordAuthentication yes`, allowing the SSH protocol's **none**
+  authentication without a password prompt or client key. Direct root SSH
+  login and forwarding are disallowed; `capriusb` can run `sudo -i` with no
+  password via a dedicated sudo rule, without belonging to `wheel`.
+
+**Security warning:** Anyone who can connect a USB host to the phone can
+obtain an unauthenticated `capriusb` shell and then **full root access** via
+passwordless `sudo`. The sudo rule applies to every `capriusb` session,
+including local logins; it is not limited to USB. Only use this on a
+physically controlled development phone. The first SSH connection may ask to
+trust the server host key, separate from client authentication. There is no
+telnet or Internet sharing over USB.
+
+On your Linux laptop, identify its USB Ethernet interface (e.g. `enx...`)
+and replace `<usb-iface>` with that exact interface name:
+
+```sh
+ip -br link
+sudo ip address add 172.16.42.2/24 dev <usb-iface>
+sudo ip link set dev <usb-iface> up
+ssh -p 2223 capriusb@172.16.42.1
+sudo -i
+```
+
+For ordinary authenticated SSH over the same cable, use
+`ssh -p 2222 bhunter@172.16.42.1`. On Capri, check
+`systemctl status capri-usb-ecm capri-usb-sshd` and
+`journalctl -b -u capri-usb-ecm -u capri-usb-sshd` for diagnostics.
+
+Both services run **only after normal NixOS boots**; there is no early-initrd
+SSH recovery. Configuration evaluation succeeds, but the USB interface and
+unauthenticated connection still require physical-device testing.
 
 ## Ext4 userdata image
 
