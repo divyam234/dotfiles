@@ -51,8 +51,14 @@ let
         INPUT_EVDEV = yes;
         INPUT_UINPUT = yes;
 
-        # Power-variant battery, display and touchscreen.
-        BATTERY_CAPRI_PMI632 = yes;
+        # Native PMI632 SMB5 charging, QGauge and battery thermistor.
+        POWER_SUPPLY = yes;
+        IIO = yes;
+        THERMAL = yes;
+        CHARGER_QCOM_SMB2 = yes;
+        BATTERY_QCOM_QG = yes;
+        GENERIC_ADC_THERMAL = yes;
+        NVMEM_SPMI_SDAM = yes;
         DRM_MSM = yes;
         DRM_MSM_DSI_14NM_PHY = yes;
         DRM_PANEL_MOTOROLA_CAPRI_DJN = yes;
@@ -158,15 +164,10 @@ let
       // structuredExtraConfig;
     kernelPatches = [
       {
-        # One patch for the XT2127-4 device tree, PMI632 battery driver,
-        # source detection, charging controller and OEM PMIC readbacks.
-        name = "capri-power-charging";
-        patch = ../patches/0001-kernel-capri-power-charging.patch;
-      }
-      {
-        # Kconfig dependency seed is independent of the battery driver.
-        name = "capri-config-dependencies";
-        patch = ../patches/0002-kernel-capri-config-dependencies.patch;
+        # Full native Capri PMI632/SMB5/QGauge patch, including the Power DTB
+        # and formerly separate NixOS kernel configuration dependencies.
+        name = "capri-native-smb5";
+        patch = ../patches/0001-kernel-capri-native-smb5.patch;
       }
     ]
     ++ (args.kernelPatches or [ ]);

@@ -20,26 +20,25 @@ Snapdragon's normal runtime memory allocator, not fixed addresses.
 The Android header-v3 U-Boot image's empty ramdisk is only a packaging
 placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
 
-## Kernel: one combined Capri Power charging patch
+## Kernel: one consolidated native Capri SMB5/QGauge patch
 
-- **Kernel source:** [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), branch `capri-7.2`, pinned commit `232c314e8909dd77395b2c553e7dda2232e4a4cc`.
-- **Only Power/charging source patch:** `0001-kernel-capri-power-charging.patch`. It replaces the old Power variant patch and patches 0003–0008, preserving their complete source changes.
-- **Seven files covered:** the Power DTS and DT build rule, the PMI632 battery driver, the input/IRQ monitor, the Power charger controller and both policy/charger headers. The compiled working tree was compared byte-for-byte with the replayed combined patch.
-- **Separate build-only patch:** `0002-kernel-capri-config-dependencies.patch` seeds Qualcomm display/audio Kconfig dependencies. This is unrelated to charging.
-- **Device defaults:** the charger now reads and checks the existing PMI632 factory settings for 4.45 V float voltage, JEITA, watchdog, safety timer, signed termination and USB input limit rather than overwriting those protections with JK50 values. The battery profile retains the 3 A *factory maximum*, not a 3 A USB draw authorization. For the observed 500 mA SDP input the experimental charger caps battery FCC at 200 mA; that cap is deliberately **not** the stock fast-charge rate.
-- **Activation:** the battery driver detects the Power variant from its device-tree property and enables the Power charging controller by default, without adding charging kernel parameters. The optional generic `charging=0` override still inhibits charging during diagnostics. The driver fails initialization if the observed PMIC safety settings are unexpected.
-- **Compilation:** the Nix derivation builds the Power DTB first, embeds it into `include/generated/capri-dtb.h`, and compiles the ARM64 `Image` with matching modules.
+- **Pinned source:** [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), revision `232c314e8909dd77395b2c553e7dda2232e4a4cc` (Linux 7.2.9).
+- **Single kernel patch:** `0001-kernel-capri-native-smb5.patch`, generated as the complete source difference from the pinned revision to the local `capri-7.2` commit `33e75361c`. The former Power charging patch and separate Kconfig dependency patch are superseded and removed.
+- **Native drivers:** adds Qualcomm QGauge, the adapted SMB2/SMB5 PMI632 charger and battery ADC thermal zone; removes the former `capri-pmi632-battery.c` driver and its proprietary charging policy. Provides the Moto G10 Power XT2127-4 DTS and PMIC metadata.
+- **Charging policy:** uses the configured 4.450 V float voltage, native PMIC JEITA and watchdog protection, a board-specific current/termination policy, and Motorola-style hardware `BAT_OV` detection with its 40 mV reporting tolerance. The temporary software cutoff at the float target has been removed.
+- **NixOS options:** select `CHARGER_QCOM_SMB2`, `BATTERY_QCOM_QG`, `GENERIC_ADC_THERMAL` and `NVMEM_SPMI_SDAM` built-in; the single patch includes the old ARM64 defconfig dependency seed.
+- **Build:** `kernel/default.nix` builds the Power DTB and embeds it in the `Image` before linking. The local ARM64 kernel compiled successfully with Clang.
+- **Hardware verification:** RAM-only v5 boot successfully charged near full at about 4.477 V, 27.9 °C and 327–314 mA, without the false cutoff. The phone was rebooted to Android; no partitions were flashed. Full-cycle termination, recharge and thermal fault behavior remain unverified.
 
-The previous monitoring and dry-run-policy development remains documented in
-[PMI632 charging validation](CHARGING-VALIDATION.md), but the intermediate patch
-files have been removed. The combined patch is intended to apply once to the
-pinned upstream kernel. Its successful compilation does **not** establish that
-charging, hardware watchdog shutdown or termination work correctly on a live
-lithium battery. No device flash or charging experiment is part of consolidation.
+The previous experimental implementation and telemetry remain in the historical
+[PMI632 charging validation](CHARGING-VALIDATION.md). Current native-driver results
+are documented in `CAPRI-NATIVE-SMB5-STATUS.md` in the kernel source patch. This
+patch must be applied **once** to the pinned source revision, not on top of the
+already-patched local kernel tree.
 
 ## Important
 
-- **Do not apply patches twice**; the earlier development source trees already contain the exported Power and U-Boot changes, but not necessarily the separate configuration dependency seed patch.
+- **Do not apply patches twice**; the local `capri-7.2` source tree already includes the consolidated kernel changes. Nix applies the single patch to the pinned older revision.
 - The U-Boot source is the *official U-Boot tree* with a Capri downstream patchset; the kernel source is the *Capri downstream Linux tree*, not vanilla Linux from Torvalds. Rebasing Capri kernel support directly onto a vanilla tag would be a much larger, separate patch series.
 - Firmware and device-specific modem NV files are **not** in these patches. Do not add modemst/fsg/fsc or other personal NV snapshots to the Nix store or repository.
 - Patch application checks are necessary but do not by themselves prove that Nix successfully compiles both sources or that a NixOS root filesystem boots on the phone.

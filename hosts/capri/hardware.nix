@@ -10,7 +10,7 @@ in
   # Use NixOS's standard U-Boot/extlinux loader. /boot lives on the root
   # filesystem; no EFI partition or Android GPT boundary changes are needed.
   boot.kernelPackages = lib.mkForce (pkgs.linuxPackagesFor kernel);
-  # The battery driver detects JK50 vs Power via DT; no charging kernel parameters.
+  # Native PMI632 SMB5/QGauge are enabled by the Capri Power DT, no charge boot flags.
   boot.loader.grub.enable = lib.mkForce false;
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.generic-extlinux-compatible.enable = true;
