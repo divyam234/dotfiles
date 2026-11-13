@@ -10,12 +10,16 @@ These are **source patches**, not prebuilt kernel/U-Boot binaries. Pin and fetch
 - Compiling it will still require the Capri build configuration (`qcom_defconfig` plus the added `motorola-capri.config`) and packaging `u-boot.bin` into the Motorola Android header-v3 `boot.img` with `mkbootimg`. This patch does not by itself create the final boot.img.
 - Sanity check on the current patched tree: `git apply --reverse --check <patch>`; on a clean checkout of the base tag: `git apply --check <patch>`.
 
-The Nix package overlays `uboot/default.env` and enables direct Linux boot with
-`sysboot`/`booti`, raw initramfs and read-only ext4 support. It disables eMMC,
+The Nix package overlays `uboot/default.env` with the extlinux-first environment
+from `capri-upstream-uboot` commit `c3af53f5`. U-Boot's Standard Boot scans
+readable partitions for `extlinux/extlinux.conf` or `boot/extlinux/extlinux.conf`
+using `bootflow scan -lb`; a failed scan falls back to the diagnostic menu.
+The menu retains a manual EFI boot option. The Nix build requires
+`BOOTSTD`, `BOOTMETH_EXTLINUX` and `CMD_BOOTFLOW`, and disables eMMC,
 filesystem, GPT, flashing, capsule and persistent-environment write paths.
-The default boot command checks the verified userdata PARTUUID before reading
-`/boot/extlinux/extlinux.conf` from eMMC partition 77. Load addresses come from
-Snapdragon's normal runtime memory allocator, not fixed addresses.
+Load addresses come from Snapdragon's runtime memory allocator, not fixed addresses.
+This replaces the former partition-77-specific `sysboot`/PARTUUID guard;
+NixOS still mounts its root filesystem by the verified userdata PARTUUID.
 
 The Android header-v3 U-Boot image's empty ramdisk is only a packaging
 placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
@@ -148,7 +152,8 @@ userdata partition:
 `hosts/capri/hardware.nix` declares this PARTUUID as ext4 root. The generated
 initrd fstab mounts it as `/`; NixOS writes its extlinux menu and generation
 kernel/initramfs/DTB files under `/boot` during installation or activation.
-The literal `ext2` argument to U-Boot's `sysboot` selects its ext2/3/4 reader.
+U-Boot's extlinux boot method reads the same ext4 filesystem directly;
+no separate EFI System Partition is needed.
 
 **This filesystem has not been created on the phone.** Android currently uses
 encrypted F2FS data. A later installation must explicitly authorize erasing and
@@ -164,13 +169,12 @@ Read-only `sgdisk --verify` found no GPT errors, but reported Motorola's small
 partition-entry table, header gap and userdata end alignment; do not normalize
 or “repair” these as part of installation.
 
-**Verification:** U-Boot configuration-only generation passed; direct-boot
-capabilities are enabled and write/export features are disabled. The standard
-NixOS extlinux generator was exercised with temporary path fixtures, checking
-kernel/initramfs/Power-DTB paths and kernel parameters. Isolated shell scenarios
-checked the partition-UUID guard for the correct UUID, a wrong UUID and missing
-eMMC. These are configuration checks, not U-Boot/kernel compilation or physical
-boot validation. No device formatting, partition writes or flashing occurred.
+**Verification:** NixOS's extlinux generator was exercised with temporary
+path fixtures, checking kernel/initramfs/Power-DTB paths and kernel parameters.
+The older partition-UUID-guard shell tests apply only to the superseded
+`sysboot` environment; the replacement `bootflow` environment still needs
+integration testing against a real NixOS ext4 filesystem on the handset.
+No device formatting, partition writes or flashing occurred in those tests.
 
 USB ECM plus SSH is configured for the **normal** native NixOS system.
 Early-initrd USB recovery and early-initrd Buffyboard remain unimplemented;

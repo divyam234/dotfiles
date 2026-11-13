@@ -28,7 +28,10 @@ let
       # Keep the boot path read-only even though the source patch also
       # exposes optional filesystem/GPT write commands.
       cat >> .config <<'EOF'
-      CONFIG_CMD_SYSBOOT=y
+      CONFIG_BOOTSTD=y
+      CONFIG_BOOTMETH_EXTLINUX=y
+      CONFIG_CMD_BOOTFLOW=y
+      CONFIG_CMD_BOOTFLOW_FULL=y
       CONFIG_CMD_BOOTI=y
       CONFIG_SUPPORT_RAW_INITRD=y
       CONFIG_CMD_EXT4=y
@@ -96,7 +99,8 @@ let
           ARM64 MOTOROLA_CAPRI OF_SEPARATE OF_BOARD \
           LINUX_KERNEL_IMAGE_HEADER POSITION_INDEPENDENT \
           INIT_SP_RELATIVE SAVE_PREV_BL_FDT_ADDR \
-          MMC MMC_SDHCI_MSM CMD_SYSBOOT CMD_BOOTI SUPPORT_RAW_INITRD \
+          MMC MMC_SDHCI_MSM BOOTSTD BOOTMETH_EXTLINUX \
+          CMD_BOOTFLOW CMD_BOOTFLOW_FULL CMD_BOOTI SUPPORT_RAW_INITRD \
           FS_EXT4 CMD_EXT4 PARTITION_UUIDS \
           ENV_IS_NOWHERE EFI_VARIABLE_NO_STORE; do
           grep -qx "CONFIG_''${option}=y" ${uboot}/.config
