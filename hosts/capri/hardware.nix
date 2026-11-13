@@ -14,6 +14,7 @@ in
   boot.loader.grub.enable = lib.mkForce false;
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.generic-extlinux-compatible.enable = true;
+  boot.loader.generic-extlinux-compatible.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = false;
 
   # Verified over ADB on this XT2127-4: userdata is mmcblk0p77. This declares
