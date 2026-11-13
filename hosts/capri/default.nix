@@ -15,6 +15,8 @@
         ./hardware.nix
         ./image.nix
         ./modem-nv.nix
+        ./usb-ecm.nix
+        ./usb-ssh.nix
       ];
       system.stateVersion = "26.05";
       services.teldrive.settings.http.address = lib.mkForce "0.0.0.0:8090";
