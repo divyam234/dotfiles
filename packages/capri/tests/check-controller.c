@@ -24,6 +24,7 @@ static const struct capri_control_observation nominal = {
 	.battery_voltage_uv = 4000000,
 	.usb_voltage_uv = 5032000,
 	.usb_icl_ua = 500000,
+	.usb_current_ua = 220000,
 	.charge_current_calibrated = false,
 	.charging_active = false,
 };
@@ -153,6 +154,12 @@ int main(void)
 	o = nominal; o.usb_icl_ua = 900000;
 	step_fault("USB limit over SDP", o, CAPRI_CTL_INPUT_INVALID);
 	++scenarios;
+	o = nominal; o.usb_current_ua = 788600;
+	step_fault("measured input over effective AICL", o, CAPRI_CTL_INPUT_INVALID);
+	++scenarios;
+	o = nominal; o.usb_current_ua = -1;
+	step_fault("invalid input-current ADC", o, CAPRI_CTL_INPUT_INVALID);
+	++scenarios;
 	o = nominal; o.usb_voltage_uv = 4300000;
 	step_fault("VBUS undervoltage", o, CAPRI_CTL_INPUT_INVALID);
 	++scenarios;
@@ -251,6 +258,20 @@ int main(void)
 	assert(!state.terminated);
 	++scenarios;
 
+	/* Measured overdraw latches through USB disconnect/reconnect. */
+	o = nominal; o.usb_current_ua = 788600;
+	state = (struct capri_control_state){};
+	plan = capri_control_calculate(&state, &o);
+	assert(state.input_fault_latched && (plan.reasons & CAPRI_CTL_INPUT_INVALID));
+	o.usb_online = false;
+	(void)capri_control_calculate(&state, &o);
+	o = nominal;
+	for (i = 0; i < 4; ++i)
+		plan = capri_control_calculate(&state, &o);
+	assert(state.input_fault_latched && (plan.reasons & CAPRI_CTL_FAULT_LATCHED));
+	assert(!plan.source_candidate && !plan.charging_permitted);
+	++scenarios;
+
 	/* Pure engine fuzz: weird readings must never grant hardware
 	 * control, and no candidate may exceed the sensed SDP limit.
 	 */
@@ -260,6 +281,7 @@ int main(void)
 		o.battery_voltage_uv = (i * 43 % 3200) * 1000 + 2200000;
 		o.usb_voltage_uv = (i * 71 % 9000) * 1000;
 		o.usb_icl_ua = (i * 13 % 90) * 50000;
+		o.usb_current_ua = (i * 37 % 700) * 1000;
 		o.usb_sdp = i % 3 != 0;
 		o.gauge_valid = i % 101 != 0;
 		o.charger_fault = i % 127 == 0;
@@ -273,6 +295,7 @@ int main(void)
 			       o.usb_icl_ua <= 500000);
 			assert(plan.fcc_ua <= 200000);
 			assert(plan.usb_icl_ua <= o.usb_icl_ua);
+			assert(o.usb_current_ua <= o.usb_icl_ua);
 		}
 	}
 	++scenarios;

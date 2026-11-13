@@ -552,3 +552,38 @@ separate RAMUI image, and booted it temporarily with `fastboot boot`.
 The handset was returned to fully booted stock Android. **No partitions were
 flashed, no PMIC charging registers changed, and charging remained disabled
 throughout RAMUI testing.**
+
+## Power default-charge RAMUI startup investigation (2026-11-13)
+
+The first image (`boot-ramui-power-default-charging.img`, SHA-256
+`416d69b096e26d2fd531123c0ef5e47b7a2f8b8304c732a0c8e0d8e15f0859e8`)
+booted Linux 7.2.9 **without charging kernel arguments**, but the Power
+battery driver's PMIC setup rejected a register with `-EINVAL`. Neither
+battery supply nor USB battery monitor registered; charging was not enabled.
+
+Read-only SPMI regmap inspection located a genuine mismatch between the
+phone's **configured** and **effective** input-current limits:
+`USBIN_CURRENT_LIMIT_CFG (0x1370)=0x1e` (1.5 A configured) while
+`ICL_STATUS (0x1107)=0x0a` (500 mA effective). Stock PMIC defaults
+otherwise matched: FV `0x55` = 4.45 V, FCC `0x28` = 2 A, JEITA
+`0x1b`, WD `0x62/0x8c`, timer `0x02`, signed ITERM `0xfd65`
+(about −102 mA), and charger command `0x00` after the probe disable.
+
+The original initializer incorrectly compared **raw programmed** ICL
+to the effective 500 mA limit, rejecting OEM defaults. The corrected
+initializer no longer treats dynamic source-current settings as static
+PMIC prerequisites. The runtime charging policy still reads **effective
+ICL_STATUS** every sample and requires no more than 500 mA, plus
+battery/temperature/watchdog/source protection conditions, before enabling
+charging. The OEM 1.5 A programmed input register remains unmodified.
+
+The phone returned to stock Android with boot_completed=1, kernel
+4.19.325. At test start the pack was **100% / 4.472 V**, above its
+4.45 V float setting. Do not defeat the full-charge cutoff to force
+battery charge current.
+
+The revised ARM64 kernel compiled successfully, and a second isolated
+RAMUI image (`boot-ramui-power-default-charging-aicl.img`, SHA-256
+`64c8878fcca095856f0b75c9e7830eed67fbd19e07eef74ac22f770c1ab1835b`)
+uses the same unchanged v7 RAMUI initramfs, with zero battery kernel
+parameters. Runtime results follow after testing.
