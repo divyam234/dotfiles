@@ -3,6 +3,7 @@
   fetchFromGitHub,
   lib,
   python3,
+  runCommand,
   features ? { },
   randstructSeed ? "",
   structuredExtraConfig ? { },
@@ -16,14 +17,27 @@ let
     hash = "sha256-NgSc1kU16RJHptdtQQxZmThk9DBzSAPAfOW7vybRs6o=";
   };
 
+  # Generate the baseline config within Nix (not as a kernel patch). Kconfig
+  # must see these built-in dependencies before Nixpkgs' config generator
+  # asks for DRM_MSM and other built-in drivers.
+  nixDefconfig = runCommand "capri-nixos-defconfig" { } ''
+    cp ${source}/arch/arm64/configs/defconfig "$out"
+    chmod u+w "$out"
+    substituteInPlace "$out" \
+      --replace-fail 'CONFIG_QCOM_LLCC=m' 'CONFIG_QCOM_LLCC=y' \
+      --replace-fail 'CONFIG_QCOM_OCMEM=m' 'CONFIG_QCOM_OCMEM=y' \
+      --replace-fail 'CONFIG_QCOM_APR=m' 'CONFIG_QCOM_APR=y'
+    sed -i '/^CONFIG_QCOM_OCMEM=y$/a CONFIG_BACKLIGHT_CLASS_DEVICE=y' "$out"
+  '';
   kernel = buildLinux {
     pname = "linux-capri";
     version = "7.2.9";
     modDirVersion = "7.2.9-capri";
     src = source;
-    # Start with the standard ARM64/NixOS configuration, not the stripped
-    # handset defconfig. Keep device-specific requirements explicit below.
-    defconfig = "defconfig";
+    # Keep the normal ARM64 defconfig as baseline, with Nix-only built-in
+    # dependency seeds. All final options are in structuredExtraConfig.
+    defconfig = "alldefconfig";
+    extraMakeFlags = [ "KCONFIG_ALLCONFIG=${nixDefconfig}" ];
     enableCommonConfig = true;
     autoModules = true;
     ignoreConfigErrors = false;
@@ -85,6 +99,8 @@ let
         REGULATOR_QCOM_SPMI = yes;
         REGULATOR_QCOM_USB_VBUS = yes;
         COMMON_CLK_QCOM = yes;
+        QCOM_LLCC = yes;
+        QCOM_OCMEM = yes;
         QCOM_CLK_RPM = yes;
         QCOM_CLK_SMD_RPM = yes;
         SM_GCC_6115 = yes;

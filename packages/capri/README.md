@@ -23,18 +23,18 @@ placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
 ## Kernel: one consolidated native Capri SMB5/QGauge patch
 
 - **Pinned source:** [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), revision `232c314e8909dd77395b2c553e7dda2232e4a4cc` (Linux 7.2.9).
-- **Single kernel patch:** `0001-kernel-capri-native-smb5.patch`, generated as the complete source difference from the pinned revision to the local `capri-7.2` commit `33e75361c`. The former Power charging patch and separate Kconfig dependency patch are superseded and removed.
+- **Single kernel patch:** `0001-kernel-capri-native-smb5.patch`, containing the source, device-tree and binding changes from the pinned revision to local `capri-7.2` commit `33e75361c`. Both `defconfig` changes and all `.md` documentation are intentionally excluded. The previous Power charging patch and separate config patch have been removed.
 - **Native drivers:** adds Qualcomm QGauge, the adapted SMB2/SMB5 PMI632 charger and battery ADC thermal zone; removes the former `capri-pmi632-battery.c` driver and its proprietary charging policy. Provides the Moto G10 Power XT2127-4 DTS and PMIC metadata.
 - **Charging policy:** uses the configured 4.450 V float voltage, native PMIC JEITA and watchdog protection, a board-specific current/termination policy, and Motorola-style hardware `BAT_OV` detection with its 40 mV reporting tolerance. The temporary software cutoff at the float target has been removed.
-- **NixOS options:** select `CHARGER_QCOM_SMB2`, `BATTERY_QCOM_QG`, `GENERIC_ADC_THERMAL` and `NVMEM_SPMI_SDAM` built-in; the single patch includes the old ARM64 defconfig dependency seed.
+- **NixOS options:** `structuredExtraConfig` sets every required build flag, including `QCOM_LLCC`, `QCOM_OCMEM`, `QCOM_APR`, `BACKLIGHT_CLASS_DEVICE`, `CHARGER_QCOM_SMB2`, `BATTERY_QCOM_QG`, `GENERIC_ADC_THERMAL` and `NVMEM_SPMI_SDAM`. No defconfig patch is needed.
 - **Build:** `kernel/default.nix` builds the Power DTB and embeds it in the `Image` before linking. The local ARM64 kernel compiled successfully with Clang.
 - **Hardware verification:** RAM-only v5 boot successfully charged near full at about 4.477 V, 27.9 °C and 327–314 mA, without the false cutoff. The phone was rebooted to Android; no partitions were flashed. Full-cycle termination, recharge and thermal fault behavior remain unverified.
 
-The previous experimental implementation and telemetry remain in the historical
-[PMI632 charging validation](CHARGING-VALIDATION.md). Current native-driver results
-are documented in `CAPRI-NATIVE-SMB5-STATUS.md` in the kernel source patch. This
-patch must be applied **once** to the pinned source revision, not on top of the
-already-patched local kernel tree.
+The historical [PMI632 charging validation](CHARGING-VALIDATION.md) and
+`CAPRI-NATIVE-SMB5-STATUS.md` in the **kernel development repository** remain
+separate documentation; neither is bundled into the Nix source patch.
+Apply the patch **once** to the pinned kernel revision, not on top of the
+already-patched local development tree.
 
 ## Important
 
