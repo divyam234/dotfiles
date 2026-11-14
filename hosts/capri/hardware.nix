@@ -17,10 +17,10 @@ in
   boot.loader.generic-extlinux-compatible.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = false;
 
-  # The NixOS root lives on the removable SanDisk microSD, not Android userdata.
-  # The image builder sets this ext4 label; do not reference internal eMMC.
+  # The native NixOS root lives in the former Android userdata partition
+  # (eMMC mmcblk0p77). Preserve the microSD as a separately labeled fallback.
   fileSystems."/" = {
-    device = "/dev/disk/by-label/NIXOS_CAPRI";
+    device = "/dev/disk/by-label/NIXOS_EMMC";
     fsType = "ext4";
   };
 

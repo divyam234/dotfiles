@@ -58,7 +58,7 @@ assert capri.console.font == "ter-128n";
 assert capri.services.getty.autologinUser == "bhunter";
 assert !capri.users.mutableUsers;
 assert capri.users.users.bhunter.hashedPasswordFile == null;
-assert capri.users.users.bhunter.hashedPassword == "!";
+assert capri.users.users.bhunter.hashedPassword == "*";
 assert !capri.security.sudo.wheelNeedsPassword;
 assert capri.system.disableInstallerTools;
 assert !capri.documentation.enable;
