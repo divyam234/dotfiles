@@ -1,0 +1,27 @@
+diff --git a/arch/arm64/kernel/capri-fdt.c b/arch/arm64/kernel/capri-fdt.c
+--- a/arch/arm64/kernel/capri-fdt.c
++++ b/arch/arm64/kernel/capri-fdt.c
+@@ -60,5 +60,23 @@ void * __init capri_prepare_fdt(const void *firmware, phys_addr_t *phys, int *size)
+ 
+  if (!firmware || fdt_check_header(firmware))
+   panic("Capri FDT: invalid firmware DT");
++ /*
++  * U-Boot extlinux supplies the native Power DT itself, including live
++  * RAM banks and /chosen initrd addresses. Do not replace it with the
++  * embedded fallback intended for Motorola's Android bootloader.
++  */
++ if (!fdt_node_check_compatible(firmware, 0, "motorola,capri") &&
++     !fdt_node_check_compatible(firmware, 0, "qcom,sm4250")) {
++  const fdt32_t *board_id;
++  int board_id_len;
++
++  board_id = fdt_getprop(firmware, 0, "qcom,board-id", &board_id_len);
++  if (!board_id || board_id_len != 2 * sizeof(*board_id) ||
++      fdt32_to_cpu(board_id[0]) != 0x500 ||
++      fdt32_to_cpu(board_id[1]) != 0xb200)
++   panic("Capri FDT: unexpected native board ID");
++  pr_info("Capri: using native Power DT supplied by U-Boot\n");
++  return (void *)firmware;
++ }
+  if (fdt_node_check_compatible(firmware, 0, "qcom,bengal-capri"))
+   panic("Capri FDT: unexpected board, refusing local DT override");

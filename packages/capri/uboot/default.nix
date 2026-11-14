@@ -1,11 +1,16 @@
 {
   android-tools,
+  bison,
   buildUBoot,
   cpio,
   dtc,
   fetchFromGitHub,
+  flex,
+  gnutls,
   gzip,
+  openssl,
   runCommand,
+  xxd,
 }:
 let
   source = fetchFromGitHub {
@@ -19,7 +24,17 @@ let
     version = "2026.07";
     src = source;
     defconfig = "qcom_defconfig";
-    extraPatches = [ ../patches/0001-uboot-motorola-capri-upstream-v2026.07.patch ];
+    nativeBuildInputs = [
+      bison
+      flex
+      gnutls
+      openssl
+      xxd
+    ];
+    extraPatches = [
+      ../patches/0001-uboot-motorola-capri-upstream-v2026.07.patch
+      ../patches/0002-uboot-capri-microsd-sdhc2.patch
+    ];
     preConfigure = ''
       cp ${./default.env} board/qualcomm/motorola-capri.env
     '';

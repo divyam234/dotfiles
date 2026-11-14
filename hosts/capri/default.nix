@@ -1,13 +1,8 @@
-{ den, lib, ... }:
+{ den, ... }:
 {
   den.aspects.capri = {
-    includes = [
-      # Same NixOS base as netcup, without its container infrastructure.
-      den.aspects.base
-      den.aspects.server
-      den.aspects.home-manager-policy
-      den.aspects.teldrive-native
-    ];
+    # Minimal first-boot rootfs; add services later via this flake.
+    includes = [ den.aspects.capri-minimal ];
 
     nixos = {
       imports = [
@@ -16,12 +11,8 @@
         ./image.nix
         ./modem-nv.nix
         ./usb-ecm.nix
-        ./usb-ssh.nix
       ];
       system.stateVersion = "26.05";
-      services.teldrive.settings.http.address = lib.mkForce "0.0.0.0:8090";
-      services.teldrive.user = "root";
-      services.teldrive.group = "root";
     };
   };
 }

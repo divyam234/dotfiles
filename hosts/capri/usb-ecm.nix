@@ -4,8 +4,7 @@
   networking.networkmanager.unmanaged = [ "interface-name:usb*" ];
 
   # Replicate the tested RAMUI ECM gadget on the real NixOS root filesystem.
-  # The normal SSH daemon stays key-only on 2222; an independent SSH daemon
-  # permits unauthenticated logins on the USB-only port 2223.
+  # The normal key-authenticated SSH daemon serves USB and Wi-Fi on port 2222.
   systemd.services.capri-usb-ecm = {
     description = "Capri USB ECM networking for SSH";
     wantedBy = [ "multi-user.target" ];
@@ -59,8 +58,9 @@
         printf '%s\n' capri-nixos > "$gadget/strings/0x409/serialnumber"
 
         mkdir -p "$gadget/functions/ecm.usb0"
-        # Name the link predictably so firewall rules can restrict by input interface.
-        printf '%s\n' usb0 > "$gadget/functions/ecm.usb0/ifname"
+        # The ECM ifname configfs attribute requires a pattern with exactly
+        # one %d, not a literal interface name. The kernel resolves it on bind.
+        printf '%s\n' 'usb%d' > "$gadget/functions/ecm.usb0/ifname"
         mkdir -p "$gadget/configs/c.1/strings/0x409"
         printf '%s\n' 'USB ECM SSH' > "$gadget/configs/c.1/strings/0x409/configuration"
         if [ ! -L "$gadget/configs/c.1/ecm.usb0" ]; then
@@ -68,25 +68,24 @@
         fi
       fi
 
-      # The USB function determines its actual interface name.
-      # ConfigFS attributes can be readable even when they report zero size.
-      iface=""
-      IFS= read -r iface < "$gadget/functions/ecm.usb0/ifname" || true
-      if [ -z "$iface" ]; then
-        echo "Capri USB ECM interface name is empty" >&2
-        exit 1
-      fi
-      if [ "$iface" != usb0 ]; then
-        echo "Expected usb0 for interface-specific SSH firewall, got $iface" >&2
-        exit 1
-      fi
-      ip address replace 172.16.42.1/24 dev "$iface"
-      ip link set dev "$iface" up
-
+      # The ECM netdev is registered when the gadget binds to its UDC.
+      # Configure IP only after binding, when usb%d has become usb0 (or usbN).
       if [ -z "$bound_udc" ]; then
         printf '%s\n' "$udc" > "$gadget/UDC"
       fi
-      echo "Capri USB ECM: $iface at 172.16.42.1/24; SSH 2222 (keys), SSH 2223 (no auth)"
+
+      iface=""
+      IFS= read -r iface < "$gadget/functions/ecm.usb0/ifname" || true
+      case "$iface" in
+        usb[0-9]*) ;;
+        *)
+          echo "Invalid or unavailable Capri USB ECM interface: $iface" >&2
+          exit 1
+          ;;
+      esac
+      ip address replace 172.16.42.1/24 dev "$iface"
+      ip link set dev "$iface" up
+      echo "Capri USB ECM: $iface at 172.16.42.1/24; SSH 2222 (keys)"
     '';
     preStop = ''
       gadget=/sys/kernel/config/usb_gadget/capri_ecm

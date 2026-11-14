@@ -3,7 +3,6 @@
   fetchFromGitHub,
   lib,
   python3,
-  runCommand,
   features ? { },
   randstructSeed ? "",
   structuredExtraConfig ? { },
@@ -17,29 +16,26 @@ let
     hash = "sha256-NgSc1kU16RJHptdtQQxZmThk9DBzSAPAfOW7vybRs6o=";
   };
 
-  # Generate the baseline config within Nix (not as a kernel patch). Kconfig
-  # must see these built-in dependencies before Nixpkgs' config generator
-  # asks for DRM_MSM and other built-in drivers.
-  nixDefconfig = runCommand "capri-nixos-defconfig" { } ''
-    cp ${source}/arch/arm64/configs/defconfig "$out"
-    chmod u+w "$out"
-    substituteInPlace "$out" \
-      --replace-fail 'CONFIG_QCOM_LLCC=m' 'CONFIG_QCOM_LLCC=y' \
-      --replace-fail 'CONFIG_QCOM_OCMEM=m' 'CONFIG_QCOM_OCMEM=y' \
-      --replace-fail 'CONFIG_QCOM_APR=m' 'CONFIG_QCOM_APR=y'
-    sed -i '/^CONFIG_QCOM_OCMEM=y$/a CONFIG_BACKLIGHT_CLASS_DEVICE=y' "$out"
-  '';
   kernel = buildLinux {
     pname = "linux-capri";
     version = "7.2.9";
     modDirVersion = "7.2.9-capri";
     src = source;
-    # Keep the normal ARM64 defconfig as baseline, with Nix-only built-in
-    # dependency seeds. All final options are in structuredExtraConfig.
-    defconfig = "alldefconfig";
-    extraMakeFlags = [ "KCONFIG_ALLCONFIG=${nixDefconfig}" ];
-    enableCommonConfig = true;
-    autoModules = true;
+    # Start from the tested Capri device defconfig, not all ARM64 platforms.
+    # NixOS common options and hardware overrides are layered on top.
+    defconfig = "motorola_capri_defconfig";
+    # ARM64 host utilities (resolve_btfids) use glibc UAPI headers whose
+    # __u128 type is absent from the kernel tools' older Linux UAPI shim.
+    # Keep BTF/eBPF enabled; supply the missing host-only integer alias.
+    extraMakeFlags = [
+      "HOSTCFLAGS=-D__u128=__uint128_t"
+    ];
+    # Nixpkgs' generic common config pulls in drivers for unrelated SoCs.
+    # Use explicit boot, systemd, filesystem and Capri settings instead.
+    enableCommonConfig = false;
+    # Do not auto-enable every optional hardware driver as a module.
+    # Keep explicitly selected Capri modules and their Kconfig dependencies.
+    autoModules = false;
     ignoreConfigErrors = false;
     structuredExtraConfig =
       with lib.kernel;
@@ -55,6 +51,10 @@ let
         EFI = yes;
         EFI_STUB = yes;
         EFI_PARTITION = yes;
+        # Android provisions removable microSD cards with an MBR partition
+        # table. Without this, mmcblk1 appears but mmcblk1p1 does not, so
+        # initrd cannot resolve /dev/disk/by-label/NIXOS_CAPRI.
+        MSDOS_PARTITION = yes;
         BLK_DEV_INITRD = yes;
         RD_GZIP = yes;
         RD_ZSTD = yes;
@@ -64,6 +64,52 @@ let
         FRAMEBUFFER_CONSOLE = yes;
         INPUT_EVDEV = yes;
         INPUT_UINPUT = yes;
+
+        # NixOS requiredKernelConfig and Mobile NixOS core baseline.
+        # These are userspace/systemd essentials, not extra hardware drivers.
+        CRYPTO_HMAC = yes;
+        CRYPTO_USER_API_HASH = yes;
+        AUTOFS_FS = yes;
+        # I/O accounting and memory pressure reporting for systemd/cgroups.
+        BLK_CGROUP = yes;
+        PSI = yes;
+
+        # Mobile NixOS-inspired cgroup v2 resource controls.
+        # Containers need CPU quotas and I/O throttling, not extra SoC drivers.
+        CFS_BANDWIDTH = yes;
+        BLK_DEV_THROTTLING = yes;
+        BLK_CGROUP_IOLATENCY = yes;
+        BLK_CGROUP_IOCOST = yes;
+        # Prefer multi-generation page reclaim on RAM-constrained phones.
+        LRU_GEN = yes;
+        LRU_GEN_ENABLED = yes;
+        # Optional userspace-program binary handlers (e.g. QEMU binfmt).
+        BINFMT_MISC = module;
+
+        # General-purpose Linux: isolation, security and observability.
+        # Keep these subsystems while excluding unrelated SoC drivers.
+        CGROUP_CPUACCT = yes;
+        AUDIT = yes;
+        AUDITSYSCALL = yes;
+        SECURITY = yes;
+        SECURITYFS = yes;
+        # NixOS controls active LSMs via security.lsm; do not force AppArmor.
+        SECURITY_LANDLOCK = yes;
+        SECURITY_YAMA = yes;
+        HARDENED_USERCOPY = yes;
+        FORTIFY_SOURCE = yes;
+        SLAB_FREELIST_HARDENED = yes;
+        SLAB_FREELIST_RANDOM = yes;
+        # ARM64/GCC has stack-protector support; verify generated Kconfig.
+        STACKPROTECTOR = yes;
+        STACKPROTECTOR_STRONG = yes;
+        DEBUG_KERNEL = yes;
+        DETECT_HUNG_TASK = yes;
+        BPF_JIT = yes;
+        PERF_EVENTS = yes;
+        KPROBES = yes;
+        # Useful to diagnose drivers without enabling the full debug suite.
+        FTRACE = yes;
 
         # Native PMI632 SMB5 charging, QGauge and battery thermistor.
         POWER_SUPPLY = yes;
@@ -89,6 +135,37 @@ let
         MMC_SDHCI_PLTFM = yes;
         MMC_SDHCI_MSM = yes;
         EXT4_FS = yes;
+
+        # Normal Linux storage features as optional modules, not boot-critical.
+        # Internal microSD/eMMC + EXT4 stay built in above.
+        BLK_DEV_LOOP = module;
+        MD = yes; # Parent menu for device mapper and LUKS; RAID remains disabled.
+        BLK_DEV_DM = module;
+        DM_CRYPT = module;
+        DM_VERITY = module;
+        FS_ENCRYPTION = yes;
+        SCSI = yes;
+        BLK_DEV_BSG = yes;
+        BLK_DEV_SD = module;
+        USB_STORAGE = module;
+        USB_UAS = module;
+        FAT_FS = module;
+        VFAT_FS = module;
+        EXFAT_FS = module;
+        BTRFS_FS = module;
+        F2FS_FS = module;
+        SQUASHFS = module;
+        SQUASHFS_ZSTD = yes;
+        EROFS_FS = module;
+        NLS_UTF8 = yes;
+        NLS_CODEPAGE_437 = module;
+        NLS_ISO8859_1 = module;
+        # Qualcomm/display DMA allocations may require contiguous pages.
+        CMA = yes;
+        # User-space suspend inhibition for mobile-style power control.
+        PM_WAKELOCKS = yes;
+        DMA_CMA = yes;
+        CMA_SIZE_MBYTES = freeform "32";
         PINCTRL_SM6115 = yes;
         PINCTRL_QCOM_SPMI_PMIC = yes;
         SPMI = yes;
@@ -150,6 +227,46 @@ let
         PHY_QCOM_QUSB2 = yes;
         PHY_QCOM_USB_SNPS_FEMTO_V2 = yes;
 
+        # Minimal virtual networking for native Podman and Tailscale.
+        # Keep everything else on the device-specific kernel baseline.
+        NET_CORE = yes;
+        # Policy routing is required by Tailscale's routing table rules.
+        IP_ADVANCED_ROUTER = yes;
+        IP_MULTIPLE_TABLES = yes;
+        IPV6_MULTIPLE_TABLES = yes;
+        TUN = yes;
+        VETH = module;
+        BRIDGE = module;
+        MODULE_UNLOAD = yes;
+
+        # Native WireGuard and common virtual interfaces for containers.
+        WIREGUARD = module;
+        MACVLAN = module;
+        IPVLAN = module;
+        VXLAN = module;
+        DUMMY = module;
+        BRIDGE_NETFILTER = module;
+        # Traffic control / eBPF classifiers used by modern Linux networking.
+        NET_SCHED = yes;
+        NET_CLS_ACT = yes;
+        NET_CLS_BPF = module;
+        NET_SCH_INGRESS = module;
+        NET_SCH_FQ_CODEL = module;
+
+        # NixOS firewall's IPv4/IPv6 rpfilter compatibility and NAT.
+        NETFILTER_XTABLES = module;
+        NFT_COMPAT = module;
+        IP_NF_IPTABLES = module;
+        IP6_NF_IPTABLES = module;
+        IP_NF_MATCH_RPFILTER = module;
+        IP6_NF_MATCH_RPFILTER = module;
+        # Standard nftables rules beyond the boot-minimal NAT/filter subset.
+        NF_TABLES_NETDEV = yes;
+        NFT_LOG = module;
+        NFT_LIMIT = module;
+        NFT_FIB_IPV4 = module;
+        NFT_FIB_IPV6 = module;
+
         # Wi-Fi remoteproc startup remains controlled by the host services.
         QRTR = yes;
         QRTR_SMD = yes;
@@ -184,6 +301,16 @@ let
         # and formerly separate NixOS kernel configuration dependencies.
         name = "capri-native-smb5";
         patch = ../patches/0001-kernel-capri-native-smb5.patch;
+      }
+      {
+        name = "capri-microsd-sdhc2";
+        patch = ../patches/0002-kernel-capri-microsd-sdhc2.patch;
+      }
+      {
+        # U-Boot extlinux supplies our native Power FDT, not Motorola's
+        # qcom,bengal-capri firmware FDT; keep its live memory/initrd fixups.
+        name = "capri-native-uboot-fdt";
+        patch = ../patches/0003-kernel-capri-native-uboot-fdt.patch;
       }
     ]
     ++ (args.kernelPatches or [ ]);

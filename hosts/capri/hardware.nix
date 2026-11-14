@@ -17,10 +17,10 @@ in
   boot.loader.generic-extlinux-compatible.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = false;
 
-  # Verified over ADB on this XT2127-4: userdata is mmcblk0p77. This declares
-  # its future native filesystem; it does not format the current Android data.
+  # The NixOS root lives on the removable SanDisk microSD, not Android userdata.
+  # The image builder sets this ext4 label; do not reference internal eMMC.
   fileSystems."/" = {
-    device = "/dev/disk/by-partuuid/f6eb68be-3488-aaba-703b-eb107625d212";
+    device = "/dev/disk/by-label/NIXOS_CAPRI";
     fsType = "ext4";
   };
 
@@ -33,5 +33,42 @@ in
   # The handset uses built-in Qualcomm MMC, eMMC and ext4 drivers. The stock
   # x86-oriented initrd module list is inappropriate for this kernel.
   boot.initrd.includeDefaultModules = false;
+  # NixOS's EXT initrd support adds ext2 even when only ext4 is mounted.
+  # Capri has built-in EXT4_FS=y but no separate ext2 module; retain strict
+  # module checking rather than allowing missing modules globally.
+  boot.initrd.availableKernelModules.ext2 = lib.mkForce false;
   boot.initrd.systemd.tpm2.enable = false;
+
+  # Temporary early-boot diagnostics for the first native microSD boot.
+  # No console login or root password is required; output goes to the LCD.
+  boot.initrd.systemd.services.capri-mmc-diagnostics = {
+    description = "Show Capri microSD probe failures on boot console";
+    wantedBy = [ "initrd.target" ];
+    after = [ "systemd-udev-trigger.service" ];
+    path = with pkgs; [
+      coreutils
+      gnugrep
+      util-linux
+    ];
+    serviceConfig = {
+      Type = "simple";
+      StandardOutput = "journal+console";
+      StandardError = "journal+console";
+    };
+    script = ''
+      for delay in 15 45; do
+        sleep "$delay"
+        echo "======= CAPRI MMC DIAGNOSTICS ======="
+        echo "MMC hosts:"
+        ls -l /sys/class/mmc_host/ || true
+        echo "Block devices:"
+        ls -l /sys/class/block/ || true
+        echo "Detected rootfs labels:"
+        ls -l /dev/disk/by-label/ || true
+        echo "Kernel MMC and dependency probes:"
+        dmesg | grep -iE 'mmc|sdhc|sdcc|card.det|pinctrl|regulat|rpmpd|interconnect|defer|probe' | tail -n 45 || true
+        echo "======= END CAPRI MMC DIAGNOSTICS ======="
+      done
+    '';
+  };
 }

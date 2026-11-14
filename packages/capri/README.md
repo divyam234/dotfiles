@@ -87,18 +87,20 @@ is intended for native NixOS; it is not yet a tested bootable phone image.
 
 ## Native boot evaluation status
 
-The Nix kernel derivation uses `buildLinux` with the pinned source's standard
-ARM64 `defconfig`, Nixpkgs' common configuration and declarative Capri hardware
-overrides in `kernel/default.nix`. Automatic module expansion is enabled.
-The stripped `motorola_capri_defconfig` is not the baseline: its disabled parent
-features prevent common NixOS settings from being selected. Required overrides
-remain strictly checked rather than silently ignored.
+The Nix kernel derivation uses `buildLinux` with the pinned source's
+`motorola_capri_defconfig`, not the generic all-platform ARM64 defconfig.
+`enableCommonConfig = false` and `autoModules = false` avoid enabling
+unrelated SoC drivers or every optional module. Required NixOS boot, systemd,
+networking and Capri hardware options are selected explicitly in
+`kernel/default.nix` and validated strictly with `ignoreConfigErrors = false`.
 
-A device defconfig is also a valid starting point when combined with explicit
-NixOS requirements. [Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos/blob/development/modules/kernel-config.nix)
-uses a curated required-settings layer over device configurations rather than
-requiring the generic ARM64 defconfig. Capri uses the standard baseline here
-to retain the broader Nixpkgs common feature set.
+The previous generic config had 4,207 built-in Kconfig symbols and 7,566
+module symbols; the overly minimal Capri config had 1,010 built-ins and 22
+modules. The curated general-purpose Capri configuration, incorporating
+Mobile NixOS's relevant kernel recommendations, has **1,150 built-ins and
+71 modules**. These are enabled Kconfig symbols, not source file counts.
+Strict config-only validation passes, but the full kernel and device boot
+remain untested.
 
 Boot-critical display, eMMC/ext4, USB and Qualcomm dependencies stay built in;
 the touchscreen, ATH10K SNOC and modem remoteproc drivers remain modules.
@@ -117,17 +119,44 @@ nix build --no-link --print-out-paths \
   .#nixosConfigurations.capri.config.boot.kernelPackages.kernel.configfile
 ```
 
-Configuration-only generation passed with `enableCommonConfig = true`,
-`autoModules = true` and strict option checking. The generated file retains
-Capri boot/battery/display, built-in eMMC/ext4 and USB support, modular
-touchscreen/Wi-Fi/remoteproc drivers, and the shared security/network features.
-RPMB is built in so that the MMC block driver can also be built in.
+Configuration-only generation passed with `enableCommonConfig = false`,
+`autoModules = false` and `ignoreConfigErrors = false`. The host's 24 entries in
+`system.requiredKernelConfig` were checked against the earlier optimized
+config and all passed. The curated config retains those mandatory settings
+and enables additional normal Linux functionality:
 
-Both IPv4 and IPv6 iptables rpfilter modules are enabled, resolving the earlier
-kernel/firewall capability blocker without weakening the firewall policy.
-The full Capri `system.build.toplevel.drvPath`, composition contract and
-initramfs derivation now evaluate with no failed assertions. Configuration
-generation is not a kernel compilation or hardware boot test.
+- **Security/observability:** Landlock and Yama are enabled, and NixOS
+  manages active LSMs through `security.lsm`. AppArmor is not requested in
+  the Capri kernel configuration; enabling AppArmor later will require
+  explicitly compiling and activating it. Auditing, hardened user copies,
+  fortification, BPF JIT, perf, kprobes and ftrace remain enabled.
+- **Storage:** modular loop and device-mapper targets, dm-crypt, dm-verity,
+  SCSI USB mass storage/UAS, FAT/exFAT, Btrfs, F2FS, SquashFS and EROFS;
+  `EXT4_FS` and the Qualcomm MMC controller remain built in.
+- **Networking/containers:** native WireGuard as a module, TUN, veth, bridge,
+  macvlan, ipvlan, vxlan, nftables extensions, traffic control/BPF classifiers,
+  namespaces, cgroups, block I/O accounting and PSI.
+- **Mobile hardware:** `CMA=y`, `DMA_CMA=y`, 32 MiB CMA default, alongside
+  built-in Capri charging, display, SDHC2 and USB gadget drivers.
+- **Additional Mobile NixOS-inspired support:** `CFS_BANDWIDTH` for cgroup CPU
+  quotas; `BLK_DEV_THROTTLING`, `BLK_CGROUP_IOLATENCY` and
+  `BLK_CGROUP_IOCOST` for I/O control; `LRU_GEN` and `LRU_GEN_ENABLED` for
+  memory reclaim; slab freelist hardening/randomization and strong stack
+  protectors; `DETECT_HUNG_TASK`; optional `BINFMT_MISC=m` and
+  `SQUASHFS_ZSTD=y`; user-space `PM_WAKELOCKS=y`.
+
+Motorola's `motorola_capri_defconfig` remains the hardware baseline: unrelated
+ARM64 SoCs are still disabled. New storage/network device drivers are mostly
+modules. This adds generic Linux capabilities without restoring Nixpkgs'
+all-hardware driver expansion. A Kconfig-only test cannot prove that every
+module compiles, loads, or works on physical hardware; the next full build and
+boot tests must check that separately.
+
+`RANDOMIZE_BASE` remains disabled until the native DT/U-Boot handoff is
+verified; `RD_XZ` remains disabled since our initrd is compressed with Zstd.
+The extra Android Binder, Mobile NixOS USB FunctionFS/RNDIS/NCM gadget
+functions, and wide legacy netfilter rule set are not required by the current
+headless boot and are not enabled by this pass.
 
 ## Native storage and boot layout
 
@@ -136,99 +165,83 @@ systemd-boot. U-Boot loads the kernel, NixOS initramfs and Power DTB from
 `/boot` on the same ext4 filesystem as `/`. There is no separate EFI
 filesystem and no need to resize or repurpose Android `super`.
 
-Live read-only inspection through ADB on `ideapad` verified this XT2127-4's
-userdata partition:
+The NixOS root filesystem is on the removable SanDisk microSD, not the
+Android internal userdata partition. ADB verified `/dev/block/mmcblk1`
+(124735488 512-byte sectors) and the current `/dev/block/mmcblk1p1`
+(124702720 sectors). NixOS mounts `/dev/disk/by-label/NIXOS_CAPRI` as `/`;
+its generated extlinux boot files live in the same ext4 filesystem.
 
-| Property | Verified value |
-| --- | --- |
-| GPT entry / Android name | 77 / `userdata` |
-| Android block device | `/dev/block/mmcblk0p77` |
-| PARTUUID | `f6eb68be-3488-aaba-703b-eb107625d212` |
-| First sector | 24135680 |
-| Last sector | 122142686 |
-| Sector count / size | 98007007 / 512 bytes |
-| Capacity | approximately 46.7 GiB |
+U-Boot's Capri board DT enables removable `sdhc_2` as `mmc1`, and its
+`boot_targets=mmc1` setting restricts the extlinux boot scan to the microSD.
+The native Linux Power DT also enables `sdhc_2` with the exact Motorola
+DVT2 SKU5 board-ID `0x500/0xb200` regulator, GPIO88 card-detect, and
+pinctrl settings. The firmware's initial rail state is retained in U-Boot.
+These new board changes are in separate Nix source patches
+`0002-uboot-capri-microsd-sdhc2.patch` and
+`0002-kernel-capri-microsd-sdhc2.patch`.
 
-`hosts/capri/hardware.nix` declares this PARTUUID as ext4 root. The generated
-initrd fstab mounts it as `/`; NixOS writes its extlinux menu and generation
-kernel/initramfs/DTB files under `/boot` during installation or activation.
-U-Boot's extlinux boot method reads the same ext4 filesystem directly;
-no separate EFI System Partition is needed.
+**Important:** These changes have not yet been tested on the native Linux
+boot path. The removable card currently contains about 52 GiB of existing
+files; do not overwrite its partition until the data is explicitly cleared
+for erasure or a verified backup exists. The rootfs installer must never
+write to `/dev/block/mmcblk0` or any internal partition. The ext4 image is
+written to the checked `/dev/block/mmcblk1p1` **partition**, not the
+whole-disk `/dev/block/mmcblk1` device.
 
-**This filesystem has not been created on the phone.** Android currently uses
-encrypted F2FS data. A later installation must explicitly authorize erasing and
-formatting userdata from a suitable recovery environment; do not try to format
-it while Android is using it. Installing U-Boot into `boot_a`/`boot_b` also needs
-a separately verified slot and explicit flashing instruction.
+Leave `super`, `userdata`, all Qualcomm firmware and modem NV/calibration
+partitions, including `persist`, `prodpersist`, `modemst1`, `modemst2`, `fsg_b`
+and `fsc`, and Motorola boot partitions untouched. The U-Boot test is through
+RAM-only `fastboot boot`; no slot flashing or Android repartitioning.
 
-No GPT edits are required. Leave `super`, `padA`, `padB`, all Qualcomm firmware
-and calibration/NV partitions, and Motorola's bootloader partitions unchanged.
-In particular, never erase or format `persist`, `prodpersist`, `modemst1`,
-`modemst2`, `fsg_a`, `fsg_b` or `fsc`. Do not write a whole-disk image.
-Read-only `sgdisk --verify` found no GPT errors, but reported Motorola's small
-partition-entry table, header gap and userdata end alignment; do not normalize
-or “repair” these as part of installation.
-
-**Verification:** NixOS's extlinux generator was exercised with temporary
-path fixtures, checking kernel/initramfs/Power-DTB paths and kernel parameters.
-The older partition-UUID-guard shell tests apply only to the superseded
-`sysboot` environment; the replacement `bootflow` environment still needs
-integration testing against a real NixOS ext4 filesystem on the handset.
-No device formatting, partition writes or flashing occurred in those tests.
+**Verification:** Generated extlinux paths and the original source patch
+checks passed, but a complete real-NixOS microSD boot and in-device
+storage read remain to be hardware-verified.
 
 USB ECM plus SSH is configured for the **normal** native NixOS system.
 Early-initrd USB recovery and early-initrd Buffyboard remain unimplemented;
 the RAMUI telnet service is not installed in NixOS.
 
-## USB ECM networking and USB-only unauthenticated SSH (normal NixOS)
+## USB ECM networking and existing SSH authentication
 
-`hosts/capri/usb-ecm.nix` creates the configfs ECM function after the real
-root is mounted. It uses RAMUI's experimental USB IDs (`18d1:d001`) and
-sets `172.16.42.1/24` on the gadget's explicitly named `usb0` interface.
-NetworkManager leaves USB interfaces unmanaged; Wi-Fi works independently.
+`hosts/capri/usb-ecm.nix` creates the configfs ECM USB network function after
+normal NixOS boots. The phone uses `172.16.42.1/24` on `usb0`; NetworkManager
+leaves that interface unmanaged while handling Wi-Fi independently.
 
-There are now **two separate SSH servers**:
+There is one OpenSSH service on port `2222`, with password authentication
+disabled and existing `bhunter` authorized public keys. Both Wi-Fi and USB
+use the same SSH user, authorized keys and security policy. There is no
+`capriusb` account, no separate USB SSH daemon and no unauthenticated access.
+The existing server policy denies direct root SSH logins.
 
-- **Normal NixOS SSH:** port `2222`, existing `bhunter` account,
-  key authentication required on all networks. No change to this policy.
-- **USB-only diagnostic SSH:** port `2223`, listens only at
-  `172.16.42.1` and is allowed by the firewall only for input arriving via
-  `usb0`. The dedicated non-root `capriusb` account has an empty password;
-  the independent OpenSSH daemon sets `UsePAM no`, `PermitEmptyPasswords yes`,
-  and `PasswordAuthentication yes`, allowing the SSH protocol's **none**
-  authentication without a password prompt or client key. Direct root SSH
-  login and forwarding are disallowed; `capriusb` can run `sudo -i` with no
-  password via a dedicated sudo rule, without belonging to `wheel`.
-
-**Security warning:** Anyone who can connect a USB host to the phone can
-obtain an unauthenticated `capriusb` shell and then **full root access** via
-passwordless `sudo`. The sudo rule applies to every `capriusb` session,
-including local logins; it is not limited to USB. Only use this on a
-physically controlled development phone. The first SSH connection may ask to
-trust the server host key, separate from client authentication. There is no
-telnet or Internet sharing over USB.
-
-On your Linux laptop, identify its USB Ethernet interface (e.g. `enx...`)
-and replace `<usb-iface>` with that exact interface name:
+On the Linux laptop, find the gadget's Ethernet interface and assign it
+`172.16.42.2/24`, replacing `<usb-iface>` with its actual interface name:
 
 ```sh
 ip -br link
 sudo ip address add 172.16.42.2/24 dev <usb-iface>
 sudo ip link set dev <usb-iface> up
-ssh -p 2223 capriusb@172.16.42.1
-sudo -i
+ssh -p 2222 bhunter@172.16.42.1
 ```
 
-For ordinary authenticated SSH over the same cable, use
-`ssh -p 2222 bhunter@172.16.42.1`. On Capri, check
-`systemctl status capri-usb-ecm capri-usb-sshd` and
-`journalctl -b -u capri-usb-ecm -u capri-usb-sshd` for diagnostics.
+Check `systemctl status capri-usb-ecm` and
+`journalctl -b -u capri-usb-ecm` on the phone. The USB gadget requires a
+normal userspace boot and remains unverified on real native NixOS hardware;
+there is no early-initrd SSH service.
 
-Both services run **only after normal NixOS boots**; there is no early-initrd
-SSH recovery. Configuration evaluation succeeds, but the USB interface and
-unauthenticated connection still require physical-device testing.
+The SOPS age private identity is shared by NixOS and Home Manager. The key
+must be installed on the real root filesystem (never in Git or the Nix store)
+with these **exact EXT4 ownership and permissions**:
 
-## Ext4 userdata image
+```text
+/var/lib/sops-nix/          0:100  0750  (root:users)
+/var/lib/sops-nix/key.txt   0:100  0640  (root:users)
+```
+
+Root can decrypt NixOS secrets; `bhunter` (group `users`) can read the same age
+key for Home Manager. **Never replace it with `0:0 0600`** when preparing Capri
+images. SSH still accepts only authorized public keys, not private keys.
+
+## Ext4 removable microSD rootfs image
 
 `packages.aarch64-linux.capri-rootfs-image` produces a raw, unencrypted ext4
 filesystem image using Nixpkgs' `make-ext4-fs.nix`. It contains the real Capri
@@ -236,14 +249,32 @@ system closure, its Nix registration manifest and the standard extlinux
 kernel/initramfs/Power-DTB boot files. Only the selected initial generation is
 included; build-host profiles are not imported.
 
-The output is a single filesystem, **not a whole-disk image**. It contains no GPT
-or U-Boot boot image. The builder rejects an image larger than the verified
-98007007-sector userdata partition.
+The Capri host includes only `den.aspects.capri-minimal` from
+`modules/aspects/features/capri-minimal.nix`, rather than the shared
+`server` role (which imports the entire development toolchain). The initial
+image retains the native Qualcomm/Motorola hardware and charging modules,
+Wi-Fi firmware/startup, Buffyboard, USB ECM and key-only SSH on port 2222,
+Tailscale, a restricted firewall, fail2ban, and Nix with flake support.
+Teldrive, Podman, QEMU, Rust/Go compilers, desktop themes and editor/AI
+packages can be added through the dotfiles flake after the first successful
+boot. NixOS installer tools and bundled documentation are disabled; rsync
+and strace remain for recovery. The **testing-only Capri minimal image**
+uses passwordless `bhunter` console autologin, a locked local password, and
+passwordless sudo; SSH remains public-key-only. Normal hosts retain their
+existing SOPS-based password authentication.
 
-`hosts/capri/image.nix` enables filesystem auto-resizing inside the existing
-userdata partition, while `boot.growPartition = false` prevents automatic GPT
-growth. A first-boot service loads `/nix-path-registration`, establishes the
-initial NixOS system profile, then removes that marker only after success.
+The earlier full-profile filesystem image was approximately 12.8 GiB, with
+an 11.0 GiB system closure (1,943 store paths). This is the **old** image,
+not a measured result of the minimal profile. The new closure/image size
+cannot be confirmed until the minimal image and its kernel are built.
+
+The output is a single filesystem, **not a whole-disk image**. It contains
+no GPT or U-Boot boot image. The builder limits the image to the verified
+124702720-sector removable microSD partition, and labels the filesystem
+`NIXOS_CAPRI` for the root mount. A first-boot service loads the
+`/nix-path-registration` manifest and creates the initial NixOS system
+profile. Filesystem auto-resizing only grows ext4 within its partition;
+`boot.growPartition = false` forbids automatic partition-table growth.
 
 Evaluate without compiling the Capri kernel:
 
@@ -257,15 +288,29 @@ After kernel compilation is authorized, build the real image with:
 nix build --out-link result-capri-rootfs .#capri-rootfs-image
 ```
 
-The result link points directly to the ext4 filesystem image. Building it
-requires the Capri kernel but not the U-Boot package. Flashing is a separate,
-destructive operation requiring explicit authorization and a verified userdata
-target; no flashing script or automatic device writes are provided.
+The result link points to the ext4 filesystem image. Building requires the
+Capri kernel but not U-Boot. Writing the image requires a verified,
+unmounted removable microSD partition and explicit permission to discard
+its existing data. Do not copy an image onto Android's userdata or the
+whole-disk device.
 
-The builder does not copy runtime age keys, decrypted secrets or modem NV
-snapshots. Before first boot, provision the existing NixOS SOPS age key at
-`/var/lib/sops-nix/key.txt` with mode `0600`, through an explicitly authorized
-installation/recovery procedure. Shared `neededForUsers` secrets depend on it.
+The builder deliberately does **not** embed runtime age keys, decrypted
+secrets or modem NV snapshots. After building the EXT4 image, provision the
+existing SOPS age key on its mounted real root filesystem, then verify both
+ownership and permissions **before flashing**:
+
+```sh
+sudo install -d -o 0 -g 100 -m 0750 /mnt/capri-new/var/lib/sops-nix
+sudo install -o 0 -g 100 -m 0640 \
+  /mnt/capri-old/var/lib/sops-nix/key.txt \
+  /mnt/capri-new/var/lib/sops-nix/key.txt
+sudo stat -c '%u:%g %a %n' \
+  /mnt/capri-new/var/lib/sops-nix \
+  /mnt/capri-new/var/lib/sops-nix/key.txt
+```
+
+Expected: `0:100 750` for the directory and `0:100 640` for the key.
+Do not bake this private key into a Nix derivation or store path.
 
 **Validation:** The production image/system derivations and Capri composition
 contract evaluate with no failed assertions. A tiny fixture image built through

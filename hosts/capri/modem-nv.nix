@@ -11,7 +11,9 @@ let
     name = "capri-start-wifi-modem";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gnugrep
       pkgs.kmod
+      pkgs.qrtr
     ];
     text = ''
       set -euo pipefail
@@ -20,7 +22,7 @@ let
       for service in 14 64 4096; do
         ready=0
         for _ in $(seq 1 20); do
-          if qrtr-lookup "$service" 2>/dev/null | grep -Eq "^[[:space:]]*''${service}[[:space:]]"; then
+          if qrtr-lookup "$service" | grep -Eq "^[[:space:]]*''${service}[[:space:]]"; then
             ready=1
             break
           fi

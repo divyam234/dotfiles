@@ -1,0 +1,71 @@
+diff --git a/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts b/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
+index 37f555ed..f20c91b4 100644
+--- a/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
++++ b/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
+@@ -14,6 +14,7 @@
+ 
+ 	aliases {
+ 		mmc0 = &sdhc_1;
++		mmc1 = &sdhc_2;
+ 		usb0 = &usb_dwc3;
+ 	};
+ 
+@@ -62,6 +63,10 @@
+ 			regulator-min-microvolt = <488000>;
+ 			regulator-max-microvolt = <1000000>;
+ 		};
++		vreg_l5a: l5 {
++			regulator-min-microvolt = <1648000>;
++			regulator-max-microvolt = <3056000>;
++		};
+ 		vreg_l11a: l11 {
+ 			regulator-min-microvolt = <1704000>;
+ 			regulator-max-microvolt = <1952000>;
+@@ -74,6 +79,10 @@
+ 			regulator-min-microvolt = <2920000>;
+ 			regulator-max-microvolt = <3232000>;
+ 		};
++		vreg_l22a: l22 {
++			regulator-min-microvolt = <2952000>;
++			regulator-max-microvolt = <3304000>;
++		};
+ 		vreg_l24a: l24 {
+ 			regulator-min-microvolt = <2704000>;
+ 			regulator-max-microvolt = <3544000>;
+@@ -97,7 +106,35 @@
+ 	status = "okay";
+ };
+ 
+-&tlmm { gpio-reserved-ranges = <14 4>; };
++/* XT2127-4 DVT2 SKU5 overlay (board-id 0x500/0xb200): L22A/L5A,
++ * SDC2 pins, and active-high GPIO88 card-detect. Preserve ABL's existing
++ * RPM regulator votes; do not attempt unsupported PM6125 RPM control here.
++ */
++&sdhc_2 {
++	vmmc-supply = <&vreg_l22a>;
++	vqmmc-supply = <&vreg_l5a>;
++	cd-gpios = <&tlmm 88 GPIO_ACTIVE_HIGH>;
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&sdc2_state_on &sdc2_card_det_n>;
++	pinctrl-1 = <&sdc2_state_off &sdc2_card_det_n>;
++	max-frequency = <50000000>;
++	/delete-property/ power-domains;
++	/delete-property/ operating-points-v2;
++	/delete-property/ interconnects;
++	/delete-property/ interconnect-names;
++	/delete-property/ iommus;
++	status = "okay";
++};
++
++&tlmm {
++	gpio-reserved-ranges = <14 4>;
++	sdc2_card_det_n: sd-card-det-n-state {
++		pins = "gpio88";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-up;
++	};
++};
+ 
+ &usb {
+ 	qcom,select-utmi-as-pipe-clk;
