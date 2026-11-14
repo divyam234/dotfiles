@@ -502,49 +502,12 @@ and requires matching PMI632 safety readbacks before charging can run.
 **No flash, reboot or live charging test was conducted for this
 newly consolidated build.**
 
-## Repeatable non-invasive checks
+## Historical validation tooling
 
-From `dotfiles/`, check the **single combined Power patch** against
-the local patched source checkout (on a clean upstream checkout, use
-`git apply --check` instead):
-
-```sh
-git -C ../capri-build-src apply --reverse --check \
-  ../dotfiles/packages/capri/patches/0001-kernel-capri-power-charging.patch
-python3 packages/capri/tests/check-telemetry.py \
-  ../capri-build-src/drivers/power/supply/capri-pmi632-battery.c
-python3 packages/capri/tests/check-charger-events.py \
-  ../capri-build-src/drivers/power/supply/capri-pmi632-battery.c \
-  ../capri-build-src/arch/arm64/boot/dts/qcom/capri-power-battery.dtsi
-python3 packages/capri/tests/check-input-monitor.py \
-  ../capri-build-src/drivers/power/supply/capri-pmi632-battery.c \
-  ../capri-build-src/arch/arm64/boot/dts/qcom/capri-power-battery.dtsi
-cc -std=c11 -Wall -Wextra -Werror \
-  -I ../capri-build-src/drivers/power/supply \
-  packages/capri/tests/check-charge-policy.c -o /tmp/capri-policy-test
-/tmp/capri-policy-test
-cc -std=c11 -O2 -Wall -Wextra -Werror \
-  -I ../capri-build-src/drivers/power/supply \
-  packages/capri/tests/check-controller.c -o /tmp/capri-controller-test
-/tmp/capri-controller-test
-python3 packages/capri/tests/check-controller-wiring.py
-```
-
-Check Nix formatting and evaluate the kernel derivation **without building**:
-
-```sh
-nixfmt --check packages/capri/kernel/default.nix
-nix eval --impure --raw --expr \
-  '(builtins.getFlake (toString ./. )).nixosConfigurations.capri.config.boot.kernelPackages.kernel.drvPath'
-```
-
-The separate `michael-capri-kernel` audit verifies the stock profile
-references and the 0003 temperature refresh. Local `check-telemetry.py`
-checks ADC interpolation and Power charger-disable invariants;
-`check-charger-events.py` checks IRQ bindings and no PMIC writes from
-its event handlers; `check-input-monitor.py` checks the USB input
-source, scale, DT channels and read-only implementation. These
-source/math checks do **not** validate hardware charging behavior.
+The Capri-specific offline tests, RAMUI test-image helper and Nix composition
+contract have been removed from this repository. Test names and results above
+are historical records, not instructions for tools currently shipped here.
+Those source/math checks did not validate hardware charging behavior.
 
 The original source-only audit and first RAMUI v7 run made no kernel build.
 The subsequent patched-kernel test **rebuilt Linux 7.2.9**, generated a
