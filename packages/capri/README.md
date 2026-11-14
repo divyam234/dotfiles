@@ -175,6 +175,21 @@ or boot-tested. The running phone kernel is unchanged; its missing conntrack
 match and MARK support are not fixed until a newly built kernel is installed
 and verified.
 
+## RTC time persistence
+
+The Power board enables PM6125 RTC writes through
+`0004-kernel-capri-rtc-set-time.patch`. The kernel keeps `RTC_HCTOSYS=y`
+and enables `RTC_SYSTOHC=y`, both targeting `rtc0`. After NTP synchronization,
+the kernel periodically saves UTC to the PMIC clock (approximately every
+11 minutes). No Android `persist` access or private offset storage is used.
+
+This changes the physical clock shared with firmware. The running device
+must boot the rebuilt kernel and Power DTB before writes are available.
+After NTP synchronizes, `sudo hwclock --systohc --utc` seeds the RTC without
+waiting for the periodic update. Verify `timedatectl`, then reboot and
+check the early kernel clock message to confirm persistence. Device-level
+RTC writes and reboot persistence have not yet been tested.
+
 ## Native storage and boot layout
 
 Capri uses NixOS's built-in `generic-extlinux-compatible` loader, not
