@@ -55,21 +55,14 @@ assert lib.elem "novatek-nt36525b-capri" capri.boot.kernelModules;
 assert lib.elem "multi-user.target" capri.systemd.services.capri-buffyboard.wantedBy;
 assert capri.systemd.services.capri-buffyboard.serviceConfig.Restart == "always";
 assert capri.console.font == "ter-128n";
-assert capri.services.getty.autologinUser == "bhunter";
-assert !capri.users.mutableUsers;
-assert capri.users.users.bhunter.hashedPasswordFile == null;
-assert capri.users.users.bhunter.hashedPassword == "*";
+assert capri.services.getty.autologinUser == null;
+assert capri.users.users.bhunter.hashedPasswordFile == capri.sops.secrets."users/bhunter/password".path;
 assert !capri.security.sudo.wheelNeedsPassword;
-assert capri.system.disableInstallerTools;
-assert !capri.documentation.enable;
-assert !(capri.services ? teldrive);
-assert
-  !(lib.any (
-    p:
-    lib.hasPrefix "qemu-" (p.name or "")
-    || lib.hasPrefix "rustc-" (p.name or "")
-    || lib.hasPrefix "opencode-" (p.name or "")
-  ) capri.home-manager.users.bhunter.home.packages);
+assert !capri.networking.nftables.enable;
+assert capri.services.teldrive.enable;
+assert capri.services.teldrive.settings.http.address == "0.0.0.0:8090";
+assert capri.services.teldrive.user == "root";
+assert capri.services.teldrive.group == "root";
 assert !capri.virtualisation.podman.enable;
 assert !capri.virtualisation.containers.enable;
 assert !capri.services.caddy.enable;

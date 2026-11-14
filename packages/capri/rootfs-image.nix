@@ -5,6 +5,7 @@ let
   emmcPartitionBytes = 98007007 * 512;
   image = pkgs.callPackage (pkgs.path + "/nixos/lib/make-ext4-fs.nix") {
     storePaths = [ config.system.build.toplevel ];
+    compressImage = true;
     volumeLabel = "NIXOS_EMMC";
     populateImageCommands = ''
       mkdir -p ./files/boot
@@ -14,9 +15,10 @@ let
   };
 in
 image.overrideAttrs (old: {
-  name = "capri-emmc.ext4";
+  name = "capri-emmc.ext4.zst";
   buildCommand = old.buildCommand + ''
-    bytes=$(stat -c %s "$out")
+    # The upstream builder retains $img as the uncompressed filesystem.
+    bytes=$(stat -c %s "$img")
     if (( bytes > ${toString emmcPartitionBytes} )); then
       echo "Capri rootfs image exceeds the verified eMMC userdata partition size" >&2
       exit 1

@@ -1,0 +1,41 @@
+diff --git a/boot/bootdev-uclass.c b/boot/bootdev-uclass.c
+--- a/boot/bootdev-uclass.c
++++ b/boot/bootdev-uclass.c
+@@ -104,3 +104,4 @@
+-	/* Sanity check */
+-	if (iter->part >= MAX_PART_PER_BOOTDEV)
++	/* Limit automatic scans, not an explicitly requested partition. */
++	if (iter->part >= MAX_PART_PER_BOOTDEV &&
++	    !(iter->flags & BOOTFLOWIF_SINGLE_PARTITION))
+ 		return log_msg_ret("max", -ESHUTDOWN);
+@@ -158,3 +159,1 @@
+-	if (iter->flags & BOOTFLOWIF_SINGLE_PARTITION) {
+-		/* a particular partition was specified, scan it without checking */
+-	} else if (!iter->part) {
++	if (!iter->part) {
+@@ -171,2 +170,3 @@
+-	} else if ((iter->flags & BOOTFLOWIF_ONLY_BOOTABLE) &&
++	} else if (!(iter->flags & BOOTFLOWIF_SINGLE_PARTITION) &&
++		   (iter->flags & BOOTFLOWIF_ONLY_BOOTABLE) &&
+ 		   iter->first_bootable >= 0 &&
+diff --git a/boot/bootmeth-uclass.c b/boot/bootmeth-uclass.c
+--- a/boot/bootmeth-uclass.c
++++ b/boot/bootmeth-uclass.c
+@@ -133,9 +133,1 @@
+-		/*
+-		 * We don't support skipping global bootmeths. Instead, the user
+-		 * should omit them from the ordering
+-		 */
+-		if (!include_global) {
+-			ret = log_msg_ret("glob", -EPERM);
+-			goto err_order;
+-		}
+ 		memcpy(order, std->bootmeth_order,
+@@ -159,2 +151,7 @@
+ 				if (is_global) {
++					/* Explicit targets require an order without globals. */
++					if (!include_global) {
++						ret = log_msg_ret("glob", -EPERM);
++						goto err_order;
++					}
+ 					iter->first_glob_method = i;

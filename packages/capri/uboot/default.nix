@@ -33,7 +33,7 @@ let
     ];
     extraPatches = [
       ../patches/0001-uboot-motorola-capri-upstream-v2026.07.patch
-      ../patches/0002-uboot-capri-microsd-sdhc2.patch
+      ../patches/0002-uboot-bootflow-explicit-partition.patch
     ];
     preConfigure = ''
       cp ${./default.env} board/qualcomm/motorola-capri.env

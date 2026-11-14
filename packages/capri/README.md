@@ -10,16 +10,15 @@ These are **source patches**, not prebuilt kernel/U-Boot binaries. Pin and fetch
 - Compiling it will still require the Capri build configuration (`qcom_defconfig` plus the added `motorola-capri.config`) and packaging `u-boot.bin` into the Motorola Android header-v3 `boot.img` with `mkbootimg`. This patch does not by itself create the final boot.img.
 - Sanity check on the current patched tree: `git apply --reverse --check <patch>`; on a clean checkout of the base tag: `git apply --check <patch>`.
 
-The Nix package overlays `uboot/default.env` with the extlinux-first environment
-from `capri-upstream-uboot` commit `c3af53f5`. U-Boot's Standard Boot scans
-readable partitions for `extlinux/extlinux.conf` or `boot/extlinux/extlinux.conf`
-using `bootflow scan -lb`; a failed scan falls back to the diagnostic menu.
-The menu retains a manual EFI boot option. The Nix build requires
-`BOOTSTD`, `BOOTMETH_EXTLINUX` and `CMD_BOOTFLOW`, and disables eMMC,
-filesystem, GPT, flashing, capsule and persistent-environment write paths.
-Load addresses come from Snapdragon's runtime memory allocator, not fixed addresses.
-This replaces the former partition-77-specific `sysboot`/PARTUUID guard;
-NixOS still mounts its root filesystem by the verified userdata PARTUUID.
+The Nix package overlays `uboot/default.env` with an internal-eMMC-only
+environment. U-Boot's Standard Boot reads userdata's
+`/boot/extlinux/extlinux.conf` using `bootflow scan -lb mmc0:0x4d`;
+`0x4d` is partition 77. A failed boot returns to the diagnostic menu, with
+no microSD fallback. The menu retains a manual EFI boot option.
+The Nix build requires `BOOTSTD`, `BOOTMETH_EXTLINUX` and `CMD_BOOTFLOW`,
+and disables storage writes, GPT changes, flashing, capsules and persistent
+environment storage. Load addresses come from Snapdragon's runtime memory
+allocator, not fixed addresses. NixOS mounts `/dev/disk/by-label/NIXOS_EMMC`.
 
 The Android header-v3 U-Boot image's empty ramdisk is only a packaging
 placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
@@ -133,9 +132,22 @@ and enables additional normal Linux functionality:
 - **Storage:** modular loop and device-mapper targets, dm-crypt, dm-verity,
   SCSI USB mass storage/UAS, FAT/exFAT, Btrfs, F2FS, SquashFS and EROFS;
   `EXT4_FS` and the Qualcomm MMC controller remain built in.
-- **Networking/containers:** native WireGuard as a module, TUN, veth, bridge,
-  macvlan, ipvlan, vxlan, nftables extensions, traffic control/BPF classifiers,
-  namespaces, cgroups, block I/O accounting and PSI.
+- **Networking/containers:** IPv4/IPv6 policy, multipath and multicast routing;
+  VLAN-aware bridges, bonding, veth, macvlan/ipvlan, VRF, VXLAN, Geneve and
+  Open vSwitch; WireGuard, OpenVPN data-channel offload, IPsec, GRE/IP tunnels
+  and PPP/L2TP. Optional protocols and virtual interfaces are modules; the
+  boot-time IP, TUN, conntrack and nftables core stay built in.
+- **Firewall:** native nftables IPv4/IPv6, ARP, bridge and netdev families;
+  conntrack marks, zones, events and Netlink control; NAT, transparent proxying,
+  logging, queueing, flow tables, IP sets and IPVS load balancing. Xtables
+  includes `conntrack`, `MARK`, `CONNMARK`, `multiport`, `REJECT`, `MASQUERADE`,
+  `pkttype`, and other software matches/targets for NixOS, Fail2ban and
+  Tailscale. Both iptables-nft compatibility and optional legacy iptables
+  tables are configured; this does not change the userspace firewall backend.
+- **Traffic control:** HTB/HFSC, CAKE, FQ/FQ-CoDel, PIE, netem, IFB,
+  classifiers and BPF/tc actions for shaping, filtering, redirecting and
+  connection tracking. Namespaces, cgroups, block I/O accounting and PSI remain
+  enabled.
 - **Mobile hardware:** `CMA=y`, `DMA_CMA=y`, 32 MiB CMA default, alongside
   built-in Capri charging, display, SDHC2 and USB gadget drivers.
 - **Additional Mobile NixOS-inspired support:** `CFS_BANDWIDTH` for cgroup CPU
@@ -154,9 +166,14 @@ boot tests must check that separately.
 
 `RANDOMIZE_BASE` remains disabled until the native DT/U-Boot handoff is
 verified; `RD_XZ` remains disabled since our initrd is compressed with Zstd.
-The extra Android Binder, Mobile NixOS USB FunctionFS/RNDIS/NCM gadget
-functions, and wide legacy netfilter rule set are not required by the current
-headless boot and are not enabled by this pass.
+The extra Android Binder and Mobile NixOS USB FunctionFS/RNDIS/NCM gadget
+functions are not required by the current headless boot and remain outside
+this networking expansion.
+
+The expanded networking configuration above has not been evaluated, built,
+or boot-tested. The running phone kernel is unchanged; its missing conntrack
+match and MARK support are not fixed until a newly built kernel is installed
+and verified.
 
 ## Native storage and boot layout
 
@@ -165,37 +182,41 @@ systemd-boot. U-Boot loads the kernel, NixOS initramfs and Power DTB from
 `/boot` on the same ext4 filesystem as `/`. There is no separate EFI
 filesystem and no need to resize or repurpose Android `super`.
 
-The NixOS root filesystem is on the removable SanDisk microSD, not the
-Android internal userdata partition. ADB verified `/dev/block/mmcblk1`
-(124735488 512-byte sectors) and the current `/dev/block/mmcblk1p1`
-(124702720 sectors). NixOS mounts `/dev/disk/by-label/NIXOS_CAPRI` as `/`;
-its generated extlinux boot files live in the same ext4 filesystem.
+The NixOS root filesystem lives on internal eMMC userdata,
+`/dev/block/mmcblk0p77` in Android recovery, with verified capacity
+50,179,587,584 bytes (98007007 sectors). NixOS mounts
+`/dev/disk/by-label/NIXOS_EMMC` as `/`; the generated extlinux files live
+in the same ext4 filesystem.
 
-U-Boot's Capri board DT enables removable `sdhc_2` as `mmc1`, and its
-`boot_targets=mmc1` setting restricts the extlinux boot scan to the microSD.
-The native Linux Power DT also enables `sdhc_2` with the exact Motorola
-DVT2 SKU5 board-ID `0x500/0xb200` regulator, GPIO88 card-detect, and
-pinctrl settings. The firmware's initial rail state is retained in U-Boot.
-These new board changes are in separate Nix source patches
-`0002-uboot-capri-microsd-sdhc2.patch` and
-`0002-kernel-capri-microsd-sdhc2.patch`.
+U-Boot keeps `boot_targets=mmc0` and explicitly selects userdata with
+`bootflow scan -lb mmc0:0x4d`. The pinned upstream Standard Boot code limits
+automatic scans to low partition numbers; the
+`0002-uboot-bootflow-explicit-partition.patch` exempts explicit partition
+requests from that limit, initializes their filesystem, and permits an
+explicit target with a custom non-global boot-method order. Automatic scans
+remain bounded. This avoids changing Android GPT boot flags or probing
+calibration filesystems.
+A read-only discovery command is `bootflow scan -ale mmc0:0x4d`.
 
-**Important:** These changes have not yet been tested on the native Linux
-boot path. The removable card currently contains about 52 GiB of existing
-files; do not overwrite its partition until the data is explicitly cleared
-for erasure or a verified backup exists. The rootfs installer must never
-write to `/dev/block/mmcblk0` or any internal partition. The ext4 image is
-written to the checked `/dev/block/mmcblk1p1` **partition**, not the
-whole-disk `/dev/block/mmcblk1` device.
+The board DT maps `mmc0` to internal `sdhc_1`. Removable `sdhc_2` is disabled
+in U-Boot and has no `mmc1` alias. Failed internal boot returns to the
+diagnostic menu instead of starting an older system from the card.
 
-Leave `super`, `userdata`, all Qualcomm firmware and modem NV/calibration
-partitions, including `persist`, `prodpersist`, `modemst1`, `modemst2`, `fsg_b`
-and `fsc`, and Motorola boot partitions untouched. The U-Boot test is through
-RAM-only `fastboot boot`; no slot flashing or Android repartitioning.
+Linux retains microSD support through `0002-kernel-capri-microsd-sdhc2.patch`
+for use as ordinary storage; this does not enable it in U-Boot.
 
-**Verification:** Generated extlinux paths and the original source patch
-checks passed, but a complete real-NixOS microSD boot and in-device
-storage read remain to be hardware-verified.
+**Important:** Writing the rootfs image destroys Android userdata. Verify
+the partition identity, capacity and unmounted state before writing only
+that partition. Never write the whole `/dev/block/mmcblk0` disk.
+Leave `super`, Qualcomm firmware and modem NV/calibration partitions,
+including `persist`, `prodpersist`, `modemst1`, `modemst2`, `fsg_b` and `fsc`,
+untouched. Test the U-Boot image through RAM-only `fastboot boot`; do not
+flash Motorola boot slots or repartition Android as part of that test.
+
+**Verification:** Rootfs installation can be checked by hashing exactly the
+uncompressed image length from userdata before mounting or booting it.
+The boot image is built separately; successful rootfs readback does not
+prove that the running U-Boot selected internal eMMC.
 
 USB ECM plus SSH is configured for the **normal** native NixOS system.
 Early-initrd USB recovery and early-initrd Buffyboard remain unimplemented;
@@ -241,37 +262,35 @@ Root can decrypt NixOS secrets; `bhunter` (group `users`) can read the same age
 key for Home Manager. **Never replace it with `0:0 0600`** when preparing Capri
 images. SSH still accepts only authorized public keys, not private keys.
 
-## Ext4 removable microSD rootfs image
+## Ext4 internal eMMC rootfs image
 
-`packages.aarch64-linux.capri-rootfs-image` produces a raw, unencrypted ext4
-filesystem image using Nixpkgs' `make-ext4-fs.nix`. It contains the real Capri
+`packages.aarch64-linux.capri-rootfs-image` produces a Zstandard-compressed,
+unencrypted ext4 filesystem image using Nixpkgs' `make-ext4-fs.nix` with
+`compressImage = true`. It contains the real Capri
 system closure, its Nix registration manifest and the standard extlinux
 kernel/initramfs/Power-DTB boot files. Only the selected initial generation is
 included; build-host profiles are not imported.
 
-The Capri host includes only `den.aspects.capri-minimal` from
-`modules/aspects/features/capri-minimal.nix`, rather than the shared
-`server` role (which imports the entire development toolchain). The initial
-image retains the native Qualcomm/Motorola hardware and charging modules,
-Wi-Fi firmware/startup, Buffyboard, USB ECM and key-only SSH on port 2222,
-Tailscale, a restricted firewall, fail2ban, and Nix with flake support.
-Teldrive, Podman, QEMU, Rust/Go compilers, desktop themes and editor/AI
-packages can be added through the dotfiles flake after the first successful
-boot. NixOS installer tools and bundled documentation are disabled; rsync
-and strace remain for recovery. The **testing-only Capri minimal image**
-uses passwordless `bhunter` console autologin, a locked local password, and
-passwordless sudo; SSH remains public-key-only. Normal hosts retain their
-existing SOPS-based password authentication.
+The Capri host uses the full shared `base`, `server`, and
+`home-manager-policy` aspects plus `teldrive-native`. The image includes
+the server development tools and integrated Home Manager configuration,
+alongside the current native hardware, charging, Wi-Fi, Buffyboard and USB
+ECM support. SSH remains public-key-only on port 2222; console login uses
+the normal SOPS-managed user password without autologin. The firewall uses
+the default iptables backend, with `xt_pkttype` enabled in the kernel configuration.
 
-The earlier full-profile filesystem image was approximately 12.8 GiB, with
-an 11.0 GiB system closure (1,943 store paths). This is the **old** image,
-not a measured result of the minimal profile. The new closure/image size
-cannot be confirmed until the minimal image and its kernel are built.
+Teldrive listens on `0.0.0.0:8090` and runs as root, matching the previous
+full Capri profile. Its runtime secrets require the existing SOPS age key.
+The image size depends on the full system closure and must be measured
+after building.
+
+Compression reduces storage and transfer size, not the installed filesystem
+size. The partition-capacity guard measures the uncompressed image.
 
 The output is a single filesystem, **not a whole-disk image**. It contains
 no GPT or U-Boot boot image. The builder limits the image to the verified
-124702720-sector removable microSD partition, and labels the filesystem
-`NIXOS_CAPRI` for the root mount. A first-boot service loads the
+98007007-sector internal userdata partition, and labels the filesystem
+`NIXOS_EMMC` for the root mount. A first-boot service loads the
 `/nix-path-registration` manifest and creates the initial NixOS system
 profile. Filesystem auto-resizing only grows ext4 within its partition;
 `boot.growPartition = false` forbids automatic partition-table growth.
@@ -288,11 +307,17 @@ After kernel compilation is authorized, build the real image with:
 nix build --out-link result-capri-rootfs .#capri-rootfs-image
 ```
 
-The result link points to the ext4 filesystem image. Building requires the
-Capri kernel but not U-Boot. Writing the image requires a verified,
-unmounted removable microSD partition and explicit permission to discard
-its existing data. Do not copy an image onto Android's userdata or the
-whole-disk device.
+The result link points to the compressed `.ext4.zst` filesystem image.
+Decompress it before mounting it or provisioning the age key:
+
+```sh
+zstd -d result-capri-rootfs -o capri-rootfs.ext4
+```
+
+Building requires the Capri kernel but not U-Boot. Writing the image requires
+the verified, unmounted internal userdata partition and explicit permission
+to discard its existing data. Do not write the whole-disk device or the
+removable microSD partition.
 
 The builder deliberately does **not** embed runtime age keys, decrypted
 secrets or modem NV snapshots. After building the EXT4 image, provision the
@@ -312,10 +337,6 @@ sudo stat -c '%u:%g %a %n' \
 Expected: `0:100 750` for the directory and `0:100 640` for the key.
 Do not bake this private key into a Nix derivation or store path.
 
-**Validation:** The production image/system derivations and Capri composition
-contract evaluate with no failed assertions. A tiny fixture image built through
-the same image builder passed checks for unencrypted ext4, extlinux payload
-paths, closure contents and registration manifest. A temporary copy grew to its
-backing-file size and passed fsck without partition-table changes. Those payloads
-were test fixtures; the real Capri image has not been built, and no kernel or
-U-Boot compilation, phone formatting or flashing was performed for this step.
+**Validation:** Compression uses the existing Zstandard support in the pinned
+Nixpkgs filesystem builder. The compression change has not been built or
+checked; builds and checks require explicit authorization.

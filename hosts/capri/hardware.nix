@@ -18,7 +18,7 @@ in
   boot.loader.efi.canTouchEfiVariables = false;
 
   # The native NixOS root lives in the former Android userdata partition
-  # (eMMC mmcblk0p77). Preserve the microSD as a separately labeled fallback.
+  # (eMMC mmcblk0p77). U-Boot does not boot from the removable microSD.
   fileSystems."/" = {
     device = "/dev/disk/by-label/NIXOS_EMMC";
     fsType = "ext4";
