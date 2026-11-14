@@ -70,6 +70,11 @@ let
         CRYPTO_HMAC = yes;
         CRYPTO_USER_API_HASH = yes;
         AUTOFS_FS = yes;
+        ADVISE_SYSCALLS = yes;
+        MEMBARRIER = yes;
+        AIO = yes;
+        IO_URING = yes;
+        RSEQ = yes;
         # I/O accounting and memory pressure reporting for systemd/cgroups.
         BLK_CGROUP = yes;
         PSI = yes;
