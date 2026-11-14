@@ -177,18 +177,16 @@ and verified.
 
 ## RTC time persistence
 
-The Power board enables PM6125 RTC writes through
-`0004-kernel-capri-rtc-set-time.patch`. The kernel keeps `RTC_HCTOSYS=y`
-and enables `RTC_SYSTOHC=y`, both targeting `rtc0`. After NTP synchronization,
-the kernel periodically saves UTC to the PMIC clock (approximately every
-11 minutes). No Android `persist` access or private offset storage is used.
+The PM6125 RTC remains readable through `rtc0`, with `RTC_HCTOSYS=y`.
+Direct time writes are not enabled: the handset's SPMI ownership policy
+denies writes to RTC control register `sid=0, addr=0x6046`. Enabling
+`allow-set-time` does not grant that permission.
 
-This changes the physical clock shared with firmware. The running device
-must boot the rebuilt kernel and Power DTB before writes are available.
-After NTP synchronizes, `sudo hwclock --systohc --utc` seeds the RTC without
-waiting for the periodic update. Verify `timedatectl`, then reboot and
-check the early kernel clock message to confirm persistence. Device-level
-RTC writes and reboot persistence have not yet been tested.
+`RTC_SYSTOHC` is disabled so NTP synchronization does not repeatedly attempt
+the blocked writes. NTP still corrects the system clock after networking
+is available. The hardware RTC was observed reporting 1971; accurate time
+across reboots requires a supported persistent offset mechanism, which has
+not been verified on Capri. Do not seed this RTC with `hwclock --systohc`.
 
 ## Native storage and boot layout
 

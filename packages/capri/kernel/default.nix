@@ -216,11 +216,10 @@ let
         NVMEM_QCOM_QFPROM = yes;
         QCOM_TZMEM_MODE_GENERIC = yes;
         RTC_DRV_PM8XXX = yes;
-        # Boot from the PMIC clock and persist NTP-corrected UTC back to it.
+        # Read the PMIC clock at boot; firmware denies direct RTC writes.
         RTC_HCTOSYS = yes;
         RTC_HCTOSYS_DEVICE = freeform "rtc0";
-        RTC_SYSTOHC = yes;
-        RTC_SYSTOHC_DEVICE = freeform "rtc0";
+        RTC_SYSTOHC = no;
 
         # Keep USB gadget support available before loading modules.
         USB_DWC3 = yes;
@@ -626,10 +625,6 @@ let
         # qcom,bengal-capri firmware FDT; keep its live memory/initrd fixups.
         name = "capri-native-uboot-fdt";
         patch = ../patches/0003-kernel-capri-native-uboot-fdt.patch;
-      }
-      {
-        name = "capri-rtc-set-time";
-        patch = ../patches/0004-kernel-capri-rtc-set-time.patch;
       }
     ]
     ++ (args.kernelPatches or [ ]);
