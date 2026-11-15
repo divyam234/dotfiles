@@ -5,6 +5,7 @@
       den.aspects.base
       den.aspects.server
       den.aspects.home-manager-policy
+      den.aspects.iets
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.caddy

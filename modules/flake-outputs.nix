@@ -170,6 +170,7 @@
       packages =
         den.lib.nh.denPackages { fromFlake = true; } pkgs
         // {
+          iets = pkgs.callPackage ../packages/iets { };
           dot = pkgs.callPackage ../packages/dot {
             hosts = builtins.attrNames self.nixosConfigurations;
             homes = builtins.attrNames (self.homeConfigurations or { });
