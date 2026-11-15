@@ -5,9 +5,7 @@ let
   overlays = [
     inputs.nix-pkgs.overlays.default
     inputs.teldrive.overlays.default
-    (final: _prev: {
-      local = dotfilesLib.importPackages final ../packages;
-    })
+    (final: _prev: dotfilesLib.importPackages final ../packages)
   ];
 in
 {

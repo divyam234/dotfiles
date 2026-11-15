@@ -4,11 +4,11 @@
     nixos =
       { pkgs, ... }:
       {
-        nix.package = pkgs.callPackage (pkgs.local.iets.src + "/nix/classic.nix") {
-          iets = pkgs.local.iets;
+        nix.package = pkgs.callPackage (pkgs.iets.src + "/nix/classic.nix") {
+          iets = pkgs.iets;
           nix = pkgs.nix;
         };
-        environment.systemPackages = [ pkgs.local.iets ];
+        environment.systemPackages = [ pkgs.iets ];
       };
 
     homeManager =

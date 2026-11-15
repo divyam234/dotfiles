@@ -42,7 +42,7 @@
           serviceConfig = {
             Type = "simple";
             EnvironmentFile = envFile;
-            ExecStart = "${pkgs.local.camoflare}/bin/camoflare";
+            ExecStart = "${pkgs.camoflare}/bin/camoflare";
             Restart = "always";
             RestartSec = "10s";
           };

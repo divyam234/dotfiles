@@ -87,7 +87,7 @@ in
         { pkgs, ... }:
         {
           home.packages = with pkgs; [
-            local.svc
+            svc
             podman
             podman-compose
             podman-tui

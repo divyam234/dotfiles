@@ -7,7 +7,7 @@
         home.packages = with pkgs; [
           fish
           nix-your-shell
-          (local.dot.override {
+          (dot.override {
             hosts = builtins.attrNames self.nixosConfigurations;
             homes = builtins.attrNames (self.homeConfigurations or { });
           })
