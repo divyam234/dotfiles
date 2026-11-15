@@ -39,36 +39,4 @@ in
   boot.initrd.availableKernelModules.ext2 = lib.mkForce false;
   boot.initrd.systemd.tpm2.enable = false;
 
-  # Temporary early-boot diagnostics for the first native microSD boot.
-  # No console login or root password is required; output goes to the LCD.
-  boot.initrd.systemd.services.capri-mmc-diagnostics = {
-    description = "Show Capri microSD probe failures on boot console";
-    wantedBy = [ "initrd.target" ];
-    after = [ "systemd-udev-trigger.service" ];
-    path = with pkgs; [
-      coreutils
-      gnugrep
-      util-linux
-    ];
-    serviceConfig = {
-      Type = "simple";
-      StandardOutput = "journal+console";
-      StandardError = "journal+console";
-    };
-    script = ''
-      for delay in 15 45; do
-        sleep "$delay"
-        echo "======= CAPRI MMC DIAGNOSTICS ======="
-        echo "MMC hosts:"
-        ls -l /sys/class/mmc_host/ || true
-        echo "Block devices:"
-        ls -l /sys/class/block/ || true
-        echo "Detected rootfs labels:"
-        ls -l /dev/disk/by-label/ || true
-        echo "Kernel MMC and dependency probes:"
-        dmesg | grep -iE 'mmc|sdhc|sdcc|card.det|pinctrl|regulat|rpmpd|interconnect|defer|probe' | tail -n 45 || true
-        echo "======= END CAPRI MMC DIAGNOSTICS ======="
-      done
-    '';
-  };
 }
