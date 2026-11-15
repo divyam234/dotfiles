@@ -154,6 +154,9 @@ assert capri.systemd.timers.cloudflare-dns-sync.timerConfig.OnUnitActiveSec == "
 assert !capriDns.publicTarget.ipv4.enable;
 assert capriDns.publicTarget.ipv6.enable;
 assert capriDns.publicTarget.ipv6.source == "local";
+assert capri.virtualisation.quadlet.networks.svc.networkConfig.ipv6;
+assert builtins.elem "fd89:ca91::/64"
+  capri.virtualisation.quadlet.networks.svc.networkConfig.subnets;
 assert
   capriDns.records == [
     {

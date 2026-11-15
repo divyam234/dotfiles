@@ -311,6 +311,36 @@
                 printf 'Updated %s %s\n' "$type" "$name"
               fi
             done
+
+            # Only prune records owned by this host, after desired records are
+            # reconciled successfully. Other hosts and unmanaged DNS are untouched.
+            all_records='[]'
+            page=1
+            while :; do
+              response="$(cloudflare --get \
+                --data-urlencode 'per_page=100' \
+                --data-urlencode "page=$page" \
+                "$api/zones/$zone_id/dns_records")"
+              all_records="$(jq -cn --argjson previous "$all_records" \
+                --argjson response "$response" '$previous + $response.result')"
+              pages="$(jq -r '.result_info.total_pages // 1' <<<"$response")"
+              [ "$page" -lt "$pages" ] || break
+              page=$((page + 1))
+            done
+
+            jq -c --arg owner "$owner" --slurpfile manifest "$manifest" '
+              .[]
+              | select(.comment == $owner)
+              | select(.type == "A" or .type == "AAAA")
+              | . as $record
+              | select(any($manifest[0].records[];
+                  .name == $record.name and .type == $record.type) | not)
+            ' <<<"$all_records" | while IFS= read -r record; do
+              record_id="$(jq -r '.id' <<<"$record")"
+              cloudflare -X DELETE "$api/zones/$zone_id/dns_records/$record_id" >/dev/null
+              printf 'Deleted stale %s %s\n' \
+                "$(jq -r '.type' <<<"$record")" "$(jq -r '.name' <<<"$record")"
+            done
           '';
         };
 

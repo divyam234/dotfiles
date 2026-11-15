@@ -22,6 +22,10 @@
         ./usb-ecm.nix
       ];
       system.stateVersion = "26.05";
+      virtualisation.quadlet.networks.svc.networkConfig = {
+        ipv6 = true;
+        subnets = [ "fd89:ca91::/64" ];
+      };
       services.teldrive.settings.http.address = lib.mkForce "0.0.0.0:8090";
       services.teldrive.user = "root";
       services.teldrive.group = "root";
