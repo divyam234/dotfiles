@@ -105,6 +105,7 @@
         in
         installer.config.system.build.isoImage;
       netcup = self.nixosConfigurations.netcup.config;
+      capri = self.nixosConfigurations.capri.config;
       homelab = self.nixosConfigurations.homelab.config;
       ideapad = self.nixosConfigurations.ideapad.config;
       laptop = self.nixosConfigurations.laptop.config;
@@ -120,6 +121,7 @@
             ;
         };
         containers = import ../lib/checks/containers.nix {
+          inherit capri;
           netcupSystem = self.nixosConfigurations.netcup;
           inherit
             homelab

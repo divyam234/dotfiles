@@ -5,6 +5,14 @@ let
 
   commonPaths = [
     [
+      "streamweave"
+      "admin_token"
+    ]
+    [
+      "streamweave"
+      "master_key"
+    ]
+    [
       "users"
       "bhunter"
       "password"
@@ -139,14 +147,6 @@ let
     [
       "restic"
       "rclone_conf"
-    ]
-    [
-      "streamweave"
-      "admin_token"
-    ]
-    [
-      "streamweave"
-      "master_key"
     ]
     [
       "gproxy"

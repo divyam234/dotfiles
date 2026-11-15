@@ -5,6 +5,11 @@
       den.aspects.base
       den.aspects.server
       den.aspects.home-manager-policy
+      den.aspects.oci-service
+      den.aspects.requires-domain
+      den.aspects.caddy
+      den.aspects.cloudflare-dns
+      den.aspects.streamweave
       den.aspects.teldrive-native
     ];
 

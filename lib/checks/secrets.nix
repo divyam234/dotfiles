@@ -36,8 +36,6 @@ let
     "restic/rclone_conf"
     "restic/repository"
     "stash/secret_key"
-    "streamweave/admin_token"
-    "streamweave/master_key"
     "tailscale/oauth_client_secret"
     "teldrive/data_key"
     "teldrive/encryption_key"
@@ -106,7 +104,6 @@ let
     "redis.env"
     "stash-worker.env"
     "stash.env"
-    "streamweave.env"
     "teldrive.env"
     "vaultwarden.env"
   ];

@@ -8,8 +8,6 @@
       "streamweave/master_key"
     ];
 
-    postgresSchemas.streamweave = { };
-
     caddyRoutes.streamweave = {
       host = "streamweave.${host.domain}";
       access = "public";
@@ -28,7 +26,6 @@
         ...
       }:
       let
-        quadlet = config.virtualisation.quadlet;
         image = "ghcr.io/divyam234/streamweave:latest";
         envFile = config.sops.templates."streamweave.env".path;
         migrate = pkgs.writeShellScript "streamweave-migrate" ''
@@ -47,7 +44,7 @@
           secretEnvironment = {
             PRODUCTION = "true";
             HTTP_ADDR = ":8080";
-            DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres?sslmode=disable";
+            DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:6432/postgres?sslmode=disable";
             DATABASE_SCHEMA = "streamweave";
             MASTER_KEY = secrets.streamweave.master_key;
             ADMIN_TOKEN = secrets.streamweave.admin_token;
@@ -58,12 +55,11 @@
           };
           unitConfig = {
             After = [
-              quadlet.containers.pgdog.ref
-              "postgres-provision.service"
+              "tailscaled.service"
+              "tailscale-autoconnect.service"
             ];
             Requires = [
-              quadlet.containers.pgdog.ref
-              "postgres-provision.service"
+              "tailscaled.service"
             ];
           };
           serviceConfig = {

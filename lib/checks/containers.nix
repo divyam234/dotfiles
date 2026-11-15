@@ -1,4 +1,5 @@
 {
+  capri,
   homelab,
   ideapad,
   laptop,
@@ -7,6 +8,9 @@
   netcupSystem,
 }:
 let
+  capriDns = builtins.fromJSON (
+    builtins.readFile capri.environment.etc."cloudflare-dns/manifest.json".source
+  );
   expected = [
     "adguard-cli"
     "caddy"
@@ -20,7 +24,6 @@ let
     "postgres"
     "redis"
     "siyuan"
-    "streamweave"
     "vaultwarden"
   ];
   names = builtins.attrNames netcup.virtualisation.quadlet.containers;
@@ -139,13 +142,30 @@ assert hasContainerPolicy homelab;
 assert hasCleanupPolicy netcup;
 assert hasCleanupPolicy homelab;
 assert
-  netcup.virtualisation.quadlet.containers.streamweave.containerConfig.image
+  capri.virtualisation.quadlet.containers.streamweave.containerConfig.image
   == "ghcr.io/divyam234/streamweave:latest";
-assert netcup.virtualisation.quadlet.containers.streamweave.containerConfig.publishPorts == [ ];
-assert builtins.elem "postgres-provision.service"
-  netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
-assert builtins.elem netcup.virtualisation.quadlet.containers.pgdog.ref
-  netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
+assert capri.virtualisation.quadlet.containers.streamweave.containerConfig.publishPorts == [ ];
+assert !(netcup.virtualisation.quadlet.containers ? streamweave);
+assert !(capri.virtualisation.quadlet.containers ? postgres);
+assert lib.hasInfix "@netcup:6432/postgres" capri.sops.templates."streamweave.env".content;
+assert builtins.elem "tailscaled.service"
+  capri.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
+assert capri.systemd.timers.cloudflare-dns-sync.timerConfig.OnUnitActiveSec == "5m";
+assert !capriDns.publicTarget.ipv4.enable;
+assert capriDns.publicTarget.ipv6.enable;
+assert capriDns.publicTarget.ipv6.source == "local";
+assert
+  capriDns.records == [
+    {
+      name = "streamweave.${capriDns.zone}";
+      proxied = false;
+      target = "public-ipv6";
+      type = "AAAA";
+    }
+  ];
+assert lib.hasInfix "reverse_proxy streamweave:8080" capri.environment.etc."caddy/Caddyfile".text;
+assert capri.sops.secrets."streamweave/master_key".sopsFile == ../../secrets/common.yaml;
+assert hasContainerPolicy capri;
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert homelab.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert !(netcup.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
