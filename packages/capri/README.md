@@ -39,6 +39,55 @@ separate documentation; neither is bundled into the Nix source patch.
 Apply the patch **once** to the pinned kernel revision, not on top of the
 already-patched local development tree.
 
+### Experimental awake-time battery percentage reporting
+
+`0004-kernel-capri-qg-charge-reporting.patch` applies after the existing
+kernel patches. `kernel/qg-soc.h` is installed alongside `qcom_qg.c` by the
+Nix package. This is a reporting-only software charge estimate, **not**
+Qualcomm's complete Android fuel-gauge algorithm or hardware coulomb counting.
+Charger limits, thermal protections, termination policy and SDAM are unchanged.
+
+The existing driver seeds capacity from power-on OCV and otherwise only
+updates it when the hardware supplies a good OCV. On an always-awake server,
+capacity can stay at the boot estimate for hours while charging.
+
+The experimental estimator:
+
+- Seeds from the existing OCV percentage and SDAM full capacity, falling back
+  to the battery's design capacity when learned capacity is unavailable.
+- Integrates signed burst-current samples every five seconds while awake,
+  retaining fractional charge. It does not use the S2 current average, which
+  remained positive immediately after unplugging the charger in live testing.
+- Drops the integration baseline after failed reads, charge/discharge
+  transitions, suspend and sampling gaps over 30 seconds.
+- Re-anchors on a new hardware-qualified OCV or charger-reported `Full`, and
+  clamps reported capacity to 0–100. Battery removal invalidates the estimate.
+- Does not persist SOC or extrapolate through suspended time. The initial
+  estimate may be wrong if power-on OCV is stale; an increasing percentage
+  alone does not establish absolute accuracy. Full-cycle device validation
+  is still required.
+
+Reference: LineageOS's
+[`qpnp-qg.c`](https://github.com/LineageOS/android_kernel_motorola_sm6225/blob/1da2d0861244d324cfff0fcb31dec374dd94436b/drivers/power/supply/qcom/qpnp-qg.c)
+accepts userspace SOC values in `process_udata_work()`;
+[`qg-soc.c`](https://github.com/LineageOS/android_kernel_motorola_sm6225/blob/1da2d0861244d324cfff0fcb31dec374dd94436b/drivers/power/supply/qcom/qg-soc.c)
+smooths the reported SOC rather than providing a standalone estimator.
+The downstream subtype-dependent current conversion agrees with the
+conversion already present in Capri's native driver. Unplug/replug testing
+confirmed negative discharge and positive charge readings, but did not
+independently calibrate current magnitude.
+
+Run the focused arithmetic/boundary tests without building a kernel:
+
+```sh
+nix build --no-link .#checks.aarch64-linux.capri-qg-soc
+```
+
+Before deploying, compile the driver in the actual ARM64 kernel, then validate
+percentage movement, unplug/replug transitions, full-charge anchoring and
+suspend/resume on the phone. A kernel change needs a reboot; `just test` does
+not replace the running kernel. Retain a known-working boot entry.
+
 ## Important
 
 - **Do not apply patches twice**; the local `capri-7.2` source tree already includes the consolidated kernel changes. Nix applies the single patch to the pinned older revision.

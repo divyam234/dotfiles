@@ -626,6 +626,10 @@ let
         name = "capri-native-uboot-fdt";
         patch = ../patches/0003-kernel-capri-native-uboot-fdt.patch;
       }
+      {
+        name = "capri-qg-charge-reporting";
+        patch = ../patches/0004-kernel-capri-qg-charge-reporting.patch;
+      }
     ]
     ++ (args.kernelPatches or [ ]);
     inherit randstructSeed;
@@ -638,6 +642,10 @@ let
 in
 kernel.overrideAttrs (old: {
   nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ python3 ];
+
+  postPatch = (old.postPatch or "") + ''
+    cp ${./qg-soc.h} drivers/power/supply/qg-soc.h
+  '';
 
   # CONFIG_ARM64_MOTOROLA_CAPRI_BOOT embeds the handset DTB into the Image.
   # Build the Power variant first so capri-fdt.o can include the generated header.

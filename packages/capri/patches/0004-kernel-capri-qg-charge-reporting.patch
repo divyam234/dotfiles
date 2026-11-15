@@ -1,0 +1,245 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] power: supply: qcom_qg: estimate awake-time charge between OCVs
+
+CAPACITY currently returns the boot/rest OCV estimate indefinitely while an
+always-awake host charges. Integrate burst-current samples for reporting only.
+Do not extrapolate across suspend, failed reads, long gaps or detected current
+direction changes. Re-anchor on a new hardware-qualified OCV or charger FULL.
+
+The helper qg-soc.h is supplied by the Nix package and host-tested separately.
+No charging limits, charger policy or persistent gauge registers are changed.
+
+--- a/drivers/power/supply/qcom_qg.c
++++ b/drivers/power/supply/qcom_qg.c
+@@ -29,6 +29,9 @@
+ #include <linux/property.h>
+ #include <linux/regmap.h>
+ #include <linux/timekeeping.h>
++#include <linux/workqueue.h>
++
++#include "qg-soc.h"
+ 
+ /* Peripheral type register */
+ #define QG_PERPH_TYPE			0x04
+@@ -94,6 +97,10 @@
+ 	struct nvmem_device *sdam;
+ 
+ 	struct mutex lock; /* protects the FIFO/burst hold register sequences */
++	struct mutex soc_lock;
++	struct delayed_work soc_work;
++	struct qg_soc soc;
++	bool soc_running;
+ 
+ 	/* Cached measurements (updated from IRQs and on-demand reads) */
+ 	unsigned int vbat_uv;
+@@ -307,10 +314,10 @@
+ 	qg->ocv_uv = ocv_uv;
+ 	qg->ocv_time = ktime_get_seconds();
+ 
+-	return 0;
++	return 1; /* A new hardware-qualified OCV was consumed. */
+ }
+ 
+-static int qg_get_capacity(struct qcom_qg *qg, int *capacity)
++static int qg_get_ocv_capacity(struct qcom_qg *qg, int *capacity)
+ {
+ 	int temp_decidegc;
+ 	int cap, ret;
+@@ -370,6 +377,104 @@
+ 	return 0;
+ }
+ 
++static void qg_seed_soc(struct qcom_qg *qg)
++{
++	int capacity, full_uah;
++
++	if (qg_get_ocv_capacity(qg, &capacity))
++		return;
++	if (qg_get_charge_full(qg, &full_uah) || full_uah <= 0)
++		full_uah = qg->batt_info->charge_full_design_uah;
++
++	guard(mutex)(&qg->soc_lock);
++	qg_soc_seed(&qg->soc, full_uah, capacity);
++}
++
++static int qg_get_capacity(struct qcom_qg *qg, int *capacity)
++{
++	scoped_guard(mutex, &qg->soc_lock) {
++		if (qg->soc.initialized) {
++			*capacity = qg_soc_capacity(&qg->soc);
++			return 0;
++		}
++	}
++	return qg_get_ocv_capacity(qg, capacity);
++}
++
++static void qg_soc_work(struct work_struct *work)
++{
++	struct qcom_qg *qg = container_of(to_delayed_work(work),
++					struct qcom_qg, soc_work);
++	union power_supply_propval status;
++	struct power_supply *charger;
++	bool full = false, changed;
++	int current_ua = 0, previous, ret = -ENODATA;
++
++	/*
++	 * Never use the S2 current average as a fresh sample: it can still
++	 * describe charging after USB is unplugged. The burst reading is also
++	 * used by CURRENT_NOW. Temperature and charger reads stay outside locks.
++	 */
++	if (READ_ONCE(qg->batt_present))
++		ret = qg_read_ibat(qg, &current_ua);
++
++	charger = power_supply_get_by_name("pmi632-charger");
++	if (charger) {
++		if (!power_supply_get_property(charger,
++				POWER_SUPPLY_PROP_STATUS, &status))
++			full = status.intval == POWER_SUPPLY_STATUS_FULL;
++		power_supply_put(charger);
++	}
++
++	scoped_guard(mutex, &qg->soc_lock) {
++		if (!qg->soc_running)
++			return;
++		previous = qg->soc.initialized ? qg_soc_capacity(&qg->soc) : -1;
++		if (full && READ_ONCE(qg->batt_present))
++			qg_soc_mark_full(&qg->soc);
++		else if (!ret)
++			qg_soc_sample(&qg->soc, ktime_to_ms(ktime_get()), current_ua);
++		else
++			qg_soc_invalidate_sample(&qg->soc);
++
++		changed = qg->soc.initialized &&
++			  previous != qg_soc_capacity(&qg->soc);
++		schedule_delayed_work(&qg->soc_work, msecs_to_jiffies(5000));
++	}
++	if (changed)
++		power_supply_changed(qg->psy);
++}
++
++static void qg_stop_soc_work(void *data)
++{
++	struct qcom_qg *qg = data;
++
++	scoped_guard(mutex, &qg->soc_lock) {
++		qg->soc_running = false;
++		qg_soc_invalidate_sample(&qg->soc);
++	}
++	cancel_delayed_work_sync(&qg->soc_work);
++}
++
++static void qg_start_soc_work(struct qcom_qg *qg)
++{
++	guard(mutex)(&qg->soc_lock);
++	qg->soc_running = true;
++	qg_soc_invalidate_sample(&qg->soc);
++	mod_delayed_work(system_wq, &qg->soc_work, 0);
++}
++
++static void qg_external_power_changed(struct power_supply *psy)
++{
++	struct qcom_qg *qg = power_supply_get_drvdata(psy);
++
++	guard(mutex)(&qg->soc_lock);
++	if (qg->soc_running) {
++		qg_soc_invalidate_sample(&qg->soc);
++		mod_delayed_work(system_wq, &qg->soc_work, 0);
++	}
++}
++
+ static int qg_get_health(struct qcom_qg *qg, int *health)
+ {
+ 	struct power_supply_battery_info *info = qg->batt_info;
+@@ -456,9 +561,12 @@
+ static irqreturn_t qg_good_ocv_irq(int irq, void *data)
+ {
+ 	struct qcom_qg *qg = data;
++	int ret;
+ 
+ 	scoped_guard(mutex, &qg->lock)
+-		qg_update_ocv(qg);
++		ret = qg_update_ocv(qg);
++	if (ret > 0)
++		qg_seed_soc(qg);
+ 
+ 	power_supply_changed(qg->psy);
+ 
+@@ -470,8 +578,17 @@
+ 	struct qcom_qg *qg = data;
+ 	bool present;
+ 
+-	if (!qg_read_battery_present(qg, &present))
+-		qg->batt_present = present;
++	if (!qg_read_battery_present(qg, &present)) {
++		WRITE_ONCE(qg->batt_present, present);
++		if (!present) {
++			scoped_guard(mutex, &qg->soc_lock) {
++				qg->soc.initialized = false;
++				qg_soc_invalidate_sample(&qg->soc);
++			}
++			scoped_guard(mutex, &qg->lock)
++				qg->ocv_uv = 0;
++		}
++	}
+ 
+ 	power_supply_changed(qg->psy);
+ 
+@@ -640,6 +757,7 @@
+ 	.properties = qg_properties,
+ 	.num_properties = ARRAY_SIZE(qg_properties),
+ 	.get_property = qg_get_property,
++	.external_power_changed = qg_external_power_changed,
+ };
+ 
+ static int qg_get_optional_irq(struct qcom_qg *qg, struct platform_device *pdev,
+@@ -681,6 +799,8 @@
+ 
+ 	qg->dev = dev;
+ 	mutex_init(&qg->lock);
++	mutex_init(&qg->soc_lock);
++	INIT_DELAYED_WORK(&qg->soc_work, qg_soc_work);
+ 
+ 	qg->regmap = dev_get_regmap(dev->parent, NULL);
+ 	if (!qg->regmap)
+@@ -772,6 +892,11 @@
+ 		return ret;
+ 
+ 	platform_set_drvdata(pdev, qg);
++	qg_seed_soc(qg);
++	ret = devm_add_action_or_reset(dev, qg_stop_soc_work, qg);
++	if (ret)
++		return ret;
++	qg_start_soc_work(qg);
+ 
+ 	dev_dbg(dev, "QG: batt=%s OCV=%u uV VBAT=%u uV\n",
+ 		qg->batt_present ? "present" : "absent",
+@@ -784,6 +909,7 @@
+ {
+ 	struct qcom_qg *qg = dev_get_drvdata(dev);
+ 
++	qg_stop_soc_work(qg);
+ 	/*
+ 	 * The QG hardware FSM will automatically transition to sleep
+ 	 * states (S3) and measure OCV. Nothing special is needed here
+@@ -797,6 +923,7 @@
+ static int qcom_qg_resume(struct device *dev)
+ {
+ 	struct qcom_qg *qg = dev_get_drvdata(dev);
++	int ret;
+ 
+ 	/*
+ 	 * After resume, the hardware may have measured a good OCV during
+@@ -804,9 +931,12 @@
+ 	 * Also refresh the battery voltage.
+ 	 */
+ 	scoped_guard(mutex, &qg->lock)
+-		qg_update_ocv(qg);
++		ret = qg_update_ocv(qg);
++	if (ret > 0)
++		qg_seed_soc(qg);
+ 
+ 	qg_read_vbat(qg, &qg->vbat_uv);
++	qg_start_soc_work(qg);
+ 
+ 	dev_dbg(qg->dev, "Resumed, OCV=%u uV VBAT=%u uV\n",
+ 		qg->ocv_uv, qg->vbat_uv);
