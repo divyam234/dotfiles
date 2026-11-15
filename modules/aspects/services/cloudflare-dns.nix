@@ -155,6 +155,8 @@
           restartTriggers = [ manifest ];
           serviceConfig = {
             Type = "oneshot";
+            Restart = "on-failure";
+            RestartSec = "30s";
             EnvironmentFile = config.sops.templates."cloudflare-dns.env".path;
           };
           path = [

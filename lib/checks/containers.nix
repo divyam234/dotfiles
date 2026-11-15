@@ -151,6 +151,8 @@ assert lib.hasInfix "@netcup:6432/postgres" capri.sops.templates."streamweave.en
 assert builtins.elem "tailscaled.service"
   capri.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
 assert capri.systemd.timers.cloudflare-dns-sync.timerConfig.OnUnitActiveSec == "5m";
+assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.Restart == "on-failure";
+assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.RestartSec == "30s";
 assert !capriDns.publicTarget.ipv4.enable;
 assert capriDns.publicTarget.ipv6.enable;
 assert capriDns.publicTarget.ipv6.source == "local";
