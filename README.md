@@ -1,84 +1,87 @@
 # Dotfiles
 
-NixOS and Home Manager configuration for three machines, built with flakes, flake-parts, and Den.
+Personal NixOS and Home Manager configurations, built with [Nix flakes](https://nixos.org/), [flake-parts](https://flake.parts/), and [Den](https://github.com/vic/den).
 
-## Hosts
+## Devices
 
-| Host | Platform | Configuration |
-| --- | --- | --- |
-| `laptop` | `x86_64-linux` | NixOS with integrated Home Manager |
-| `netcup` | `aarch64-linux` | NixOS server with integrated Home Manager |
-| `homelab` | `x86_64-linux` | NixOS server with integrated Home Manager |
+| Host | Hardware | Platform | Role |
+| --- | --- | --- | --- |
+| [`laptop`](hosts/laptop/) | Intel Core i5-8300H, Intel + NVIDIA graphics | `x86_64-linux` | Workstation with MSI EC controls and Btrfs |
+| [`ideapad`](hosts/ideapad/) | Intel Core i3-7100U, Intel + AMD graphics | `x86_64-linux` | Workstation with Intel media acceleration and rclone WebDAV |
+| [`homelab`](hosts/homelab/) | AMD A6-7310 with Radeon R4 graphics | `x86_64-linux` | Home server with attached storage and a Librespot audio receiver |
+| [`netcup`](hosts/netcup/) | ARM virtual machine | `aarch64-linux` | Service host with Caddy, PostgreSQL, Redis, backups, and a Tailscale exit node |
+| [`capri`](hosts/capri/) | Motorola Moto G10 Power (XT2127-4), Qualcomm SM4250 | `aarch64-linux` | Native NixOS phone configuration with a custom kernel/U-Boot, TelDrive, and a Tailscale exit node |
 
-## Structure
+All five hosts integrate Home Manager for `bhunter`.
 
-```text
-entity -> host aspect -> reusable aspects -> NixOS/Home Manager modules
+The workstations share a Niri desktop with Noctalia, selected GNOME apps, Ghostty, and development tools. Display layouts are declared per host: `laptop` disables its internal panel and configures two 1080p/75 Hz HDMI outputs; `ideapad` configures its internal panel and one HDMI output at 1080p/60 Hz.
+
+Capri has device-specific boot and firmware requirements; see its [hardware and bring-up notes](packages/capri/README.md) before building or installing it.
+
+## Working with the configuration
+
+Run commands from the repository root. Nix with flakes enabled and `just` are required; build and activation recipes use `nh`.
+
+```bash
+just eval laptop             # evaluate the system configuration
+just eval-hm laptop          # evaluate the integrated Home Manager username
+just build laptop            # build without activating
+just test laptop             # activate without changing the boot default
+just switch laptop           # build and activate permanently
+just boot laptop             # make the configuration the next boot default
 ```
 
-- `modules/entities/` — data-only home and user declarations
-- `hosts/` — data-only host declarations (`entity.nix`), host aspects (`default.nix`), and hardware configuration
-- `modules/aspects/` — reusable roles, features, services, and application configuration
-- `modules/core/` — Den schema and shared defaults
-- `lib/` — helpers and evaluation checks
-- `packages/svc/` — CLI and TUI for the Quadlet service stack
+Host arguments default to the current hostname. `just home` is an alias for a system switch: Home Manager activates with NixOS, not separately. These recipes run locally; passing another hostname selects its configuration, not a remote deployment.
 
-Host composition uses direct Den `includes`. Feature-specific schema is declared beside each aspect, while cross-aspect data is passed through scope-local quirks and checked during evaluation. Den's built-in policies instantiate hosts and route integrated Home Manager users.
+Before activating changes:
 
-`flake.nix` is generated. Change `flake-file` declarations in the modules, then run:
+```bash
+just fmt                     # format Nix files
+just check                   # static checks, composition contracts, and host evaluations
+```
+
+`just check` evaluates `laptop`, `ideapad`, `homelab`, and `netcup`; evaluate `capri` explicitly with `just eval capri`.
+
+To update pinned inputs, run `just update`, then evaluate and build the affected hosts before switching. These configurations contain machine-specific disks, networking, and user settings; review the target host before installing them elsewhere.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| [`hosts/`](hosts/) | Device declarations, host composition, hardware, storage, and networking |
+| [`modules/entities/`](modules/entities/) | Home and user declarations |
+| [`modules/aspects/`](modules/aspects/) | Reusable roles, desktop features, services, and application settings |
+| [`modules/core/`](modules/core/) | Shared defaults, schemas, and injected arguments |
+| [`lib/`](lib/) | Helpers, secret catalog, and evaluation-time contracts |
+| [`packages/`](packages/) | Local tools and device support |
+| [`secrets/`](secrets/) | Shared encrypted SOPS data |
+| [`theme/`](theme/) | Shared visual assets |
+
+Each host's `entity.nix` declares data; its `default.nix` selects reusable aspects through Den `includes`. Aspects provide NixOS and Home Manager modules. Shared service data, such as routes and secret requirements, flows through quirks and is checked during evaluation.
+
+`flake.nix` is generated. Edit the source `flake-file` declarations in modules, then regenerate it:
 
 ```bash
 just write-flake
 ```
 
-## Commands
+## Local tools
 
-```bash
-just fmt                     # format tracked Nix files
-just check                   # run all flake checks
-just eval laptop             # evaluate a NixOS host
-just eval-hm laptop          # evaluate laptop's integrated Home Manager
-just build netcup            # build without activating
-just test netcup             # activate until reboot
-just switch netcup           # build and activate
-just home laptop             # switch laptop, including Home Manager
-cargo test --manifest-path packages/svc/Cargo.toml
-```
+- **[`dot`](packages/dot/README.md)** — configuration management CLI, including local builds and SSH-based deployment.
+- **[`svc`](packages/svc/README.md)** — Rust CLI/TUI for inspecting and operating systemd-managed Quadlet containers.
+- **[`camoflare`](packages/camoflare/README.md)** — browser-backed FlareSolverr-compatible service.
 
-Host recipes default to the current machine's hostname (`hostname`), so `just switch` on `ideapad` targets `ideapad`. Pass a host explicitly to override it, for example `just switch netcup`. Home Manager is integrated and activates with the system; `just home` is an alias for a system switch.
-
-Container storage cleanup runs through system and user `podman-cleanup.service`
-oneshots, scheduled on Sundays at 04:00 with up to 45 minutes of randomized delay.
-Root cleanup invokes Buildah directly; rootless cleanup uses `podman unshare`.
-Both remove all Buildah working containers, stopped containers and unused images
-older than seven days (including tagged images), and all unreferenced volumes,
-including named volume data. Images referenced by remaining containers are kept.
-Run manually with `sudo systemctl start podman-cleanup.service` for root storage
-or `systemctl --user start podman-cleanup.service` for user storage.
-
-OMP selects `openai-codex` models through the declarative `gproxy-codex.ts`
-extension, retaining Codex model metadata and discovery while sending requests
-through `openai-responses` to gproxy. Shared OpenAI model IDs are unprefixed;
-OMP adds `openai-codex/` and OpenCode adds `openai/` at their consumers.
-Apply the declarative settings through Home Manager, then restart OMP.
+For `svc` development, run `cargo test --manifest-path packages/svc/Cargo.toml`.
 
 ## Secrets
 
-Secrets use SOPS and Age.
+Secrets are encrypted with SOPS and age. Never commit decrypted values or private keys.
 
-- Shared secrets: `secrets/common.yaml`
-- Host secrets: `hosts/<name>/secrets.yaml`
-- NixOS Age key: `/var/lib/sops-nix/key.txt`
-- Home Manager Age key: `~/.config/sops/age/keys.txt`
+| Item | Location |
+| --- | --- |
+| Shared secrets | `secrets/common.yaml` |
+| Host secrets, where configured | `hosts/<name>/secrets.yaml` |
+| NixOS age key | `/var/lib/sops-nix/key.txt` |
+| Home Manager age key | `~/.config/sops/age/keys.txt` |
 
-The allowed secret catalog is centralized in `lib/secrets.nix`. Aspects emit `nixosSecrets` or `homeSecrets` quirks, so each configuration declares only the catalog entries it consumes. Service and feature modules use the provided `secrets` argument instead of setting `sopsFile` directly.
-
-## Binary Cache
-
-NixOS hosts run a loopback proxy for the signed cache published from
-[divyam234/nix-cache](https://github.com/divyam234/nix-cache). The cache stores
-raw NARs in immutable GitHub Release chunks and downloads reusable 32 MiB
-blocks with validated HTTP range requests. Configuration and the trusted public
-key live in `modules/aspects/system/nix.nix`.
-The proxy runs as `nix-cache.service`, with its index at
-`/var/cache/nix-cache/index.json`; the Fish alias `ncache-restart` restarts it.
+[`lib/secrets.nix`](lib/secrets.nix) defines the allowed catalog. Aspects request entries through `nixosSecrets` or `homeSecrets` and use the injected `secrets` argument for templates rather than setting `sopsFile` directly.
