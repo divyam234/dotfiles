@@ -4,6 +4,7 @@
     includes = [
       den.aspects.base
       den.aspects.server
+      den.aspects.audio
       den.aspects.home-manager-policy
       den.aspects.iets
       den.aspects.oci-service
@@ -23,6 +24,18 @@
         ./usb-ecm.nix
       ];
       system.stateVersion = "26.05";
+      hardware.bluetooth = {
+        enable = true;
+        powerOnBoot = true;
+      };
+      services.pipewire = {
+        socketActivation = false;
+        wireplumber.extraConfig."10-headless-bluetooth" = {
+          "wireplumber.profiles".main."monitor.bluez.seat-monitoring" = "disabled";
+        };
+      };
+      systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
+      users.users.bhunter.linger = true;
       virtualisation.quadlet.networks.svc.networkConfig = {
         ipv6 = true;
         subnets = [ "fd89:ca91::/64" ];
