@@ -4,7 +4,6 @@
     includes = [
       den.aspects.infra-host
       den.aspects.audio
-      den.aspects.librespot
     ];
     nixos =
       { ... }:

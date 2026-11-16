@@ -7,6 +7,7 @@
       den.aspects.audio
       den.aspects.home-manager-policy
       den.aspects.iets
+      den.aspects.librespot
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.caddy
@@ -35,6 +36,7 @@
         };
       };
       systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
+      systemd.user.services.pipewire-pulse.wantedBy = [ "default.target" ];
       users.users.bhunter.linger = true;
       environment.variables.IETS_MAIN_STACK_MB = "2048";
       systemd.globalEnvironment.IETS_MAIN_STACK_MB = "2048";

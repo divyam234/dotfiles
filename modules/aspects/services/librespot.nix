@@ -1,30 +1,55 @@
 { den, ... }:
 {
-  den.aspects.librespot = { host, user, ... }: {
-    nixos = _: {
-      networking.firewall = {
-        allowedTCPPorts = [ 24879 ];
-        allowedUDPPorts = [ 5353 ];
+  den.schema.host =
+    { lib, ... }:
+    {
+      options.librespot = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            cacheDir = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Directory librespot uses for its cache; defaults to librespot under the user's XDG cache directory.";
+            };
+          };
+        };
+        default = { };
+        description = "Host-specific librespot settings.";
       };
-      systemd.tmpfiles.rules = [
-        "d /mnt/drive/librespot 0750 ${user.userName} users -"
-        "d /mnt/drive/librespot/cache 0750 ${user.userName} users -"
-      ];
-      systemd.services.systemd-tmpfiles-setup.unitConfig.RequiresMountsFor = [ "/mnt/drive" ];
     };
 
-    homeManager = _: {
-      services.librespot = {
-        enable = true;
-        settings = {
-          name = host.hostName;
-          backend = "pulseaudio";
-          device-type = "speaker";
-          bitrate = 320;
-          cache = "/mnt/drive/librespot/cache";
-          zeroconf-port = 24879;
+  den.aspects.librespot = { host, user, ... }: {
+    nixos =
+      { lib, ... }:
+      {
+        networking.firewall = {
+          allowedTCPPorts = [ 24879 ];
+          allowedUDPPorts = [ 5353 ];
+        };
+
+        systemd.tmpfiles.rules = lib.optionals (host.librespot.cacheDir != null) [
+          "d ${host.librespot.cacheDir} 0750 ${user.userName} users -"
+        ];
+      };
+
+    homeManager =
+      { config, ... }:
+      {
+        services.librespot = {
+          enable = true;
+          settings = {
+            name = host.hostName;
+            backend = "pulseaudio";
+            device-type = "speaker";
+            bitrate = 320;
+            cache =
+              if host.librespot.cacheDir == null then
+                "${config.xdg.cacheHome}/librespot"
+              else
+                host.librespot.cacheDir;
+            zeroconf-port = 24879;
+          };
         };
       };
-    };
   };
 }
