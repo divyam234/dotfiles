@@ -632,6 +632,13 @@ let
         name = "capri-qg-charge-reporting";
         patch = ../patches/0004-kernel-capri-qg-charge-reporting.patch;
       }
+      {
+        # wcn399x still reports the cmnv12.bin default BD address, so the
+        # Bluetooth core needs a board-provided local-bd-address or hci0
+        # stays HCI_UNCONFIGURED (DOWN RAW).
+        name = "capri-bluetooth-bdaddr";
+        patch = ../patches/0005-kernel-capri-bluetooth-bdaddr.patch;
+      }
     ]
     ++ (args.kernelPatches or [ ]);
     inherit randstructSeed;
