@@ -333,18 +333,20 @@ static int watch_buttons(struct display *display)
 
 int main(int argc, char **argv)
 {
-    enum { DAEMON, CHECK, FORCE_ON } mode = DAEMON;
+    enum { DAEMON, CHECK, FORCE_ON, MANUAL_CYCLE } mode = DAEMON;
 
     if (argc == 2 && strcmp(argv[1], "--check") == 0)
         mode = CHECK;
     else if (argc == 2 && strcmp(argv[1], "--on") == 0)
         mode = FORCE_ON;
+    else if (argc == 2 && strcmp(argv[1], "--cycle") == 0)
+        mode = MANUAL_CYCLE;
     else if (argc != 1) {
-        fprintf(stderr, "Usage: %s [--check|--on]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [--check|--on|--cycle]\n", argv[0]);
         return 2;
     }
 
-    if (mode == DAEMON) {
+    if (mode == DAEMON || mode == MANUAL_CYCLE) {
         struct sigaction action = { .sa_handler = on_signal };
         sigemptyset(&action.sa_mask);
         sigaction(SIGINT, &action, NULL);
@@ -376,6 +378,33 @@ int main(int argc, char **argv)
                 close(display.fd);
                 return 1;
             }
+    } else if (mode == MANUAL_CYCLE) {
+        // Manual demonstration: leave all other services running and guarantee
+        // an ON attempt from the same process after 5 seconds or a signal.
+        if (active != 1) {
+            fprintf(stderr, "capri-screen-toggle: screen was not active; refusing cycle\n");
+            drmDropMaster(display.fd);
+            close(display.fd);
+            return 1;
+        }
+        if (set_active(&display, false) < 0) {
+            drmDropMaster(display.fd);
+            close(display.fd);
+            return 1;
+        }
+        display.disabled_by_us = true;
+        for (int seconds = 0; seconds < 5 && !exiting; ++seconds)
+            sleep(1);
+        restore_if_needed(&display);
+        uint64_t final_active = 0;
+        if (display.disabled_by_us || query_active(&display, &final_active) < 0 ||
+            final_active != 1) {
+            fprintf(stderr, "capri-screen-toggle: FAILED to confirm display ON\n");
+            drmDropMaster(display.fd);
+            close(display.fd);
+            return 1;
+        }
+        fprintf(stderr, "capri-screen-toggle: verified CRTC ACTIVE=1 after cycle\n");
     } else {
         // Starting the service itself never switches the display off.
         watch_buttons(&display);

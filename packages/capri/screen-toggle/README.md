@@ -57,6 +57,17 @@ The check should show a native MSM/DSI CRTC and the Assistant key on a
 `/dev/input/event*` device. Press the physical Assistant key once to switch the
 panel off, and once again to switch it on.
 
+Manual test without the Assistant key (screen off for five seconds, then
+restored in the same process):
+
+```sh
+sudo capri-screen-toggle --cycle
+```
+
+The cycle has an interrupt-aware restore path and checks CRTC `ACTIVE=1`
+when it returns. Keep SSH available; an external delayed `--on` recovery
+command is also recommended for first-time hardware tests.
+
 Recovery over SSH (does not require the display to be visible):
 
 ```sh
@@ -74,4 +85,7 @@ the previous working NixOS generation.
 - NixOS Capri `systemd.services.capri-screen-toggle` evaluates successfully.
 - C program builds with `libdrm` and `-Werror`.
 - Read-only `--check` was run as root on the current Capri NixOS system.
-- No physical screen-off/on cycle has yet been attempted.
+- The manual `--cycle` test was run on the working 50 MHz NixOS kernel.
+  DRM committed display OFF and ON; final CRTC `ACTIVE=1` was verified.
+- A subsequent `dmesg` check showed another successful panel preparation.
+- The physical Assistant-key test still requires the updated kernel/DTB.
