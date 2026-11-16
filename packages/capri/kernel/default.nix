@@ -226,6 +226,8 @@ let
         USB_XHCI_HCD = yes;
         USB_DWC3_QCOM = yes;
         USB_GADGET = yes;
+        SND_USB = yes;
+        SND_USB_AUDIO = module;
         USB_CONFIGFS = yes;
         USB_CONFIGFS_SERIAL = yes;
         USB_CONFIGFS_ACM = yes;

@@ -74,6 +74,18 @@
         printf '%s\n' "$udc" > "$gadget/UDC"
       fi
 
+      # DWC3 can remain halted after gadget rebinding. Reinitialize only the
+      # data controller; leave the Type-C power role and charging untouched.
+      role=/sys/class/usb_role/"$udc"-role-switch/role
+      if [ -r "$role" ]; then
+        IFS= read -r data_role < "$role"
+        IFS= read -r state < "/sys/class/udc/$udc/state"
+        if [ "$data_role" = device ] && [ "$state" != configured ]; then
+          printf '%s\n' none > "$role"
+          printf '%s\n' device > "$role"
+        fi
+      fi
+
       iface=""
       IFS= read -r iface < "$gadget/functions/ecm.usb0/ifname" || true
       case "$iface" in
