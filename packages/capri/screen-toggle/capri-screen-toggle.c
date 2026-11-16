@@ -333,16 +333,18 @@ static int watch_buttons(struct display *display)
 
 int main(int argc, char **argv)
 {
-    enum { DAEMON, CHECK, FORCE_ON, MANUAL_CYCLE } mode = DAEMON;
+    enum { DAEMON, CHECK, FORCE_ON, FORCE_OFF, MANUAL_CYCLE } mode = DAEMON;
 
     if (argc == 2 && strcmp(argv[1], "--check") == 0)
         mode = CHECK;
     else if (argc == 2 && strcmp(argv[1], "--on") == 0)
         mode = FORCE_ON;
+    else if (argc == 2 && strcmp(argv[1], "--off") == 0)
+        mode = FORCE_OFF;
     else if (argc == 2 && strcmp(argv[1], "--cycle") == 0)
         mode = MANUAL_CYCLE;
     else if (argc != 1) {
-        fprintf(stderr, "Usage: %s [--check|--on|--cycle]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [--check|--off|--on|--cycle]\n", argv[0]);
         return 2;
     }
 
@@ -378,6 +380,14 @@ int main(int argc, char **argv)
                 close(display.fd);
                 return 1;
             }
+    } else if (mode == FORCE_OFF) {
+        // An explicit --off leaves the display off until a separate --on.
+        // Do not set disabled_by_us: that would trigger automatic restoration.
+        if (active && set_active(&display, false) < 0) {
+            drmDropMaster(display.fd);
+            close(display.fd);
+            return 1;
+        }
     } else if (mode == MANUAL_CYCLE) {
         // Manual demonstration: leave all other services running and guarantee
         // an ON attempt from the same process after 5 seconds or a signal.

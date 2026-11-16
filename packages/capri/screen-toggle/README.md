@@ -57,6 +57,17 @@ The check should show a native MSM/DSI CRTC and the Assistant key on a
 `/dev/input/event*` device. Press the physical Assistant key once to switch the
 panel off, and once again to switch it on.
 
+Manual, independent commands without the Assistant key:
+
+```sh
+sudo capri-screen-toggle --off   # enter real DSI panel sleep; leave off
+sudo capri-screen-toggle --on    # restore the display, whenever requested
+```
+
+These are separate invocations. There is no timer and no automatic restore
+for `--off`; use SSH to issue `--on` when ready. Do not stop the service
+between commands: systemd `ExecStopPost` is a separate recovery feature.
+
 Manual test without the Assistant key (screen off for five seconds, then
 restored in the same process):
 
