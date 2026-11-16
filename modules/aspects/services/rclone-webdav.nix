@@ -21,6 +21,11 @@
               default = null;
               description = "Directory rclone uses for VFS caching; defaults to rclone-webdav under the user's XDG cache directory.";
             };
+            teldriveApiHost = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Host of the teldrive API the WebDAV server serves; unset leaves the upstream remote untouched.";
+            };
           };
         };
         default = { };
@@ -37,6 +42,7 @@
     homeManager =
       {
         config,
+        lib,
         secrets,
         ...
       }:
@@ -74,6 +80,9 @@
             allow-origin = "*";
             poll-interval = "1s";
             vfs-read-ahead = "384Mi";
+          }
+          // lib.optionalAttrs (cfg.teldriveApiHost != null) {
+            teldrive-api-host = cfg.teldriveApiHost;
           };
         };
       };
