@@ -46,7 +46,7 @@ let
 in
 rustPlatform.buildRustPackage {
   pname = "iets";
-  version = "${lib.trim (builtins.readFile (src + "/VERSION"))}-zip-pr335";
+  version = lib.trim (builtins.readFile (src + "/VERSION"));
   inherit src;
   patches = [
     (fetchpatch {
