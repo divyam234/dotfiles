@@ -35,6 +35,7 @@
           ./image.nix
           ./modem-nv.nix
           ./usb-ecm.nix
+          ./screen-toggle.nix
         ];
         system.stateVersion = "26.05";
         hardware.bluetooth = {

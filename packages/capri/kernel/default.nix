@@ -639,6 +639,11 @@ let
         name = "capri-bluetooth-bdaddr";
         patch = ../patches/0005-kernel-capri-bluetooth-bdaddr.patch;
       }
+      {
+        # Motorola's GPIO33 Assistant button, separate from power and volume.
+        name = "capri-assistant-button";
+        patch = ../patches/0006-kernel-capri-assistant-button.patch;
+      }
     ]
     ++ (args.kernelPatches or [ ]);
     inherit randstructSeed;
