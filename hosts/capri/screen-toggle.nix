@@ -20,6 +20,10 @@ in
       # Best-effort rescue when stopping/restarting the service, even if it
       # crashes while the panel is asleep. Can also be run manually over SSH.
       ExecStopPost = "-${screenToggle}/bin/capri-screen-toggle --on";
+      # Keep the previous brightness across manual OFF and ON invocations.
+      RuntimeDirectory = "capri-screen-toggle";
+      RuntimeDirectoryMode = "0700";
+      RuntimeDirectoryPreserve = "yes";
       Restart = "on-failure";
       RestartSec = "10s";
       TimeoutStopSec = "10s";
@@ -28,7 +32,9 @@ in
       ProtectSystem = "strict";
       ProtectHome = true;
       PrivateTmp = true;
-      ProtectKernelTunables = true;
+      # Only this panel's brightness sysfs node may be written by the service.
+      # ProtectKernelTunables would make that backlight control read-only.
+      ReadWritePaths = [ "/sys/class/backlight/5e94000.dsi.0/brightness" ];
       ProtectControlGroups = true;
       # Do not set PrivateDevices: the service needs /dev/dri and /dev/input.
     };

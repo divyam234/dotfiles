@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Moto G10 Power: GPIO33 Assistant key -> native MSM DRM DSI pipeline on/off.
-// Does not suspend Linux, blank the framebuffer, or change backlight brightness.
+// Does not suspend Linux; saves/reapplies native panel brightness across DRM OFF/ON.
 // Requires the Capri kernel gpio-keys DTS addition and an active MSM/DSI mode.
 #define _POSIX_C_SOURCE 200809L
 
@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -44,6 +45,95 @@ static void on_signal(int signum)
     exiting = 1;
 }
 
+
+#define BACKLIGHT_BRIGHTNESS "/sys/class/backlight/5e94000.dsi.0/brightness"
+#define BACKLIGHT_MAX "/sys/class/backlight/5e94000.dsi.0/max_brightness"
+#define SAVED_DIR "/run/capri-screen-toggle"
+#define SAVED_BRIGHTNESS SAVED_DIR "/brightness"
+
+/* Always target Capri's native DSI panel, never unrelated LEDs or devices. */
+static int read_uint_file(const char *path, unsigned *number)
+{
+    FILE *file = fopen(path, "r");
+    if (!file)
+        return -1;
+    int result = fscanf(file, "%u", number) == 1 ? 0 : -1;
+    fclose(file);
+    return result;
+}
+
+static int remember_brightness(void)
+{
+    unsigned current, maximum;
+    if (read_uint_file(BACKLIGHT_BRIGHTNESS, &current) < 0 ||
+        read_uint_file(BACKLIGHT_MAX, &maximum) < 0 ||
+        maximum == 0 || current > maximum) {
+        fprintf(stderr, "capri-screen-toggle: cannot save panel brightness; refusing OFF\n");
+        return -1;
+    }
+    if (mkdir(SAVED_DIR, 0700) < 0 && errno != EEXIST) {
+        perror("capri-screen-toggle: create runtime directory");
+        return -1;
+    }
+    FILE *file = fopen(SAVED_BRIGHTNESS ".tmp", "w");
+    if (!file)
+        return -1;
+    int failed = fprintf(file, "%u\n", current) < 0 ||
+                 fflush(file) != 0 || fsync(fileno(file)) != 0;
+    if (fclose(file) != 0)
+        failed = 1;
+    if (failed || rename(SAVED_BRIGHTNESS ".tmp", SAVED_BRIGHTNESS) < 0) {
+        perror("capri-screen-toggle: save brightness");
+        unlink(SAVED_BRIGHTNESS ".tmp");
+        return -1;
+    }
+    fprintf(stderr, "capri-screen-toggle: saved panel brightness %u/%u\n",
+            current, maximum);
+    return 0;
+}
+
+static int restore_brightness(void)
+{
+    unsigned current, maximum;
+    if (read_uint_file(BACKLIGHT_MAX, &maximum) < 0 || !maximum) {
+        fprintf(stderr, "capri-screen-toggle: backlight max unavailable\n");
+        return -1;
+    }
+
+    /* The saved brightness takes priority. --on without an earlier --off
+     * can still resend the existing sysfs brightness to undo the panel's
+     * hardcoded 0x000a brightness from the initialization sequence. */
+    bool from_snapshot = read_uint_file(SAVED_BRIGHTNESS, &current) == 0;
+    if (!from_snapshot && read_uint_file(BACKLIGHT_BRIGHTNESS, &current) < 0)
+        return -1;
+    if (current > maximum) {
+        fprintf(stderr, "capri-screen-toggle: saved brightness out of range\n");
+        return -1;
+    }
+
+    // The kernel reissues DCS 0x51 even when the sysfs value is unchanged.
+    int fd = open(BACKLIGHT_BRIGHTNESS, O_WRONLY | O_CLOEXEC);
+    if (fd < 0) {
+        perror("capri-screen-toggle: open panel brightness");
+        return -1;
+    }
+    char buffer[32];
+    int length = snprintf(buffer, sizeof(buffer), "%u\n", current);
+    ssize_t written = write(fd, buffer, (size_t)length);
+    int saved_errno = errno;
+    close(fd);
+    if (written != length) {
+        errno = written < 0 ? saved_errno : EIO;
+        perror("capri-screen-toggle: reapply panel brightness");
+        return -1;
+    }
+    if (from_snapshot)
+        unlink(SAVED_BRIGHTNESS); // Do not override later user brightness changes.
+    fprintf(stderr, "capri-screen-toggle: restored panel brightness %u/%u\n",
+            current, maximum);
+    return 0;
+}
+
 static int query_active(const struct display *display, uint64_t *active)
 {
     drmModeObjectProperties *props = drmModeObjectGetProperties(
@@ -65,6 +155,8 @@ static int query_active(const struct display *display, uint64_t *active)
 
 static int set_active(struct display *display, bool on)
 {
+    if (!on && remember_brightness() < 0)
+        return -1; // Never go dark unless brightness can be restored.
     drmModeAtomicReq *req = drmModeAtomicAlloc();
     if (!req) {
         fprintf(stderr, "capri-screen-toggle: cannot allocate DRM request\n");
@@ -90,6 +182,14 @@ static int set_active(struct display *display, bool on)
     }
     fprintf(stderr, "capri-screen-toggle: native DSI display %s\n",
             on ? "ON" : "OFF");
+    if (on) {
+        // Panel preparation sends brightness 0x000a (very dim).
+        // Reapply the saved value after DRM has prepared the panel.
+        struct timespec settle = { .tv_sec = 0, .tv_nsec = 100000000 };
+        nanosleep(&settle, NULL);
+        if (restore_brightness() < 0)
+            return -1;
+    }
     return 0;
 }
 
@@ -375,11 +475,14 @@ int main(int argc, char **argv)
         if (button >= 0)
             close(button);
     } else if (mode == FORCE_ON) {
-        if (!active)
-            if (set_active(&display, true) < 0) {
-                close(display.fd);
-                return 1;
-            }
+        // Reapply brightness even if the CRTC is already active.
+        // This repairs a display left dim by an older --on invocation.
+        if ((!active && set_active(&display, true) < 0) ||
+            (active && restore_brightness() < 0)) {
+            drmDropMaster(display.fd);
+            close(display.fd);
+            return 1;
+        }
     } else if (mode == FORCE_OFF) {
         // An explicit --off leaves the display off until a separate --on.
         // Do not set disabled_by_us: that would trigger automatic restoration.

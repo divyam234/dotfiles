@@ -28,9 +28,13 @@ planes, and connectors while requesting real display-pipeline shutdown and
 restoration. The existing Capri panel driver handles DSI Display OFF / Sleep IN
 and panel initialization on the corresponding DRM transitions.
 
-This does **not** set brightness to zero, disable Wi-Fi, suspend NixOS, or
-modify eMMC speed. The panel driver currently leaves some PMI632 display-bias
-power under firmware management; this is not complete regulator power-off.
+This does **not** set brightness to zero to simulate a screen-off state, disable
+Wi-Fi, suspend NixOS, or modify eMMC speed. It saves the panel's requested
+brightness in `/run/capri-screen-toggle/brightness` before switching DRM OFF;
+after DRM ON it explicitly re-sends that brightness through the existing
+backlight sysfs device. The panel's prepare sequence otherwise initializes
+DCS brightness to only `0x000a`. The Linux kernel still leaves PMI632
+LCD-bias power firmware-managed; this is not complete regulator power-off.
 
 The service acts only on the native `msm` DRM driver with an assigned DSI
 connector and CRTC. It refuses `simpledrm` or an unconfigured display. Button
@@ -67,6 +71,12 @@ sudo capri-screen-toggle --on    # restore the display, whenever requested
 These are separate invocations. There is no timer and no automatic restore
 for `--off`; use SSH to issue `--on` when ready. Do not stop the service
 between commands: systemd `ExecStopPost` is a separate recovery feature.
+The `--off` command refuses to shut down the display if it cannot save the
+current backlight setting. The `--on` command re-applies the saved brightness;
+if called without a preceding `--off`, it re-sends the current sysfs brightness.
+On success, the saved brightness is consumed so later manual brightness changes
+are not overridden. The requested brightness may be reported correctly by
+Linux even when actual panel illumination is still wrong, so verify visually.
 
 Manual test without the Assistant key (screen off for five seconds, then
 restored in the same process):
