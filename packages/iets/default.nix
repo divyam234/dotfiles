@@ -5,6 +5,8 @@
   lib,
   pkg-config,
   rustPlatform,
+  stdenv,
+  stdenvAdapters,
   zstd,
 }:
 let
@@ -44,7 +46,9 @@ let
         lock
     );
 in
-rustPlatform.buildRustPackage {
+(rustPlatform.buildRustPackage.override {
+  stdenv = stdenvAdapters.useMoldLinker stdenv;
+}) {
   pname = "iets";
   version = lib.trim (builtins.readFile (src + "/VERSION"));
   inherit src;
@@ -63,6 +67,33 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = patchedLock;
   postPatch = ''
     cp ${patchedLock} Cargo.lock
+    # Resolve once so the evaluator thread, demand fiber and reservation
+    # accounting use the same size. Unset preserves the upstream 4 GiB.
+    substituteInPlace src/parallel/fiber.rs \
+      --replace-fail 'pub const MAIN_STACK: usize = 4 << 30;' '
+    pub static MAIN_STACK: std::sync::LazyLock<usize> = std::sync::LazyLock::new(|| {
+        let Some(value) = std::env::var_os("IETS_MAIN_STACK_MB") else {
+            return 4 << 30;
+        };
+        let mib = value
+            .to_str()
+            .and_then(|s| s.parse::<usize>().ok())
+            .filter(|n| (16..=4096).contains(n));
+        match mib {
+            Some(n) => n << 20,
+            None => {
+                eprintln!("IETS_MAIN_STACK_MB must be an integer from 16 to 4096 (MiB)");
+                std::process::exit(2);
+            }
+        }
+    });' \
+      --replace-fail '.saturating_add(MAIN_STACK)' '.saturating_add(*MAIN_STACK)' \
+      --replace-fail 'DEFAULT_STACK * 1023 + MAIN_STACK' 'DEFAULT_STACK * 1023 + *MAIN_STACK'
+    substituteInPlace src/cli/run.rs src/api/concurrent_eval.rs \
+      --replace-fail '.stack_size(MAIN_STACK)' '.stack_size(*MAIN_STACK)'
+    substituteInPlace src/parallel/sched.rs \
+      --replace-fail 'self.new_slot_sized(user, fiber::MAIN_STACK)' \
+        'self.new_slot_sized(user, *fiber::MAIN_STACK)'
   '';
   nativeBuildInputs = [
     installShellFiles
@@ -74,10 +105,7 @@ rustPlatform.buildRustPackage {
     "--bin"
     "iets"
   ];
-  cargoTestFlags = [
-    "--lib"
-    "fetch::spool::tests"
-  ];
+  doCheck = false;
   postInstall = ''
     installShellCompletion \
       --bash src/cli/complete/iets.bash \

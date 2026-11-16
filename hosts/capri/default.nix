@@ -36,6 +36,9 @@
       };
       systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
       users.users.bhunter.linger = true;
+      environment.variables.IETS_MAIN_STACK_MB = "2048";
+      systemd.globalEnvironment.IETS_MAIN_STACK_MB = "2048";
+      zramSwap.enable = true;
       virtualisation.quadlet.networks.svc.networkConfig = {
         ipv6 = true;
         subnets = [ "fd89:ca91::/64" ];

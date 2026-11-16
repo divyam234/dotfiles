@@ -284,11 +284,36 @@ USB ECM plus SSH is configured for the **normal** native NixOS system.
 Early-initrd USB recovery and early-initrd Buffyboard remain unimplemented;
 the RAMUI telnet service is not installed in NixOS.
 
+## Compressed RAM swap
+
+Capri enables zram swap with Zstd compression and a logical capacity of 50% of
+RAM (about 1.8 GiB on the phone). Physical RAM is consumed as compressed pages
+are stored, not reserved upfront. No disk swapfile is configured.
+The running kernel has built-in zram and Zstd support; this configuration
+requires system activation and has not been runtime-verified.
+
+## Iets evaluator stack
+
+The local Iets package supports `IETS_MAIN_STACK_MB` (16–4096 MiB), defaulting
+to the upstream 4096 MiB when unset. It reads the value once per process and
+uses it for both the evaluator thread and demand fiber, including reservation
+accounting. Invalid values exit with a diagnostic.
+
+Capri sets `IETS_MAIN_STACK_MB=2048` in login-shell and system-service
+environments, including Home Manager. Other hosts retain the upstream default.
+This reduces virtual stack reservation, not a fixed amount of RAM usage.
+Deeply recursive evaluations have less stack headroom. The change has not been
+built or runtime-verified; resolving the Home Manager failure remains unproven.
+
 ## USB ECM networking and existing SSH authentication
 
 `hosts/capri/usb-ecm.nix` creates the configfs ECM USB network function after
 normal NixOS boots. The phone uses `172.16.42.1/24` on `usb0`; NetworkManager
 leaves that interface unmanaged while handling Wi-Fi independently.
+
+The service reuses the existing ECM function across restarts without rewriting
+its `ifname`: configfs rejects that write with `EBUSY` once the function is
+linked, even after unbinding the gadget.
 
 There is one OpenSSH service on port `2222`, with password authentication
 disabled and existing `bhunter` authorized public keys. Both Wi-Fi and USB

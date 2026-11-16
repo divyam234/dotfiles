@@ -58,9 +58,8 @@
         printf '%s\n' capri-nixos > "$gadget/strings/0x409/serialnumber"
 
         mkdir -p "$gadget/functions/ecm.usb0"
-        # The ECM ifname configfs attribute requires a pattern with exactly
-        # one %d, not a literal interface name. The kernel resolves it on bind.
-        printf '%s\n' 'usb%d' > "$gadget/functions/ecm.usb0/ifname"
+        # Keep the kernel's default usb%d name. Rewriting ifname on a reused,
+        # linked ECM function fails with EBUSY even while the UDC is unbound.
         mkdir -p "$gadget/configs/c.1/strings/0x409"
         printf '%s\n' 'USB ECM SSH' > "$gadget/configs/c.1/strings/0x409/configuration"
         if [ ! -L "$gadget/configs/c.1/ecm.usb0" ]; then

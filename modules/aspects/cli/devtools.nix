@@ -3,6 +3,9 @@
   den.aspects.devtools = {
     homeManager =
       { pkgs, ... }:
+      let
+        moldStdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv;
+      in
       {
         home.packages = with pkgs; [
           android-tools
@@ -32,6 +35,7 @@
           lsof
           marksman
           meson
+          mold
           nil
           ninja
           nix-output-monitor
@@ -56,6 +60,15 @@
           radare2
           qemu
         ];
+        home.file.".cargo/config.toml".source = (pkgs.formats.toml { }).generate "cargo-config.toml" {
+          target.${pkgs.stdenv.hostPlatform.rust.rustcTarget} = {
+            linker = "${moldStdenv.cc}/bin/cc";
+            rustflags = [
+              "-C"
+              "link-arg=-fuse-ld=mold"
+            ];
+          };
+        };
       };
   };
 }
