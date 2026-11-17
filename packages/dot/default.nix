@@ -7,7 +7,6 @@
   installShellFiles,
   fish,
   git,
-  nix,
   nh,
   openssh,
   hosts ? [ ],
@@ -28,10 +27,12 @@ let
     ];
     postInstall = ''
       installShellCompletion --cmd dot --fish <($out/bin/dot completion fish)
+      # Deliberately omit nix: the ambient PATH provides it (the iets-classic
+      # wrapper), so wrapped commands like `dot build` run through whatever
+      # `nix` the host has instead of forcing upstream Nix.
       wrapProgram $out/bin/dot --prefix PATH : ${
         lib.makeBinPath [
           git
-          nix
           nh
           openssh
         ]
