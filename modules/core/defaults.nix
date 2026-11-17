@@ -165,6 +165,7 @@ in
               inherit containers secrets;
               dotfiles = dotfilesLib;
             };
+            networking.nftables.enable = true;
             sops = {
               defaultSopsFormat = "yaml";
               age.keyFile = "/var/lib/sops-nix/key.txt";
