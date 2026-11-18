@@ -15,15 +15,6 @@
             default = false;
             description = "Advertise this host as a Tailscale exit node.";
           };
-          options.firewallMode = lib.mkOption {
-            type = lib.types.enum [
-              "iptables"
-              "nftables"
-              "auto"
-            ];
-            default = "nftables";
-            description = "Firewall backend tailscaled uses (TS_DEBUG_FIREWALL_MODE). nftables requires v1.84.0+ for the SNAT-rule regression fix.";
-          };
         };
         default = { };
         description = "Host-specific Tailscale settings.";
@@ -56,7 +47,6 @@
           authSecret = secrets.tailscale.oauth_client_secret;
           ephemeral = false;
           preauthorized = true;
-          firewallMode = "nftables";
         }
         // (host.tailscale or { });
         authSecretPath = cfg.authSecret.path;
@@ -94,11 +84,6 @@
             trustedInterfaces = [ "tailscale0" ];
             allowedUDPPorts = [ 41641 ];
           };
-
-          # tailscaled defaults to the iptables syntax; the shim still produces
-          # nftables rules, but force its native netlink driver for a single
-          # ruleset. Configurable per host via tailscale.firewallMode.
-          systemd.services.tailscaled.environment.TS_DEBUG_FIREWALL_MODE = cfg.firewallMode;
 
           systemd.services.tailscale-autoconnect = lib.mkIf cfg.autoconnect {
             description = "Automatic connection to Tailscale";
