@@ -167,6 +167,12 @@ assert
       target = "public-ipv6";
       type = "AAAA";
     }
+    {
+      name = "media.${capriDns.zone}";
+      proxied = false;
+      target = "tailscale-ipv4";
+      type = "A";
+    }
   ];
 assert lib.hasInfix "reverse_proxy streamweave:8080" capri.environment.etc."caddy/Caddyfile".text;
 assert capri.sops.secrets."streamweave/master_key".sopsFile == ../../secrets/common.yaml;

@@ -191,26 +191,73 @@ fn containers_using_image(image_id: &str, opts: ExecOptions) -> Result<Vec<Strin
 fn image_update_available(service: &Service, opts: ExecOptions) -> Result<Option<bool>> {
     let mut command = privilege::command("podman", opts.non_interactive);
     command.args([
-        "auto-update",
-        "--dry-run",
+        "container",
+        "inspect",
         "--format",
-        "{{.ContainerName}}\t{{.Updated}}",
+        "{{json .}}",
+        &service.container_name,
     ]);
-    let output = run_output(command, opts.timeout).context("check registry for image updates")?;
-    let status = output
-        .lines()
-        .filter_map(|line| line.split_once('\t'))
-        .find_map(|(name, status)| (name == service.container_name).then_some(status));
-
-    let Some(status) = status else {
+    let output = run_output(command, opts.timeout).context("inspect selected container")?;
+    let container: serde_json::Value =
+        serde_json::from_str(&output).context("parse container inspection")?;
+    if container["Config"]["Labels"]["io.containers.autoupdate"].as_str() != Some("registry") {
         return Ok(None);
-    };
-    match status {
-        "pending" => Ok(Some(true)),
-        "false" => Ok(Some(false)),
-        "failed" => bail!("registry update check failed for {}", service.name),
-        status => bail!("unexpected update status '{status}' for {}", service.name),
     }
+    let image_id = container["Image"]
+        .as_str()
+        .context("container has no image ID")?;
+    let image_name = container["ImageName"]
+        .as_str()
+        .context("container has no image name")?;
+    let mut command = privilege::command("podman", opts.non_interactive);
+    command.args(["image", "inspect", "--format", "{{json .}}", image_id]);
+    let output = run_output(command, opts.timeout).context("inspect running container image")?;
+    let local: serde_json::Value =
+        serde_json::from_str(&output).context("parse local image inspection")?;
+
+    let mut command = privilege::command("podman", opts.non_interactive);
+    command.args(["manifest", "inspect", image_name]);
+    let output = run_output(command, opts.timeout).context("check selected image in registry")?;
+    let remote: serde_json::Value =
+        serde_json::from_str(&output).context("parse registry manifest")?;
+    manifest_update_available(&local, &remote).map(Some)
+}
+
+fn manifest_update_available(
+    local: &serde_json::Value,
+    remote: &serde_json::Value,
+) -> Result<bool> {
+    if let Some(config) = remote["config"]["digest"].as_str() {
+        let id = local["Id"].as_str().context("local image has no ID")?;
+        return Ok(config.strip_prefix("sha256:").unwrap_or(config)
+            != id.strip_prefix("sha256:").unwrap_or(id));
+    }
+    let manifests = remote["manifests"]
+        .as_array()
+        .context("registry manifest has neither config nor image descriptors")?;
+    let mut digests = Vec::new();
+    if let Some(digest) = local["Digest"].as_str().filter(|digest| !digest.is_empty()) {
+        digests.push(digest);
+    }
+    if let Some(repo_digests) = local["RepoDigests"].as_array() {
+        digests.extend(
+            repo_digests
+                .iter()
+                .filter_map(|value| value.as_str()?.split_once('@').map(|(_, digest)| digest)),
+        );
+    }
+    if digests.is_empty() {
+        bail!("local image has no registry digests");
+    }
+    for manifest in manifests {
+        let digest = manifest["digest"]
+            .as_str()
+            .context("image descriptor has no digest")?;
+        if digests.contains(&digest) {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 /// Registry freshness for `outdated`: never fatal for unsupported services.
@@ -856,6 +903,68 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(error.root_cause().to_string(), "registry unreachable");
+    }
+
+    #[test]
+    fn selected_image_config_detects_updates() {
+        let local = serde_json::json!({"Id": "abc"});
+        assert!(
+            !manifest_update_available(
+                &local,
+                &serde_json::json!({"config": {"digest": "sha256:abc"}}),
+            )
+            .unwrap()
+        );
+        assert!(
+            manifest_update_available(
+                &local,
+                &serde_json::json!({"config": {"digest": "sha256:def"}}),
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn multi_platform_check_matches_running_image_digest() {
+        let local = serde_json::json!({
+            "Digest": "sha256:index",
+            "RepoDigests": ["registry/image@sha256:running"]
+        });
+        assert!(
+            !manifest_update_available(
+                &local,
+                &serde_json::json!({"manifests": [
+                    {"digest": "sha256:other-platform"},
+                    {"digest": "sha256:running"}
+                ]}),
+            )
+            .unwrap()
+        );
+        assert!(
+            manifest_update_available(
+                &local,
+                &serde_json::json!({"manifests": [{"digest": "sha256:new"}]}),
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn invalid_image_metadata_is_not_reported_as_current() {
+        assert!(
+            manifest_update_available(
+                &serde_json::json!({}),
+                &serde_json::json!({"config": {"digest": "sha256:abc"}}),
+            )
+            .is_err()
+        );
+        assert!(
+            manifest_update_available(
+                &serde_json::json!({"Digest": "sha256:abc"}),
+                &serde_json::json!({}),
+            )
+            .is_err()
+        );
     }
 
     #[test]

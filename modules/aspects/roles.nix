@@ -3,6 +3,7 @@
   den.aspects = {
     base.includes = [
       den.aspects.common
+      den.aspects.iets
       den.aspects.boot-policy
       den.aspects.facter
       den.aspects.security-base

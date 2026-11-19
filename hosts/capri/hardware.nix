@@ -9,13 +9,27 @@ in
 {
   # Use NixOS's standard U-Boot/extlinux loader. /boot lives on the root
   # filesystem; no EFI partition or Android GPT boundary changes are needed.
-  boot.kernelPackages = lib.mkForce (pkgs.linuxPackagesFor kernel);
-  # Native PMI632 SMB5/QGauge are enabled by the Capri Power DT, no charge boot flags.
-  boot.loader.grub.enable = lib.mkForce false;
-  boot.loader.systemd-boot.enable = lib.mkForce false;
-  boot.loader.generic-extlinux-compatible.enable = true;
-  boot.loader.generic-extlinux-compatible.configurationLimit = 5;
-  boot.loader.efi.canTouchEfiVariables = false;
+  boot = {
+    kernelPackages = lib.mkForce (pkgs.linuxPackagesFor kernel);
+    # Native PMI632 SMB5/QGauge are enabled by the Capri Power DT, no charge boot flags.
+    loader = {
+      grub.enable = lib.mkForce false;
+      systemd-boot.enable = lib.mkForce false;
+      generic-extlinux-compatible = {
+        enable = true;
+        configurationLimit = 5;
+      };
+      efi.canTouchEfiVariables = false;
+    };
+
+    # The handset uses built-in Qualcomm MMC, eMMC and ext4 drivers.
+    initrd = {
+      includeDefaultModules = false;
+      # EXT support adds ext2, but Capri only has built-in EXT4_FS=y.
+      availableKernelModules.ext2 = lib.mkForce false;
+      systemd.tpm2.enable = false;
+    };
+  };
 
   # The native NixOS root lives in the former Android userdata partition
   # (eMMC mmcblk0p77). U-Boot does not boot from the removable microSD.
@@ -29,14 +43,5 @@ in
     enable = true;
     name = "qcom/sm4250-motorola-capri-power.dtb";
   };
-
-  # The handset uses built-in Qualcomm MMC, eMMC and ext4 drivers. The stock
-  # x86-oriented initrd module list is inappropriate for this kernel.
-  boot.initrd.includeDefaultModules = false;
-  # NixOS's EXT initrd support adds ext2 even when only ext4 is mounted.
-  # Capri has built-in EXT4_FS=y but no separate ext2 module; retain strict
-  # module checking rather than allowing missing modules globally.
-  boot.initrd.availableKernelModules.ext2 = lib.mkForce false;
-  boot.initrd.systemd.tpm2.enable = false;
 
 }

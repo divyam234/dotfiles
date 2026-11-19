@@ -92,115 +92,119 @@ in
     # Qualcomm userspace servers require uncompressed .jsn and firmware blobs.
     hardware.firmwareCompression = "none";
     environment.etc."wifi/WCNSS_qcom_cfg.ini".source = "${firmware}/etc/wifi/WCNSS_qcom_cfg.ini";
-    networking.networkmanager.enable = true;
-    networking.modemmanager.enable = false;
-    networking.usePredictableInterfaceNames = false;
+    networking = {
+      networkmanager.enable = true;
+      modemmanager.enable = false;
+      usePredictableInterfaceNames = false;
+    };
     environment.systemPackages = [
       pkgs.iw
       pkgs.qrtr
     ];
 
-    systemd.services.capri-qrtr-ns = {
-      description = "Qualcomm QRTR name service for Capri";
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.qrtr}/bin/qrtr-ns -f 1";
-        Restart = "on-failure";
-        RestartSec = "2s";
+    systemd.services = {
+      capri-qrtr-ns = {
+        description = "Qualcomm QRTR name service for Capri";
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.qrtr}/bin/qrtr-ns -f 1";
+          Restart = "on-failure";
+          RestartSec = "2s";
+        };
       };
-    };
-    systemd.services.capri-pd-mapper = {
-      description = "Qualcomm protection-domain service mapper";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "capri-qrtr-ns.service" ];
-      after = [ "capri-qrtr-ns.service" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${wifi.pdMapper}/bin/pd-mapper";
-        Restart = "on-failure";
-        RestartSec = "2s";
+      capri-pd-mapper = {
+        description = "Qualcomm protection-domain service mapper";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "capri-qrtr-ns.service" ];
+        after = [ "capri-qrtr-ns.service" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${wifi.pdMapper}/bin/pd-mapper";
+          Restart = "on-failure";
+          RestartSec = "2s";
+        };
       };
-    };
-    systemd.services.capri-tqftpserv = {
-      description = "Qualcomm firmware file server with tested Capri fallback";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "capri-qrtr-ns.service" ];
-      after = [ "capri-qrtr-ns.service" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${wifi.tqftpserv}/bin/tqftpserv";
-        Restart = "on-failure";
-        RestartSec = "2s";
-        StateDirectory = "tqftpserv";
-        StateDirectoryMode = "0700";
+      capri-tqftpserv = {
+        description = "Qualcomm firmware file server with tested Capri fallback";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "capri-qrtr-ns.service" ];
+        after = [ "capri-qrtr-ns.service" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${wifi.tqftpserv}/bin/tqftpserv";
+          Restart = "on-failure";
+          RestartSec = "2s";
+          StateDirectory = "tqftpserv";
+          StateDirectoryMode = "0700";
+        };
       };
-    };
-    # Wi-Fi uses the modem remote processor but does not require a cellular
-    # data connection, ModemManager, or a SIM card.
-    systemd.services.capri-modem-start = {
-      description = "Start Capri Qualcomm modem remoteproc for WLAN";
-      wantedBy = [ "multi-user.target" ];
-      requires = [
-        "capri-rmtfs.service"
-        "capri-pd-mapper.service"
-        "capri-tqftpserv.service"
-      ];
-      after = [
-        "capri-rmtfs.service"
-        "capri-pd-mapper.service"
-        "capri-tqftpserv.service"
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${startModem}/bin/capri-start-wifi-modem";
+      # Wi-Fi uses the modem remote processor but does not require a cellular
+      # data connection, ModemManager, or a SIM card.
+      capri-modem-start = {
+        description = "Start Capri Qualcomm modem remoteproc for WLAN";
+        wantedBy = [ "multi-user.target" ];
+        requires = [
+          "capri-rmtfs.service"
+          "capri-pd-mapper.service"
+          "capri-tqftpserv.service"
+        ];
+        after = [
+          "capri-rmtfs.service"
+          "capri-pd-mapper.service"
+          "capri-tqftpserv.service"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${startModem}/bin/capri-start-wifi-modem";
+        };
       };
-    };
-    systemd.services.capri-wifi-driver = {
-      description = "Load Capri WCN3990 WLAN driver after modem startup";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "capri-modem-start.service" ];
-      after = [ "capri-modem-start.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${pkgs.kmod}/bin/modprobe ath10k_snoc";
+      capri-wifi-driver = {
+        description = "Load Capri WCN3990 WLAN driver after modem startup";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "capri-modem-start.service" ];
+        after = [ "capri-modem-start.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.kmod}/bin/modprobe ath10k_snoc";
+        };
       };
-    };
-    # RMTFS -r reads raw NV with O_RDONLY and shadows requested writes in
-    # daemon RAM. It never opens the partitions read-write.
-    systemd.services.capri-modem-nv-readonly = {
-      description = "Protect Motorola modem NV partitions from writes";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "systemd-udev-settle.service" ];
-      wants = [ "systemd-udev-settle.service" ];
-      before = [ "capri-rmtfs.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${prepare}/bin/capri-prepare-readonly-modem-nv";
+      # RMTFS -r reads raw NV with O_RDONLY and shadows requested writes in
+      # daemon RAM. It never opens the partitions read-write.
+      capri-modem-nv-readonly = {
+        description = "Protect Motorola modem NV partitions from writes";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "systemd-udev-settle.service" ];
+        wants = [ "systemd-udev-settle.service" ];
+        before = [ "capri-rmtfs.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${prepare}/bin/capri-prepare-readonly-modem-nv";
+        };
       };
-    };
-    systemd.services.capri-rmtfs = {
-      description = "Capri RMTFS using read-only raw NV partitions";
-      wantedBy = [ "multi-user.target" ];
-      requires = [
-        "capri-modem-nv-readonly.service"
-        "capri-qrtr-ns.service"
-      ];
-      after = [
-        "capri-modem-nv-readonly.service"
-        "capri-qrtr-ns.service"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.rmtfs}/bin/rmtfs -P -r -o ${nvDir}";
-        Restart = "on-failure";
-        RestartSec = "3s";
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        NoNewPrivileges = true;
+      capri-rmtfs = {
+        description = "Capri RMTFS using read-only raw NV partitions";
+        wantedBy = [ "multi-user.target" ];
+        requires = [
+          "capri-modem-nv-readonly.service"
+          "capri-qrtr-ns.service"
+        ];
+        after = [
+          "capri-modem-nv-readonly.service"
+          "capri-qrtr-ns.service"
+        ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.rmtfs}/bin/rmtfs -P -r -o ${nvDir}";
+          Restart = "on-failure";
+          RestartSec = "3s";
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          NoNewPrivileges = true;
+        };
       };
     };
   };

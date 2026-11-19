@@ -27,8 +27,20 @@ exit 0
 const PODMAN_STUB: &str = r#"#!/bin/sh
 echo "podman $*" >> "$STUB_LOG"
 case "$1" in
-  auto-update)
-    printf 'web\t%s\ndb\t%s\n' "${WEB_UPDATE:-false}" "${DB_UPDATE:-false}"
+  container)
+    printf '{"Image":"sha256:%s","ImageName":"example/%s:1","Config":{"Labels":{"io.containers.autoupdate":"registry"}}}\n' "$5" "$5"
+    ;;
+  image)
+    printf '{"Id":"%s"}\n' "$5"
+    ;;
+  manifest)
+    case "$3" in
+      *web*) name=web; update="${WEB_UPDATE:-false}" ;;
+      *db*) name=db; update="${DB_UPDATE:-false}" ;;
+      *) exit 1 ;;
+    esac
+    if [ "$update" = "pending" ]; then name=new; fi
+    printf '{"config":{"digest":"sha256:%s"}}\n' "$name"
     ;;
   inspect)
     echo "sha256:$4"
@@ -206,7 +218,18 @@ fn update_dry_run_runs_reads_but_no_mutations() {
         .success()
         .stdout(predicate::str::contains("dry-run"));
     let log = stub_log(&harness);
-    assert!(log.contains("auto-update"), "reads run for real:\n{log}");
+    assert!(
+        log.contains("manifest inspect example/web:1"),
+        "selected image checked:\n{log}"
+    );
+    assert!(
+        !log.contains("auto-update"),
+        "must not scan every image:\n{log}"
+    );
+    assert!(
+        !log.contains("example/db"),
+        "must not check unrelated image:\n{log}"
+    );
     assert!(log.contains("inspect"), "reads run for real:\n{log}");
     assert!(!log.contains("pull"), "no mutations in dry-run:\n{log}");
     assert!(

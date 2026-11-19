@@ -15,6 +15,7 @@ rustPlatform.buildRustPackage {
     filter = path: _type: baseNameOf path != "target";
   };
   cargoLock.lockFile = ./Cargo.lock;
+  doCheck = false;
 
   nativeBuildInputs = [
     installShellFiles

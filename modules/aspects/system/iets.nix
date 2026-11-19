@@ -5,8 +5,7 @@
       { pkgs, ... }:
       {
         nix.package = pkgs.callPackage (pkgs.iets.src + "/nix/classic.nix") {
-          iets = pkgs.iets;
-          nix = pkgs.nix;
+          inherit (pkgs) iets nix;
         };
         environment.systemPackages = [ pkgs.iets ];
       };

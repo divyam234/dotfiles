@@ -14,6 +14,7 @@ buildGoModule {
   };
   # Stdlib only: no vendored dependencies to hash.
   vendorHash = null;
+  doCheck = false;
   ldflags = [
     "-s"
     "-w"

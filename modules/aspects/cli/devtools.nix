@@ -59,14 +59,11 @@
           valgrind
           radare2
           qemu
+          zig
         ];
         home.file.".cargo/config.toml".source = (pkgs.formats.toml { }).generate "cargo-config.toml" {
           target.${pkgs.stdenv.hostPlatform.rust.rustcTarget} = {
             linker = "${moldStdenv.cc}/bin/cc";
-            rustflags = [
-              "-C"
-              "link-arg=-fuse-ld=mold"
-            ];
           };
         };
       };
