@@ -10,7 +10,6 @@
       den.aspects.oci-service
       den.aspects.requires-domain
       den.aspects.caddy
-      den.aspects.rclone-webdav
       den.aspects.cloudflare-dns
       den.aspects.streamweave
       den.aspects.teldrive-native
@@ -56,16 +55,7 @@
             wireplumber.wantedBy = [ "default.target" ];
             pipewire-pulse.wantedBy = [ "default.target" ];
           };
-          tmpfiles.rules = [ "d /mnt/drive 0750 bhunter users -" ];
           globalEnvironment.IETS_MAIN_STACK_MB = "2048";
-        };
-        fileSystems."/mnt/drive" = {
-          device = "/dev/disk/by-uuid/d196bbe3-0620-4ee1-ad48-0919c4b93bf9";
-          fsType = "ext4";
-          options = [
-            "nofail"
-            "noatime"
-          ];
         };
         networking.firewall.interfaces."br-${containers.networkName}".allowedTCPPorts = [
           9000

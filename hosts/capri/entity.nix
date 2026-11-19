@@ -11,8 +11,6 @@ _: {
       };
     };
     tailscale.exitNode = true;
-    rcloneWebdav.cacheDir = "/mnt/drive/rclone";
-    rcloneWebdav.teldriveApiHost = "http://127.0.0.1:8090";
     users.bhunter = { };
   };
 }
