@@ -60,6 +60,7 @@
         };
 
         systemd.services.teldrive = {
+          environment.HOME = "/var/lib/teldrive";
           after = [ "tailscale-autoconnect.service" ];
           wants = [ "tailscale-autoconnect.service" ];
         };
