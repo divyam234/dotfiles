@@ -528,11 +528,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795076541,
-        "narHash": "sha256-2D3iXXPBGzYY/htbN9NkVDbhJRjsrLAwts/Uf4m9UCE=",
+        "lastModified": 1795095089,
+        "narHash": "sha256-//NQcwc47T54RYYxAXQLLwUTuXDSZkNoLNrGNDd3MFw=",
         "owner": "tgdrive",
         "repo": "teldrive",
-        "rev": "a0b01dff675984c0c0568a8da279907e4b208a79",
+        "rev": "113e3867d974594cad2f6899ab6858ef2d552026",
         "type": "github"
       },
       "original": {
