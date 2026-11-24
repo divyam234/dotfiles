@@ -75,6 +75,8 @@
           };
 
           targets.rofi.enable = false;
+          # Home Manager removed Wayprompt; the pinned Stylix still themes it.
+          targets.wayprompt.enable = false;
 
           icons = {
             enable = true;
