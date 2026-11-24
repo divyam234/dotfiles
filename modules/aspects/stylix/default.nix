@@ -50,6 +50,8 @@
         imports = [
           inputs.stylix.homeModules.stylix
         ];
+        # Pinned Stylix still imports Wayprompt, which Home Manager has removed.
+        disabledModules = [ "${inputs.stylix}/modules/wayprompt/hm.nix" ];
 
         fonts.fontconfig.enable = true;
 
@@ -75,8 +77,6 @@
           };
 
           targets.rofi.enable = false;
-          # Home Manager removed Wayprompt; the pinned Stylix still themes it.
-          targets.wayprompt.enable = false;
 
           icons = {
             enable = true;

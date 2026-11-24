@@ -22,7 +22,7 @@
             CAMOFOX_API_KEY = secrets.camofox.api_key;
           };
           containerConfig = {
-            image = "ghcr.io/jo-inc/camofox-browser:latest";
+            image = "ghcr.io/tgdrive/camofox-browser:latest";
             healthCmd = "none";
             networkAliases = [ "camofox-browser" ];
             environments = {
@@ -35,7 +35,7 @@
               "9377:9377"
               "5900:5901"
             ];
-            volumes = [ "${containers.dataRoot}/camofox:/root/.camofox" ];
+            volumes = [ "${containers.dataRoot}/camofox:/home/camofox/.camofox" ];
           };
           serviceConfig = {
             ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0750 -o ${user.userName} -g users ${containers.dataRoot}/camofox";
