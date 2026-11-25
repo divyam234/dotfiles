@@ -25,6 +25,9 @@ in
     # The handset uses built-in Qualcomm MMC, eMMC and ext4 drivers.
     initrd = {
       includeDefaultModules = false;
+      # Touch is built in and requests firmware before the real root is
+      # mounted; module dependency discovery cannot include this file for us.
+      extraFirmwarePaths = [ "novatek/capri-djn-nt36525b.bin" ];
       # EXT support adds ext2, but Capri only has built-in EXT4_FS=y.
       availableKernelModules.ext2 = lib.mkForce false;
       systemd.tpm2.enable = false;
