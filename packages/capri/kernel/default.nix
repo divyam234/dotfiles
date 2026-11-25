@@ -212,7 +212,6 @@ let
         POWER_RESET_QCOM_PON = yes;
         SYSCON_REBOOT_MODE = yes;
         NVMEM_QCOM_QFPROM = yes;
-        QCOM_TZMEM_MODE_GENERIC = yes;
         RTC_DRV_PM8XXX = yes;
         # Read the PMIC clock at boot; firmware denies direct RTC writes.
         RTC_HCTOSYS = yes;
@@ -292,9 +291,6 @@ let
         NLMON = module;
         NETKIT = yes;
         OPENVSWITCH = module;
-        OPENVSWITCH_GRE = module;
-        OPENVSWITCH_VXLAN = module;
-        OPENVSWITCH_GENEVE = module;
 
         # VPNs and IPv4/IPv6 tunnels.
         WIREGUARD = module;
