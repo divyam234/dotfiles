@@ -23,12 +23,6 @@ let
     # Start from the tested Capri device defconfig, not all ARM64 platforms.
     # NixOS common options and hardware overrides are layered on top.
     defconfig = "motorola_capri_defconfig";
-    # ARM64 host utilities (resolve_btfids) use glibc UAPI headers whose
-    # __u128 type is absent from the kernel tools' older Linux UAPI shim.
-    # Keep BTF/eBPF enabled; supply the missing host-only integer alias.
-    extraMakeFlags = [
-      "HOSTCFLAGS=-D__u128=__uint128_t"
-    ];
     # Nixpkgs' generic common config pulls in drivers for unrelated SoCs.
     # Use explicit boot, systemd, filesystem and Capri settings instead.
     enableCommonConfig = false;
