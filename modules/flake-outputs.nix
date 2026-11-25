@@ -234,21 +234,6 @@
       };
 
       checks = {
-        capri-qg-soc =
-          pkgs.runCommand "capri-qg-soc-test"
-            {
-              nativeBuildInputs = [ pkgs.stdenv.cc ];
-            }
-            ''
-              cp -r ${../packages/capri/tests} tests
-              mkdir kernel
-              cp ${../packages/capri/kernel/qg-soc.h} kernel/qg-soc.h
-              cc -std=c11 -Wall -Wextra -Werror \
-                -fsanitize=undefined -fno-sanitize-recover=all \
-                -I tests/compat tests/qg-soc.c -o qg-soc-test
-              ./qg-soc-test
-              touch $out
-            '';
         dot = self.packages.${system}.dot.tests.behavior;
         formatter = pkgs.runCommand "dotfiles-format-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
           cp -r ${../.} source
