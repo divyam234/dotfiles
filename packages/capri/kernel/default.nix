@@ -2,7 +2,6 @@
   buildLinux,
   fetchFromGitHub,
   lib,
-  python3,
   features ? { },
   randstructSeed ? "",
   structuredExtraConfig ? { },
@@ -10,16 +9,16 @@
 }@args:
 let
   source = fetchFromGitHub {
-    owner = "michaelmcallister";
-    repo = "linux-motorola-capri";
-    rev = "232c314e8909dd77395b2c553e7dda2232e4a4cc";
-    hash = "sha256-NgSc1kU16RJHptdtQQxZmThk9DBzSAPAfOW7vybRs6o=";
+    owner = "divyam234";
+    repo = "capri-linux";
+    rev = "a8c2f8e868bcf1a3e9ad9d75d0d9aa2f72e9e1ee";
+    hash = "sha256-AQTVylFBkFvZrKZiUm6AfhJmGk7lEdEnMvD2QVU6IOY=";
   };
 
   kernel = buildLinux {
     pname = "linux-capri";
-    version = "7.2.9";
-    modDirVersion = "7.2.9-capri";
+    version = "7.4-rc3";
+    modDirVersion = "7.4.0-rc3-capri";
     src = source;
     # Start from the tested Capri device defconfig, not all ARM64 platforms.
     # NixOS common options and hardware overrides are layered on top.
@@ -40,9 +39,8 @@ let
     structuredExtraConfig =
       with lib.kernel;
       {
-        # Preserve Motorola's boot handoff and early built-in hardware path.
+        # Native U-Boot handoff with a separate mainline Power DTB.
         ARCH_QCOM = yes;
-        ARM64_MOTOROLA_CAPRI_BOOT = yes;
         ARM64_VA_BITS_39 = yes;
         NR_CPUS = lib.mkForce (freeform "8");
         RELOCATABLE = yes;
@@ -129,7 +127,7 @@ let
         DRM_PANEL_MOTOROLA_CAPRI_DJN = yes;
         BACKLIGHT_CLASS_DEVICE = yes;
         FRAMEBUFFER_CONSOLE_ROTATION = yes;
-        TOUCHSCREEN_NOVATEK_CAPRI = module;
+        TOUCHSCREEN_NOVATEK_CAPRI = yes;
         INPUT_PM8941_PWRKEY = yes;
 
         # Root storage and its clocks, regulators, interconnect and IOMMU.
@@ -611,36 +609,8 @@ let
         SND_SOC_AW882XX_CAPRI = yes;
       }
       // structuredExtraConfig;
-    kernelPatches = [
-      {
-        # Full native Capri PMI632/SMB5/QGauge patch, including the Power DTB
-        # and formerly separate NixOS kernel configuration dependencies.
-        name = "capri-native-smb5";
-        patch = ../patches/0001-kernel-capri-native-smb5.patch;
-      }
-      {
-        name = "capri-microsd-sdhc2";
-        patch = ../patches/0002-kernel-capri-microsd-sdhc2.patch;
-      }
-      {
-        # U-Boot extlinux supplies our native Power FDT, not Motorola's
-        # qcom,bengal-capri firmware FDT; keep its live memory/initrd fixups.
-        name = "capri-native-uboot-fdt";
-        patch = ../patches/0003-kernel-capri-native-uboot-fdt.patch;
-      }
-      {
-        name = "capri-qg-charge-reporting";
-        patch = ../patches/0004-kernel-capri-qg-charge-reporting.patch;
-      }
-      {
-        # wcn399x still reports the cmnv12.bin default BD address, so the
-        # Bluetooth core needs a board-provided local-bd-address or hci0
-        # stays HCI_UNCONFIGURED (DOWN RAW).
-        name = "capri-bluetooth-bdaddr";
-        patch = ../patches/0005-kernel-capri-bluetooth-bdaddr.patch;
-      }
-    ]
-    ++ (args.kernelPatches or [ ]);
+    # Board support and the assistant button are already in the pinned source.
+    kernelPatches = args.kernelPatches or [ ];
     inherit randstructSeed;
     features = features // {
       efiBootStub = true;
@@ -649,20 +619,4 @@ let
     buildDTBs = true;
   };
 in
-kernel.overrideAttrs (old: {
-  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ python3 ];
-
-  postPatch = (old.postPatch or "") + ''
-    cp ${./qg-soc.h} drivers/power/supply/qg-soc.h
-  '';
-
-  # CONFIG_ARM64_MOTOROLA_CAPRI_BOOT embeds the handset DTB into the Image.
-  # Build the Power variant first so capri-fdt.o can include the generated header.
-  preBuild = (old.preBuild or "") + ''
-    make "''${makeFlags[@]}" qcom/sm4250-motorola-capri-power.dtb
-    ${python3}/bin/python3 scripts/capri/embed-dtb.py \
-      "$buildRoot/arch/arm64/boot/dts/qcom/sm4250-motorola-capri-power.dtb" \
-      "$buildRoot/include/generated/capri-dtb.h"
-    test -s "$buildRoot/include/generated/capri-dtb.h"
-  '';
-})
+kernel

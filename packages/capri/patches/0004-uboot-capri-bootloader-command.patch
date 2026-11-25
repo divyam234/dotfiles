@@ -1,0 +1,12 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] arm: snapdragon: build Capri bootloader reboot command
+
+--- a/arch/arm/mach-snapdragon/Makefile
++++ b/arch/arm/mach-snapdragon/Makefile
+@@ -4,5 +4,6 @@
+ 
+ obj-y += board.o
+ obj-$(CONFIG_QCOM_ABL_MEMORY_HANDOFF) += qcom-abl-memory.o
++obj-$(CONFIG_MOTOROLA_CAPRI) += capri-bootloader.o
+ obj-$(CONFIG_EFI_HAVE_CAPSULE_SUPPORT) += capsule_update.o
+ obj-$(CONFIG_OF_LIVE) += of_fixup.o

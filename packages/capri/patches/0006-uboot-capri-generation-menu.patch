@@ -1,0 +1,38 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] boot: pxe: use a button-driven generation picker on Capri
+
+Keep the extlinux parser and label loader, replacing only Capri's
+keyboard/numeric picker. Back returns without booting fallback labels.
+Other boards retain the existing PXE menu behavior.
+
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -33,6 +33,10 @@
+ #include "cli.h"
+ 
+ #include "pxe_utils.h"
++
++#ifdef CONFIG_MOTOROLA_CAPRI
++#include "capri-generation-menu.h"
++#endif
+ 
+ #define MAX_TFTP_PATH_LEN 512
+ 
+@@ -1634,6 +1638,17 @@
+ 	struct menu *m;
+ 	int err;
+ 
++#ifdef CONFIG_MOTOROLA_CAPRI
++	/*
++	 * Back/cancel must not fall through to boot_unattempted_labels().
++	 * The calling bootcmd returns to the untimed diagnostic menu.
++	 */
++	choice = capri_generation_menu(cfg);
++	if (choice)
++		label_boot(ctx, choice);
++	return;
++#endif
++
+ 	if (IS_ENABLED(CONFIG_CMD_BMP)) {
+ 		/* display BMP if available */
+ 		if (cfg->bmp) {

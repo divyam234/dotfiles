@@ -1,0 +1,25 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] arm64: dts: qcom: capri: describe volume-up button
+
+Volume down and power use PON, but volume up is wired to PM6125 GPIO5.
+Expose it to button-kbd, which already maps KEY_VOLUMEUP to KEY_UP.
+
+--- a/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
++++ b/dts/upstream/src/arm64/qcom/sm4250-motorola-capri-power.dts
+@@ -25,6 +25,16 @@
+ 		usb0 = &usb_dwc3;
+ 	};
+ 
++	gpio-keys {
++		compatible = "gpio-keys";
++
++		key-volume-up {
++			label = "Volume Up";
++			gpios = <&pm6125_gpios 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
++			linux,code = <KEY_VOLUMEUP>;
++		};
++	};
++
+ 	chosen {
+ 		#address-cells = <2>;
+ 		#size-cells = <2>;

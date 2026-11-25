@@ -4,8 +4,7 @@ let
 in
 {
   # Buffyboard writes to the framebuffer and injects keys through uinput.
-  # Both uinput and evdev are built into the pinned Capri kernel, not modules.
-  boot.kernelModules = [ "novatek-nt36525b-capri" ];
+  # uinput, evdev and Novatek touch are built into the pinned 7.4 kernel.
 
   # Match the legible console font that is used in the RAMUI prototype.
   console.font = "ter-128n";

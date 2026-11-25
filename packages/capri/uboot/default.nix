@@ -34,9 +34,16 @@ let
     extraPatches = [
       ../patches/0001-uboot-motorola-capri-upstream-v2026.07.patch
       ../patches/0002-uboot-bootflow-explicit-partition.patch
+      ../patches/0003-uboot-capri-volume-up.patch
+      ../patches/0004-uboot-capri-bootloader-command.patch
+      ../patches/0005-uboot-pm6125-gpio-bias.patch
+      ../patches/0006-uboot-capri-generation-menu.patch
+      ../patches/0007-uboot-capri-menu-return.patch
     ];
     preConfigure = ''
       cp ${./default.env} board/qualcomm/motorola-capri.env
+      cp ${./capri-bootloader.c} arch/arm/mach-snapdragon/capri-bootloader.c
+      cp ${./capri-generation-menu.h} boot/capri-generation-menu.h
     '';
     postConfigure = ''
       make motorola-capri.config
@@ -47,6 +54,9 @@ let
       CONFIG_BOOTMETH_EXTLINUX=y
       CONFIG_CMD_BOOTFLOW=y
       CONFIG_CMD_BOOTFLOW_FULL=y
+      CONFIG_CMD_BOOTMENU=y
+      CONFIG_BUTTON_GPIO=y
+      CONFIG_QCOM_PMIC_GPIO=y
       CONFIG_CMD_BOOTI=y
       CONFIG_SUPPORT_RAW_INITRD=y
       CONFIG_CMD_EXT4=y
@@ -115,7 +125,8 @@ let
           LINUX_KERNEL_IMAGE_HEADER POSITION_INDEPENDENT \
           INIT_SP_RELATIVE SAVE_PREV_BL_FDT_ADDR \
           MMC MMC_SDHCI_MSM BOOTSTD BOOTMETH_EXTLINUX \
-          CMD_BOOTFLOW CMD_BOOTFLOW_FULL CMD_BOOTI SUPPORT_RAW_INITRD \
+          CMD_BOOTFLOW CMD_BOOTFLOW_FULL CMD_BOOTMENU CMD_BOOTI SUPPORT_RAW_INITRD \
+          BUTTON_GPIO BUTTON_KEYBOARD QCOM_PMIC_GPIO \
           FS_EXT4 CMD_EXT4 PARTITION_UUIDS \
           ENV_IS_NOWHERE EFI_VARIABLE_NO_STORE; do
           grep -qx "CONFIG_''${option}=y" ${uboot}/.config
@@ -137,8 +148,19 @@ let
           echo "U-Boot must not persist its environment to storage" >&2
           exit 1
         fi
+        # One visible countdown, followed by an untimed recovery menu if
+        # the selected command returns. No storage boot before the menu.
+        for entry in \
+          'bootdelay=-2' \
+          'bootmenu_delay=6' \
+          'bootcmd=bootmenu 6' \
+          'menucmd=bootmenu -1'; do
+          grep -aFq "$entry" ${uboot}/u-boot.bin
+        done
 
         test "$(fdtget -t x ${uboot}/u-boot.dtb / qcom,board-id)" = "500 b200"
+        test "$(fdtget -t s ${uboot}/u-boot.dtb /gpio-keys/key-volume-up label)" = "Volume Up"
+        test "$(fdtget -t x ${uboot}/u-boot.dtb /gpio-keys/key-volume-up linux,code)" = "73"
         mkdir -p "$out"
         printf "%s" "" | cpio -o -H newc 2>/dev/null | gzip -n > empty-initramfs.gz
 

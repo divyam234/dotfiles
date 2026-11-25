@@ -1,0 +1,28 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] gpio: qcom: use bias-aware SPMI GPIO driver for PM6125
+
+The legacy PMIC GPIO driver disables input pulls and cannot accept
+GPIOD_PULL_UP. Route PM6125 to the existing SPMI GPIO driver, which
+supports pull flags and the LV/MV GPIO register layouts. Remove the
+legacy match so two drivers cannot claim the same controller.
+
+--- a/drivers/gpio/qcom_pmic_gpio.c
++++ b/drivers/gpio/qcom_pmic_gpio.c
+@@ -345,7 +345,6 @@
+ 	{ .compatible = "qcom,pm8916-gpio" },
+ 	{ .compatible = "qcom,pm8994-gpio" },	/* 22 GPIO's */
+ 	{ .compatible = "qcom,pms405-gpio" },
+-	{ .compatible = "qcom,pm6125-gpio" },
+ 	{ .compatible = "qcom,pm8150-gpio" },
+ 	{ }
+ };
+--- a/drivers/gpio/qcom_spmi_gpio.c
++++ b/drivers/gpio/qcom_spmi_gpio.c
+@@ -743,6 +743,7 @@
+ }
+ 
+ static const struct udevice_id qcom_spmi_pmic_gpio_ids[] = {
++	{ .compatible = "qcom,pm6125-gpio" },
+ 	{ .compatible = "qcom,pm6150l-gpio" },
+ 	{ .compatible = "qcom,pm6350-gpio" },
+ 	{ .compatible = "qcom,pm660l-gpio" },

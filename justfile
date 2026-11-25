@@ -10,7 +10,7 @@ fmt-check:
     git diff --check
 
 check:
-    nix build --no-link .#checks.{{ system }}.{formatter,deadnix,statix,architecture,contract-cache,contract-containers,contract-homelab,contract-ideapad,contract-laptop,contract-netcup,contract-security,contract-secrets}
+    nix build --no-link .#checks.{{ system }}.{formatter,deadnix,statix,architecture,contract-cache,contract-capri,contract-containers,contract-homelab,contract-ideapad,contract-laptop,contract-netcup,contract-security,contract-secrets}
     nix eval .#nixosConfigurations.laptop.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.homelab.config.system.build.toplevel.drvPath
     nix eval .#nixosConfigurations.ideapad.config.system.build.toplevel.drvPath

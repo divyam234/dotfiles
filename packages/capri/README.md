@@ -1,6 +1,8 @@
-# Capri source patchset for native NixOS
+# Capri native NixOS packages
 
-These are **source patches**, not prebuilt kernel/U-Boot binaries. Pin and fetch the source revisions below in Nix; apply each patch using `patches = [ ... ]` (or an equivalent patch phase) before compilation.
+These packages build from pinned sources, not prebuilt kernel/U-Boot binaries.
+The U-Boot package applies its board patches; the 7.4 kernel needs no local
+board patch stack.
 
 ## U-Boot: `0001-uboot-motorola-capri-upstream-v2026.07.patch`
 
@@ -11,10 +13,52 @@ These are **source patches**, not prebuilt kernel/U-Boot binaries. Pin and fetch
 - Sanity check on the current patched tree: `git apply --reverse --check <patch>`; on a clean checkout of the base tag: `git apply --check <patch>`.
 
 The Nix package overlays `uboot/default.env` with an internal-eMMC-only
-environment. U-Boot's Standard Boot reads userdata's
+environment. At startup, a diagnostics/boot menu appears with a six-second
+countdown. Any menu key stops the countdown; Volume Up/Down navigates and
+Power selects. If untouched, the first entry boots NixOS generations.
+Volume Up is a separate GPIO button (PM6125 GPIO5, active-low);
+`0003-uboot-capri-volume-up.patch` exposes it with KEY_VOLUMEUP and the
+package enables BUTTON_GPIO. PON handles Volume Down and Power. U-Boot's
+button keyboard maps these to Up, Down and Enter respectively.
+The initial legacy-GPIO version did not respond to Volume Up. Routing PM6125
+to U-Boot's bias-aware SPMI GPIO driver and requesting GPIO5's pull-up fixed
+it; the user confirmed upward navigation. The bootloader reboot entry also
+worked, with fastboot serial `ZF65268ZPB` detected afterward.
+`bootdelay=-2` enters this menu immediately rather than adding a separate
+pre-menu autoboot delay. The explicit `bootmenu 6` controls the countdown.
+Diagnostic options do not require an automatic eMMC scan before the menu.
+
+After selecting the first entry, U-Boot's Standard Boot reads userdata's
 `/boot/extlinux/extlinux.conf` using `bootflow scan -lb mmc0:0x4d`;
 `0x4d` is partition 77. A failed boot returns to the diagnostic menu, with
-no microSD fallback. The menu retains a manual EFI boot option.
+no microSD fallback. The recovery menu has no timeout after the selected
+command returns. NixOS's extlinux generation picker retains its separately
+configured timeout; the six seconds above are the initial U-Boot menu only.
+The menu retains a manual EFI boot option.
+It also offers **Reboot bootloader**, which sets the same PON GEN2 bootloader
+reason as Linux before resetting, without enabling U-Boot's fastboot server.
+
+The Capri-specific extlinux generation picker uses the same Up/Down/Enter
+decoder as the main menu, plus **Back to main menu**. It retains extlinux's
+default/override selection and countdown. Back/cancel does not attempt
+fallback generations; the calling bootcmd returns to the untimed main menu.
+The extlinux parser and kernel/DTB/initramfs loader are unchanged.
+Other boards retain their original PXE picker.
+
+Host-only selection tests:
+
+```
+cc -std=c11 -O2 -Wall -Wextra -Werror \
+  packages/capri/tests/generation-menu-test.c -o /tmp/opencode/generation-menu-test
+/tmp/opencode/generation-menu-test
+```
+
+The user confirmed physical generation-menu navigation and Back work on the
+handset, including repeated entry/return. Tested RAM-only image:
+`/nix/store/8jck303sd7rkba2fb6955hmri60bphky-capri-uboot-android-v3-boot-image/boot-uboot-capri-v3.img`,
+SHA-256 `51a0dc2c5f8adff152791481fe02075b10571f6382753a1a0a2c58d752e10f77`.
+This verifies the picker and recovery flow, not a newly built full NixOS
+system or an installed 7.4 NixOS generation. No partitions were flashed.
 The Nix build requires `BOOTSTD`, `BOOTMETH_EXTLINUX` and `CMD_BOOTFLOW`,
 and disables storage writes, GPT changes, flashing, capsules and persistent
 environment storage. Load addresses come from Snapdragon's runtime memory
@@ -23,27 +67,50 @@ allocator, not fixed addresses. NixOS mounts `/dev/disk/by-label/NIXOS_EMMC`.
 The Android header-v3 U-Boot image's empty ramdisk is only a packaging
 placeholder. NixOS's real initramfs is loaded from the ext4 root filesystem.
 
-## Kernel: one consolidated native Capri SMB5/QGauge patch
+## Kernel: native Capri Linux 7.4-rc3
 
-- **Pinned source:** [michaelmcallister/linux-motorola-capri](https://github.com/michaelmcallister/linux-motorola-capri), revision `232c314e8909dd77395b2c553e7dda2232e4a4cc` (Linux 7.2.9).
-- **Single kernel patch:** `0001-kernel-capri-native-smb5.patch`, containing the source, device-tree and binding changes from the pinned revision to local `capri-7.2` commit `33e75361c`. Both `defconfig` changes and all `.md` documentation are intentionally excluded. The previous Power charging patch and separate config patch have been removed.
+- **Pinned source:** [divyam234/capri-linux](https://github.com/divyam234/capri-linux), revision `a8c2f8e868bcf1a3e9ad9d75d0d9aa2f72e9e1ee` (Linux 7.4-rc3).
+- **No local board patch stack:** Capri board support, NixOS defconfig settings and the GPIO33 assistant button are in the pinned source. The old 7.2 patches are no longer applied.
 - **Native drivers:** adds Qualcomm QGauge, the adapted SMB2/SMB5 PMI632 charger and battery ADC thermal zone; removes the former `capri-pmi632-battery.c` driver and its proprietary charging policy. Provides the Moto G10 Power XT2127-4 DTS and PMIC metadata.
 - **Charging policy:** uses the configured 4.450 V float voltage, native PMIC JEITA and watchdog protection, a board-specific current/termination policy, and Motorola-style hardware `BAT_OV` detection with its 40 mV reporting tolerance. The temporary software cutoff at the float target has been removed.
 - **NixOS options:** `structuredExtraConfig` sets every required build flag, including `QCOM_LLCC`, `QCOM_OCMEM`, `QCOM_APR`, `BACKLIGHT_CLASS_DEVICE`, `CHARGER_QCOM_SMB2`, `BATTERY_QCOM_QG`, `GENERIC_ADC_THERMAL` and `NVMEM_SPMI_SDAM`. No defconfig patch is needed.
-- **Build:** `kernel/default.nix` builds the Power DTB and embeds it in the `Image` before linking. The local ARM64 kernel compiled successfully with Clang.
-- **Hardware verification:** RAM-only v5 boot successfully charged near full at about 4.477 V, 27.9 °C and 327–314 mA, without the false cutoff. The phone was rebooted to Android; no partitions were flashed. Full-cycle termination, recharge and thermal fault behavior remain unverified.
+- **Build:** native ARM64 `Image` and a separate Power DTB supplied by U-Boot. No embedded DTB, custom ABL handoff or embed-dtb build hook. Touch is built in.
+- **Hardware verification:** the 7.4 kernel booted RAMUI through U-Boot with working display, touch, USB recovery and Bluetooth LE scan. GPIO33 screen off/on was user-confirmed with the console guard. This does not establish a booted full NixOS system, Wi-Fi operation, or full-cycle charging validation.
 
 The historical [PMI632 charging validation](CHARGING-VALIDATION.md) and
 `CAPRI-NATIVE-SMB5-STATUS.md` in the **kernel development repository** remain
 separate documentation; neither is bundled into the Nix source patch.
-Apply the patch **once** to the pinned kernel revision, not on top of the
-already-patched local development tree.
+The older charging and patch notes below are historical; they are not
+instructions to apply the removed 7.2 patch stack to 7.4.
+
+### Assistant-button display toggle
+
+`hosts/capri/screen-button.nix` starts the packaged `capri-screen-button`
+alongside Buffyboard on the real root filesystem. GPIO33 emits
+`KEY_ASSISTANT`; the first press guards tty1 with `KD_GRAPHICS` and requests
+fbdev/DRM powerdown, the second unblanks and restores the text console.
+The guard prevents the observed 2–3 second automatic re-illumination.
+Held-key repeat is ignored. Linux, USB and touch remain running; this is
+not suspend, a touch lock, or proof that all panel bias rails power off.
+
+Normal termination restores the display. `ExecStopPost` also requests
+recovery after a crash. For manual recovery over SSH:
+
+```
+sudo systemctl stop capri-screen-button
+sudo capri-screen-button on
+```
+
+This policy requires active text-mode tty1, not a graphical compositor.
+The package tests key filtering, VT guarding and error recovery without
+hardware access. Final NixOS/Buffyboard integration still requires its own
+hardware test; no activation or flashing is performed by these changes.
 
 ### Experimental awake-time battery percentage reporting
 
-`0004-kernel-capri-qg-charge-reporting.patch` applies after the existing
-kernel patches. `kernel/qg-soc.h` is installed alongside `qcom_qg.c` by the
-Nix package. This is a reporting-only software charge estimate, **not**
+Historical 7.2 implementation: `0004-kernel-capri-qg-charge-reporting.patch`
+and `kernel/qg-soc.h` were supplied by the Nix package. They are no longer
+injected into the pinned 7.4 source. This was a reporting-only estimate, **not**
 Qualcomm's complete Android fuel-gauge algorithm or hardware coulomb counting.
 Charger limits, thermal protections, termination policy and SDAM are unchanged.
 

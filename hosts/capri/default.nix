@@ -32,6 +32,7 @@
           ./hardware.nix
           ./image.nix
           ./modem-nv.nix
+          ./screen-button.nix
           ./usb-ecm.nix
         ];
         system.stateVersion = "26.05";

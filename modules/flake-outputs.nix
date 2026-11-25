@@ -112,6 +112,7 @@
       capriBoot = pkgs.callPackage ../packages/capri/uboot { };
       home = laptop.home-manager.users.bhunter;
       contracts = {
+        capri = import ../lib/checks/capri.nix { inherit capri lib; };
         cache = import ../lib/checks/cache.nix {
           inherit
             homelab

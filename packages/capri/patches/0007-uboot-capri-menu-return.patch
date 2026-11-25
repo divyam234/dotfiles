@@ -1,0 +1,26 @@
+From: Capri NixOS maintainers
+Subject: [PATCH] cmd: bootmenu: return to Capri menu after commands
+
+Recreate the untimed main menu after a diagnostic command or generation
+picker returns, without recursive run menucmd calls. The built-in console
+entry still exits; the six-second delay applies only on first entry.
+
+--- a/cmd/bootmenu.c
++++ b/cmd/bootmenu.c
+@@ -700,6 +700,16 @@
+ 	if (delay_str)
+ 		delay = (int)simple_strtol(delay_str, NULL, 10);
+ 
++	if (IS_ENABLED(CONFIG_MOTOROLA_CAPRI)) {
++		int ret;
++
++		do {
++			ret = bootmenu_show(uefi, delay);
++			delay = -1;
++		} while (ret != BOOTMENU_RET_QUIT);
++		return 0;
++	}
++
+ 	bootmenu_show(uefi, delay);
+ 	return 0;
+ }
