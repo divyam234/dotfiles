@@ -2,7 +2,7 @@
 {
   den.aspects.desktop-apps = {
     homeManager =
-      { pkgs, ... }:
+      { lib, pkgs, ... }:
       {
         home.packages = with pkgs; [
           baobab
@@ -17,7 +17,6 @@
           wl-clipboard
           brightnessctl
           playerctl
-          mpv
           telegram-desktop
           vlc4
           obs-studio
@@ -26,6 +25,28 @@
           ddcutil
           upower
         ];
+
+        xdg.mimeApps = {
+          enable = true;
+          defaultApplications = lib.genAttrs [
+            "video/mp4"
+            "video/mpeg"
+            "video/ogg"
+            "video/quicktime"
+            "video/webm"
+            "video/x-matroska"
+            "video/x-msvideo"
+            "video/x-ms-wmv"
+            "audio/aac"
+            "audio/flac"
+            "audio/mp4"
+            "audio/mpeg"
+            "audio/ogg"
+            "audio/x-wav"
+            "application/ogg"
+            "application/x-matroska"
+          ] (_: [ "vlc4.desktop" ]);
+        };
       };
   };
 }
