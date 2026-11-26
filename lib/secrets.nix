@@ -117,18 +117,6 @@ let
 
   hostPaths = [
     [
-      "gemini-fastapi"
-      "api_key"
-    ]
-    [
-      "gemini-fastapi"
-      "secure_1psid"
-    ]
-    [
-      "gemini-fastapi"
-      "secure_1psidts"
-    ]
-    [
       "redis"
       "password"
     ]

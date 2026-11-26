@@ -14,7 +14,6 @@ let
     "camofox-browser"
     "forgejo"
     "gateauth"
-    "gemini-fastapi"
     "gluetun"
     "gproxy"
     "pgdog"

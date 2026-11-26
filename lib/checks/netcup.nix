@@ -32,7 +32,6 @@ assert !(builtins.hasAttr "mtproxy" netcup.virtualisation.quadlet.containers);
 assert
   netcup.virtualisation.quadlet.containers.gateauth.containerConfig.environments.SEED_DEFAULT_APPLICATION
   == "false";
-assert !(lib.hasInfix "stash" netcup.sops.templates."gateauth.env".content);
 assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
 assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
 assert !(userHome.systemd.user.services.codeforge.Service ? NoNewPrivileges);
@@ -67,7 +66,8 @@ assert builtins.elem "camofox-browser.service" netcup.systemd.services.camoflare
 assert builtins.elem 8191 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
 assert !(builtins.elem 8191 netcup.networking.firewall.allowedTCPPorts);
 assert lib.hasInfix "git.${domain}" caddyfile;
-assert lib.hasInfix "gemini.${domain}" caddyfile;
+assert !(netcup.virtualisation.quadlet.containers ? gemini-fastapi);
+assert !(lib.hasInfix "gemini.${domain}" caddyfile);
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
 assert lib.hasInfix "streamweave.${domain}" caddyfile;
@@ -101,12 +101,6 @@ assert builtins.elem {
   name = "auth.${domain}";
   proxied = true;
   target = "public-ipv4";
-  type = "A";
-} dnsManifest.records;
-assert builtins.elem {
-  name = "stash.${domain}";
-  proxied = false;
-  target = "tailscale-ipv4";
   type = "A";
 } dnsManifest.records;
 true

@@ -9,7 +9,6 @@
       den.aspects.camofox
       den.aspects.codeforge
       den.aspects.forgejo
-      den.aspects.gemini-fastapi
       den.aspects.gateauth
       den.aspects.gluetun
       den.aspects.gost
@@ -21,7 +20,6 @@
       den.aspects.rclone-webdav
       den.aspects.restic
       den.aspects.siyuan
-      den.aspects.stash
       den.aspects.streamweave
       den.aspects.teldrive
       den.aspects.vaultwarden
