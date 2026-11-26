@@ -142,14 +142,14 @@ assert hasContainerPolicy homelab;
 assert hasCleanupPolicy netcup;
 assert hasCleanupPolicy homelab;
 assert
-  capri.virtualisation.quadlet.containers.streamweave.containerConfig.image
+  netcup.virtualisation.quadlet.containers.streamweave.containerConfig.image
   == "ghcr.io/divyam234/streamweave:latest";
-assert capri.virtualisation.quadlet.containers.streamweave.containerConfig.publishPorts == [ ];
-assert !(netcup.virtualisation.quadlet.containers ? streamweave);
+assert netcup.virtualisation.quadlet.containers.streamweave.containerConfig.publishPorts == [ ];
+assert !(capri.virtualisation.quadlet.containers ? streamweave);
 assert !(capri.virtualisation.quadlet.containers ? postgres);
-assert lib.hasInfix "@netcup:6432/postgres" capri.sops.templates."streamweave.env".content;
-assert builtins.elem "tailscaled.service"
-  capri.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
+assert lib.hasInfix "@pgdog:6432/postgres" netcup.sops.templates."streamweave.env".content;
+assert builtins.elem netcup.virtualisation.quadlet.containers.pgdog.ref
+  netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
 assert capri.systemd.timers.cloudflare-dns-sync.timerConfig.OnUnitActiveSec == "5m";
 assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.Restart == "on-failure";
 assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.RestartSec == "30s";
@@ -162,20 +162,15 @@ assert builtins.elem "fd89:ca91::/64"
 assert
   capriDns.records == [
     {
-      name = "streamweave.${capriDns.zone}";
-      proxied = false;
-      target = "public-ipv6";
-      type = "AAAA";
-    }
-    {
       name = "media.${capriDns.zone}";
       proxied = false;
       target = "tailscale-ipv4";
       type = "A";
     }
   ];
-assert lib.hasInfix "reverse_proxy streamweave:8080" capri.environment.etc."caddy/Caddyfile".text;
-assert capri.sops.secrets."streamweave/master_key".sopsFile == ../../secrets/common.yaml;
+assert
+  !(lib.hasInfix "reverse_proxy streamweave:8080" capri.environment.etc."caddy/Caddyfile".text);
+assert netcup.sops.secrets."streamweave/master_key".sopsFile == ../../secrets/common.yaml;
 assert hasContainerPolicy capri;
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert homelab.systemd.timers.podman-auto-update.timerConfig.Persistent;
@@ -185,6 +180,7 @@ assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
     "9377:9377"
     "5900:5901"
+    "6080:6081"
   ];
 assert
   netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
@@ -202,6 +198,17 @@ assert
   netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.containerConfig.exec == [
     "TCP-LISTEN:5901,fork,reuseaddr"
     "TCP:127.0.0.1:5900"
+  ];
+assert
+  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.containerConfig.networks
+  == [ "container:camofox-browser" ];
+assert
+  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.unitConfig.Requires
+  == [ "camofox-browser.service" ];
+assert
+  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.containerConfig.exec == [
+    "TCP-LISTEN:6081,fork,reuseaddr"
+    "TCP:127.0.0.1:6080"
   ];
 assert
   netcup.virtualisation.quadlet.containers.adguard-cli.containerConfig.networks

@@ -70,8 +70,14 @@ assert lib.hasInfix "git.${domain}" caddyfile;
 assert lib.hasInfix "gemini.${domain}" caddyfile;
 assert lib.hasInfix "vault.${domain}" caddyfile;
 assert lib.hasInfix "auth.${domain}" caddyfile;
-assert !(lib.hasInfix "streamweave.${domain}" caddyfile);
-assert !(lib.hasInfix "reverse_proxy streamweave:8080" caddyfile);
+assert lib.hasInfix "streamweave.${domain}" caddyfile;
+assert lib.hasInfix "reverse_proxy streamweave:8080" caddyfile;
+assert builtins.elem {
+  name = "streamweave.${domain}";
+  proxied = true;
+  target = "public-ipv4";
+  type = "A";
+} dnsManifest.records;
 assert lib.hasInfix "reverse_proxy gateauth:8080" caddyfile;
 assert builtins.elem {
   name = "git.${domain}";

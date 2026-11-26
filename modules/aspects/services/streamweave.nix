@@ -11,7 +11,7 @@
     caddyRoutes.streamweave = {
       host = "streamweave.${host.domain}";
       access = "public";
-      proxied = false;
+      proxied = true;
       encode = false;
       cacheStatic = false;
       upstreams = [ "streamweave:8080" ];
@@ -44,7 +44,7 @@
           secretEnvironment = {
             PRODUCTION = "true";
             HTTP_ADDR = ":8080";
-            DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@netcup:6432/postgres?sslmode=disable";
+            DATABASE_URL = "postgres://${secrets.postgres.user}:${secrets.postgres.password}@pgdog:6432/postgres?sslmode=disable";
             DATABASE_SCHEMA = "streamweave";
             MASTER_KEY = secrets.streamweave.master_key;
             ADMIN_TOKEN = secrets.streamweave.admin_token;
@@ -54,13 +54,8 @@
             networkAliases = [ "streamweave" ];
           };
           unitConfig = {
-            After = [
-              "tailscaled.service"
-              "tailscale-autoconnect.service"
-            ];
-            Requires = [
-              "tailscaled.service"
-            ];
+            After = [ config.virtualisation.quadlet.containers.pgdog.ref ];
+            Requires = [ config.virtualisation.quadlet.containers.pgdog.ref ];
           };
           serviceConfig = {
             ExecStartPre = migrate;
