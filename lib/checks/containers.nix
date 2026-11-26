@@ -8,9 +8,6 @@
   netcupSystem,
 }:
 let
-  capriDns = builtins.fromJSON (
-    builtins.readFile capri.environment.etc."cloudflare-dns/manifest.json".source
-  );
   expected = [
     "adguard-cli"
     "caddy"
@@ -150,26 +147,12 @@ assert !(capri.virtualisation.quadlet.containers ? postgres);
 assert lib.hasInfix "@pgdog:6432/postgres" netcup.sops.templates."streamweave.env".content;
 assert builtins.elem netcup.virtualisation.quadlet.containers.pgdog.ref
   netcup.virtualisation.quadlet.containers.streamweave.unitConfig.Requires;
-assert capri.systemd.timers.cloudflare-dns-sync.timerConfig.OnUnitActiveSec == "5m";
-assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.Restart == "on-failure";
-assert capri.systemd.services.cloudflare-dns-sync.serviceConfig.RestartSec == "30s";
-assert !capriDns.publicTarget.ipv4.enable;
-assert capriDns.publicTarget.ipv6.enable;
-assert capriDns.publicTarget.ipv6.source == "local";
+assert !(capri.virtualisation.quadlet.containers ? caddy);
+assert !(capri.systemd.services ? cloudflare-dns-sync);
+assert !(capri.environment.etc ? "cloudflare-dns/manifest.json");
 assert capri.virtualisation.quadlet.networks.svc.networkConfig.ipv6;
 assert builtins.elem "fd89:ca91::/64"
   capri.virtualisation.quadlet.networks.svc.networkConfig.subnets;
-assert
-  capriDns.records == [
-    {
-      name = "media.${capriDns.zone}";
-      proxied = false;
-      target = "tailscale-ipv4";
-      type = "A";
-    }
-  ];
-assert
-  !(lib.hasInfix "reverse_proxy streamweave:8080" capri.environment.etc."caddy/Caddyfile".text);
 assert netcup.sops.secrets."streamweave/master_key".sopsFile == ../../secrets/common.yaml;
 assert hasContainerPolicy capri;
 assert netcup.systemd.timers.podman-auto-update.timerConfig.Persistent;

@@ -9,22 +9,11 @@
       den.aspects.librespot
       den.aspects.oci-service
       den.aspects.requires-domain
-      den.aspects.caddy
-      den.aspects.cloudflare-dns
       den.aspects.teldrive-native
     ];
 
-    caddyRoutes.media = {
-      host = "media.bhunter.tech";
-      access = "tailnet";
-      proxied = false;
-      encode = false;
-      cacheStatic = false;
-      upstreams = [ "host.containers.internal:9000" ];
-    };
-
     nixos =
-      { containers, ... }:
+      { ... }:
       {
         imports = [
           ./buffyboard.nix
@@ -57,9 +46,6 @@
           };
           globalEnvironment.IETS_MAIN_STACK_MB = "2048";
         };
-        networking.firewall.interfaces."br-${containers.networkName}".allowedTCPPorts = [
-          9000
-        ];
         users.users.bhunter.linger = true;
         environment.variables.IETS_MAIN_STACK_MB = "2048";
         zramSwap.enable = true;

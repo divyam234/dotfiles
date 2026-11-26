@@ -20,27 +20,14 @@
     nixos =
       {
         config,
-        containers,
-        pkgs,
         secrets,
         ...
       }:
       let
         image = "ghcr.io/divyam234/streamweave:latest";
-        envFile = config.sops.templates."streamweave.env".path;
-        migrate = pkgs.writeShellScript "streamweave-migrate" ''
-          set -eu
-          ${pkgs.podman}/bin/podman pull ${image}
-          ${pkgs.podman}/bin/podman run --rm --pull=never \
-            --network ${containers.networkName} \
-            --env-file ${envFile} \
-            --entrypoint /usr/local/bin/streamweave-migrate \
-            ${image}
-        '';
       in
       {
         virtualisation.quadlet.containers.streamweave = {
-          # The migration container reads this same file, including ordinary settings.
           secretEnvironment = {
             PRODUCTION = "true";
             HTTP_ADDR = ":8080";
@@ -58,7 +45,6 @@
             Requires = [ config.virtualisation.quadlet.containers.pgdog.ref ];
           };
           serviceConfig = {
-            ExecStartPre = migrate;
             MemoryMax = "1G";
             CPUQuota = "200%";
           };
