@@ -93,4 +93,10 @@ assert builtins.elem {
   target = "public-ipv4";
   type = "A";
 } dnsManifest.records;
+assert builtins.elem {
+  name = "stash.${domain}";
+  proxied = false;
+  target = "tailscale-ipv4";
+  type = "A";
+} dnsManifest.records;
 true

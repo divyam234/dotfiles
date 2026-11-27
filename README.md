@@ -69,7 +69,6 @@ just write-flake
 
 - **[`dot`](packages/dot/README.md)** — configuration management CLI, including local builds and SSH-based deployment.
 - **[`svc`](packages/svc/README.md)** — Rust CLI/TUI for inspecting and operating systemd-managed Quadlet containers.
-- **[`camoflare`](packages/camoflare/README.md)** — browser-backed FlareSolverr-compatible service.
 
 For `svc` development, run `cargo test --manifest-path packages/svc/Cargo.toml`.
 

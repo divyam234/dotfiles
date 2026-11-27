@@ -18,6 +18,7 @@
       den.aspects.rclone-webdav
       den.aspects.restic
       den.aspects.siyuan
+      den.aspects.stash
       den.aspects.streamweave
       den.aspects.teldrive
       den.aspects.vaultwarden
