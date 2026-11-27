@@ -147,7 +147,7 @@ window-rule {
 
 window-rule {
     opacity 0.9
-    exclude app-id="vlc"
+    exclude app-id="hakone"
 }
 
 window-rule {

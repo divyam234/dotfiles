@@ -18,7 +18,7 @@
           brightnessctl
           playerctl
           telegram-desktop
-          vlc4
+          hakone
           obs-studio
           sonora
           probe
@@ -45,7 +45,7 @@
             "audio/x-wav"
             "application/ogg"
             "application/x-matroska"
-          ] (_: [ "vlc4.desktop" ]);
+          ] (_: [ "hakone.desktop" ]);
         };
       };
   };
