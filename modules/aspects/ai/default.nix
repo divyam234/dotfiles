@@ -4,7 +4,6 @@
   den.aspects.ai = {
     homeSecrets = [
       "openai/api_key"
-      "camofox/access_key"
       "camofox/api_key"
     ];
 
@@ -79,13 +78,9 @@
 
         ompMcp = {
           mcpServers.camofox = {
-            type = "stdio";
-            command = "${pkgs.bun}/bin/bun";
-            args = [
-              "run"
-              "${config.home.homeDirectory}/.bun/bin/camofox-browser-mcp"
-            ];
-            env.CAMOFOX_BASE_URL = "http://netcup:9377";
+            type = "http";
+            url = "http://netcup:9377/mcp";
+            headers.Authorization = "Bearer \${MCP_CAMOUFOX_API_KEY}";
           };
         };
 
@@ -317,7 +312,6 @@
             cachePruneScopes = [ "@oh-my-pi" ];
             packages = lib.mkAfter [
               "@oh-my-pi/pi-coding-agent"
-              "@askjo/camofox-browser-mcp"
             ];
             timer = {
               enable = true;
@@ -344,16 +338,11 @@
           mode = "0400";
           content = ''
             OPENAI_API_KEY=${secrets.openai.api_key}
-            CAMOFOX_ACCESS_KEY=${secrets.camofox.access_key}
-            CAMOFOX_API_KEY=${secrets.camofox.api_key}
+            MCP_CAMOUFOX_API_KEY=${secrets.camofox.api_key}
           '';
         };
 
         home = {
-          packages = [
-            pkgs.codeforge
-          ];
-
           # Declarative settings: use project config or --config for overrides.
           file = {
             ".omp/agent/config.yml".source = yaml.generate "omp-config.yml" ompConfig;
@@ -362,7 +351,7 @@
               builtins.replaceStrings [ "@GPROXY_BASE_URL@" ] [ gproxyBaseUrl ]
                 (builtins.readFile ./gproxy-codex.ts);
 
-            ".omp/agent/mcp.json".source = json.generate "omp-mcp.json" ompMcp;
+            ".omp/agent/mcp.json".text = builtins.toJSON ompMcp;
             ".omp/agent/themes/stylix.json".source = json.generate "omp-stylix.json" ompTheme;
 
             ".config/opencode/oh-my-opencode-slim.json".source =

@@ -32,10 +32,6 @@ assert !(builtins.hasAttr "mtproxy" netcup.virtualisation.quadlet.containers);
 assert
   netcup.virtualisation.quadlet.containers.gateauth.containerConfig.environments.SEED_DEFAULT_APPLICATION
   == "false";
-assert !(builtins.hasAttr "codeforge" netcup.systemd.services);
-assert builtins.hasAttr "codeforge" userHome.systemd.user.services;
-assert !(userHome.systemd.user.services.codeforge.Service ? NoNewPrivileges);
-assert builtins.hasAttr "codeforge.env" userHome.sops.templates;
 assert builtins.elem "/var/cache/caddy:/var/cache/caddy"
   netcup.virtualisation.quadlet.containers.caddy.containerConfig.volumes;
 assert builtins.elem 53 netcup.networking.firewall.interfaces."br-svc".allowedUDPPorts;
@@ -57,14 +53,14 @@ assert netcup.virtualisation.quadlet.containers.postgres.containerConfig.publish
 assert lib.hasInfix ''iifname "eth0" ct status dnat tcp dport { 80, 443 } accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat udp dport 443 accept'' containerIngress;
 assert lib.hasInfix ''iifname "eth0" ct status dnat drop'' containerIngress;
-assert builtins.hasAttr "camoflare" netcup.systemd.services;
-assert lib.hasInfix "camoflare" netcup.systemd.services.camoflare.serviceConfig.ExecStart;
 assert
-  netcup.systemd.services.camoflare.serviceConfig.EnvironmentFile
-  == "/run/secrets/container-env/camoflare.env";
-assert builtins.elem "camofox-browser.service" netcup.systemd.services.camoflare.after;
-assert builtins.elem 8191 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
-assert !(builtins.elem 8191 netcup.networking.firewall.allowedTCPPorts);
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.image
+  == "ghcr.io/tgdrive/camofox-browser:latest";
+assert
+  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts
+  == [ "9377:9377" ];
+assert builtins.elem 9377 netcup.networking.firewall.interfaces.tailscale0.allowedTCPPorts;
+assert builtins.elem 9377 netcup.networking.firewall.interfaces."br-svc".allowedTCPPorts;
 assert lib.hasInfix "git.${domain}" caddyfile;
 assert !(netcup.virtualisation.quadlet.containers ? gemini-fastapi);
 assert !(lib.hasInfix "gemini.${domain}" caddyfile);
@@ -87,12 +83,6 @@ assert builtins.elem {
 } dnsManifest.records;
 assert builtins.elem {
   name = "vault.${domain}";
-  proxied = true;
-  target = "public-ipv4";
-  type = "A";
-} dnsManifest.records;
-assert builtins.elem {
-  name = "codeforge.${domain}";
   proxied = true;
   target = "public-ipv4";
   type = "A";

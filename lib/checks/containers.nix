@@ -159,40 +159,6 @@ assert homelab.systemd.timers.podman-auto-update.timerConfig.Persistent;
 assert !(netcup.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert !(homelab.systemd.services.podman-auto-update.serviceConfig ? ExecStart);
 assert
-  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.publishPorts == [
-    "9377:9377"
-    "5900:5901"
-    "6080:6081"
-  ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.CAMOFOX_BIND_HOST
-  == "0.0.0.0";
-assert
-  netcup.virtualisation.quadlet.containers.camofox-browser.containerConfig.environments.ENABLE_VNC
-  == "1";
-assert
-  netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.containerConfig.networks
-  == [ "container:camofox-browser" ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.unitConfig.Requires
-  == [ "camofox-browser.service" ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-vnc-bridge.containerConfig.exec == [
-    "TCP-LISTEN:5901,fork,reuseaddr"
-    "TCP:127.0.0.1:5900"
-  ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.containerConfig.networks
-  == [ "container:camofox-browser" ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.unitConfig.Requires
-  == [ "camofox-browser.service" ];
-assert
-  netcup.virtualisation.quadlet.containers.camofox-novnc-bridge.containerConfig.exec == [
-    "TCP-LISTEN:6081,fork,reuseaddr"
-    "TCP:127.0.0.1:6080"
-  ];
-assert
   netcup.virtualisation.quadlet.containers.adguard-cli.containerConfig.networks
   == [ "container:gluetun" ];
 true

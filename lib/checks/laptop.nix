@@ -36,7 +36,13 @@ assert contains "position x=0 y=0";
 assert contains "position x=1536 y=0";
 assert home.programs.bunGlobalCli.cachePruneScopes == [ "@oh-my-pi" ];
 assert builtins.elem "@oh-my-pi/pi-coding-agent" home.programs.bunGlobalCli.packages;
-assert builtins.elem "@askjo/camofox-browser-mcp" home.programs.bunGlobalCli.packages;
+assert
+  let
+    mcp = builtins.fromJSON home.home.file.".omp/agent/mcp.json".text;
+  in
+  mcp.mcpServers.camofox.type == "http"
+  && mcp.mcpServers.camofox.url == "http://netcup:9377/mcp"
+  && mcp.mcpServers.camofox.headers.Authorization == "Bearer \${MCP_CAMOUFOX_API_KEY}";
 assert builtins.hasAttr ".omp/agent/config.yml" home.home.file;
 assert builtins.hasAttr ".omp/agent/models.yml" home.home.file;
 assert builtins.hasAttr ".omp/agent/mcp.json" home.home.file;

@@ -16,8 +16,6 @@ let
     "users/bhunter/password"
   ];
   expectedNetcup = [
-    "camofox/access_key"
-    "camofox/admin_key"
     "camofox/api_key"
     "cloudflare/api_token"
     "gateauth/admin_email"
@@ -42,7 +40,6 @@ let
     "vaultwarden/admin_token"
   ];
   expectedLaptopHome = [
-    "camofox/access_key"
     "camofox/api_key"
     "github/token"
     "nordvpn/token"
@@ -52,7 +49,6 @@ let
     "ssh/private_key"
   ];
   expectedIdeapadHome = [
-    "camofox/access_key"
     "camofox/api_key"
     "github/token"
     "nordvpn/token"
@@ -62,7 +58,6 @@ let
     "ssh/private_key"
   ];
   expectedHomelabHome = [
-    "camofox/access_key"
     "camofox/api_key"
     "github/token"
     "openai/api_key"
@@ -71,10 +66,7 @@ let
     "ssh/private_key"
   ];
   expectedNetcupHome = [
-    "camofox/access_key"
-    "camofox/admin_key"
     "camofox/api_key"
-    "codeforge/token"
     "github/token"
     "openai/api_key"
     "opencode/server_password"
@@ -90,7 +82,6 @@ let
     builtins.any (package: (package.pname or package.name) == name) homeConfig.home.packages;
   expectedTemplates = [
     "caddy.env"
-    "camoflare.env"
     "camofox-browser.env"
     "cloudflare-dns.env"
     "forgejo.env"

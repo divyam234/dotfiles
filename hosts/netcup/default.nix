@@ -5,9 +5,7 @@
       den.aspects.infra-host
 
       den.aspects.adguard
-      den.aspects.camoflare
       den.aspects.camofox
-      den.aspects.codeforge
       den.aspects.forgejo
       den.aspects.gateauth
       den.aspects.gluetun
