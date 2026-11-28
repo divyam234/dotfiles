@@ -40,7 +40,7 @@
           };
 
         models = {
-          openaiStrong = "gpt-6.1-sol";
+          openaiStrong = "gpt-6.2-sol";
           openaiFast = "gpt-6-luna";
         };
 
