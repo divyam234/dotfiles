@@ -1,5 +1,4 @@
 {
-  fetchpatch,
   gitMinimal,
   installShellFiles,
   lib,
@@ -15,8 +14,8 @@ let
       type = "github";
       owner = "numtide";
       repo = "iets";
-      rev = "9157ca1a2a50c085bcd7fd0004d9ba71e2b7c1e0";
-      narHash = "sha256-YFfGtsQEw5MQECnyIQqfMC1Wp51Tz/8oPD062mptAbE=";
+      rev = "fb2a374830e8c644e7c29b546ad0e6198ba2d603";
+      narHash = "sha256-MgGPeMQ9ky9G1uEIk8DA7xJcadOVipoSYrDtaz2le34=";
     }).outPath;
   lock = builtins.readFile (src + "/Cargo.lock");
   dependencyAnchor = " \"protox\",\n \"ring\",";
@@ -54,16 +53,7 @@ in
     version = lib.trim (builtins.readFile (src + "/VERSION"));
     inherit src;
     patches = [
-      (fetchpatch {
-        name = "iets-pr335-zip.patch";
-        url = "https://github.com/numtide/iets/compare/000b20bc0e9335d4a851899f879e00d3fa5a5a75...28f1d5fc663392929cff4ebde8a927998d843963.diff";
-        hash = "sha256-Z/6CQ1O0d6wK6OXWvk46LUNaS2VGXCAcp9QfDEX5Ib0=";
-        excludes = [
-          "Cargo.lock"
-          "fuzz/Cargo.lock"
-          "docs/explanation/flakes-and-sources.md"
-        ];
-      })
+      ./zip.patch
     ];
     cargoLock.lockFile = patchedLock;
     postPatch = ''
@@ -93,8 +83,8 @@ in
       substituteInPlace src/cli/run.rs src/api/concurrent_eval.rs \
         --replace-fail '.stack_size(MAIN_STACK)' '.stack_size(*MAIN_STACK)'
       substituteInPlace src/parallel/sched.rs \
-        --replace-fail 'self.new_slot_sized(user, fiber::MAIN_STACK)' \
-          'self.new_slot_sized(user, *fiber::MAIN_STACK)'
+        --replace-fail 'self.new_slot(fiber::MAIN_STACK, || user)' \
+          'self.new_slot(*fiber::MAIN_STACK, || user)'
     '';
     nativeBuildInputs = [
       installShellFiles
