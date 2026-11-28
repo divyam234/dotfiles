@@ -41,6 +41,8 @@
       environment.systemPackages = with pkgs; [
         parted
         efibootmgr
+        ghostty.terminfo
+        kitty.terminfo
       ];
     };
   };

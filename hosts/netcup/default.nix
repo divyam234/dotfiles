@@ -21,6 +21,7 @@
       den.aspects.stash
       den.aspects.streamweave
       den.aspects.teldrive
+      den.aspects.tern-remote
       den.aspects.vaultwarden
     ];
 
